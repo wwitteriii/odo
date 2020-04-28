@@ -2,13 +2,15 @@ package ioutils
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
+
+	"github.com/spf13/afero"
 )
 
 // IsExisting returns bool whether path exists
 func IsExisting(path string) (bool, error) {
-	fileInfo, err := os.Stat(path)
+	appFS := afero.NewOsFs()
+	fileInfo, err := appFS.Stat(path)
 	if err != nil {
 		return false, err
 	}

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -38,16 +39,17 @@ func TestEnv(t *testing.T) {
 }
 
 func fakeGitopsDir(t *testing.T) (string, func()) {
-	tmpDir, cleanUp := makeTempDir(t)
+	appFS := afero.NewOsFs()
+	tmpDir, cleanUp := makeTempDir(t, appFS)
 	gitopsDir := filepath.Join(tmpDir, "gitops")
-	err := os.Mkdir(gitopsDir, 0755)
+	err := appFS.Mkdir(gitopsDir, 0755)
 	if err != nil {
 		t.Fatalf("failed to create gitops directory")
 	}
 	return gitopsDir, cleanUp
 }
 
-func makeTempDir(t *testing.T) (string, func()) {
+func makeTempDir(t *testing.T, f afero.Fs) (string, func()) {
 	t.Helper()
 	dir, err := ioutil.TempDir(os.TempDir(), "test")
 	assertNoError(t, err)
