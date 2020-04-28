@@ -2,6 +2,7 @@ package manifest
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/openshift/odo/pkg/manifest/argocd"
 	"github.com/openshift/odo/pkg/manifest/config"
@@ -25,6 +26,7 @@ func BuildResources(o *BuildParameters) error {
 		return fmt.Errorf("failed to parse manifest: %w", err)
 	}
 	if err := m.Validate(); err != nil {
+		log.Println("These are the errors", err)
 		return err
 	}
 	appFs := afero.NewOsFs()
