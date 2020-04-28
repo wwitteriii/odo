@@ -24,7 +24,9 @@ func BuildResources(o *BuildParameters) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse manifest: %w", err)
 	}
-
+	if err := m.Validate(); err != nil {
+		return err
+	}
 	appFs := afero.NewOsFs()
 	resources, err := buildResources(appFs, o, m)
 	if err != nil {
