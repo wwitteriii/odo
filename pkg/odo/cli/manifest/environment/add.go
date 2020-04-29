@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/openshift/odo/pkg/manifest"
+	"github.com/openshift/odo/pkg/manifest/ioutils"
 	"github.com/openshift/odo/pkg/odo/genericclioptions"
-	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 
 	ktemplates "k8s.io/kubernetes/pkg/kubectl/util/templates"
@@ -64,8 +64,8 @@ func (eo *AddEnvParameters) Run() error {
 		Output:  eo.output,
 		Prefix:  eo.prefix,
 	}
-	appFs := afero.NewOsFs()
-	return manifest.Env(&options, appFs)
+
+	return manifest.Env(&options, ioutils.NewFilesystem())
 }
 
 // NewCmdAddEnv creates the project add environment command.

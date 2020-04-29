@@ -20,8 +20,7 @@ type BuildParameters struct {
 }
 
 // BuildResources builds all resources from a manifest.
-func BuildResources(o *BuildParameters) error {
-	appFs := afero.NewOsFs()
+func BuildResources(o *BuildParameters, appFs afero.Fs) error {
 	m, err := config.ParseFile(appFs, o.ManifestFilename)
 	if err != nil {
 		return fmt.Errorf("failed to parse manifest: %w", err)

@@ -2,6 +2,7 @@ package config
 
 import (
 	"io"
+	"io/ioutil"
 
 	"github.com/spf13/afero"
 	"sigs.k8s.io/yaml"
@@ -10,7 +11,7 @@ import (
 // Parse decodes YAML describing an environment manifest.
 func Parse(in io.Reader) (*Manifest, error) {
 	m := &Manifest{}
-	buf, err := afero.ReadAll(in)
+	buf, err := ioutil.ReadAll(in)
 	if err != nil {
 		return nil, err
 	}

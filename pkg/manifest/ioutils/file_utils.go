@@ -7,6 +7,14 @@ import (
 	"github.com/spf13/afero"
 )
 
+func NewFilesystem() afero.Fs {
+	return afero.NewOsFs()
+}
+
+func NewMapFilesystem() afero.Fs {
+	return afero.NewMemMapFs()
+}
+
 // IsExisting returns bool whether path exists
 func IsExisting(fs afero.Fs, path string) (bool, error) {
 	fileInfo, err := fs.Stat(path)

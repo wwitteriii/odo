@@ -5,12 +5,13 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/openshift/odo/pkg/manifest/ioutils"
 	"github.com/spf13/afero"
 )
 
 func TestEnv(t *testing.T) {
 
-	fakeFs := afero.NewMemMapFs()
+	fakeFs := ioutils.NewMapFilesystem()
 	gitopsPath := afero.GetTempDir(fakeFs, "test")
 	envParameters := EnvParameters{
 		EnvName: "dev",
