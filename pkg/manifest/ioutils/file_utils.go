@@ -8,10 +8,8 @@ import (
 )
 
 // IsExisting returns bool whether path exists
-func IsExisting(path string) (bool, error) {
-	appFS := afero.NewOsFs()
-	fileInfo, err := appFS.Stat(path)
-
+func IsExisting(fs afero.Fs, path string) (bool, error) {
+	fileInfo, err := fs.Stat(path)
 	if err != nil {
 		return false, err
 	}

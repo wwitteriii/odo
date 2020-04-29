@@ -28,8 +28,9 @@ type InitParameters struct {
 // Init function will initialise the gitops directory
 func Init(o *InitParameters) error {
 
+	fs := afero.NewOsFs()
 	// check if the gitops dir already exists
-	exists, err := ioutils.IsExisting(o.Output)
+	exists, err := ioutils.IsExisting(fs, o.Output)
 	if exists {
 		return err
 	}
@@ -40,24 +41,23 @@ func Init(o *InitParameters) error {
 	}
 
 	pipelinesPath := manifest.GetPipelinesDir(o.Output, o.Prefix)
-	appFs := afero.NewOsFs()
-	fileNames, err := yaml.WriteResources(appFs, pipelinesPath, files)
+	fileNames, err := yaml.WriteResources(fs, pipelinesPath, files)
 	if err != nil {
 		return err
 	}
 
 	sort.Strings(fileNames)
 	// kustomize file should refer all the pipeline resources
-	if err := yaml.AddKustomize(appFs, "resources", fileNames, filepath.Join(pipelinesPath, manifest.Kustomize)); err != nil {
+	if err := yaml.AddKustomize(fs, "resources", fileNames, filepath.Join(pipelinesPath, manifest.Kustomize)); err != nil {
 		return err
 	}
 
-	if err := yaml.AddKustomize(appFs, "bases", []string{"./pipelines"}, filepath.Join(getCICDDir(o.Output, o.Prefix), manifest.BaseDir, manifest.Kustomize)); err != nil {
+	if err := yaml.AddKustomize(fs, "bases", []string{"./pipelines"}, filepath.Join(getCICDDir(o.Output, o.Prefix), manifest.BaseDir, manifest.Kustomize)); err != nil {
 		return err
 	}
 
 	// Add overlays
-	if err := yaml.AddKustomize(appFs, "bases", []string{"../base"}, filepath.Join(getCICDDir(o.Output, o.Prefix), "overlays", manifest.Kustomize)); err != nil {
+	if err := yaml.AddKustomize(fs, "bases", []string{"../base"}, filepath.Join(getCICDDir(o.Output, o.Prefix), "overlays", manifest.Kustomize)); err != nil {
 		return err
 	}
 

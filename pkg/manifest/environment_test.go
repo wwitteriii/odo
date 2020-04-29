@@ -2,26 +2,21 @@ package manifest
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/spf13/afero"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestEnv(t *testing.T) {
 
-	gitopsPath, cleanUp := fakeGitopsDir(t)
-	defer cleanUp()
-
+	fakeFs := afero.NewMemMapFs()
+	gitopsPath := afero.GetTempDir(fakeFs, "test")
 	envParameters := EnvParameters{
 		EnvName: "dev",
 		Output:  gitopsPath,
 	}
-	if err := Env(&envParameters); err != nil {
+	if err := Env(&envParameters, fakeFs); err != nil {
 		t.Fatalf("Env() failed :%s", err)
 	}
 
@@ -33,31 +28,23 @@ func TestEnv(t *testing.T) {
 	}
 
 	for _, path := range wantedPaths {
-		t.Run(fmt.Sprintf("checking path %s already exists", path), func(t *testing.T) {
-			assert.FileExists(t, filepath.Join(gitopsPath, path))
+		t.Run(fmt.Sprintf("checking path %s already exists", path), func(rt *testing.T) {
+			assertFileExists(rt, fakeFs, filepath.Join(gitopsPath, path))
 		})
 	}
 }
 
-func fakeGitopsDir(t *testing.T) (string, func()) {
-	appFS := afero.NewOsFs()
-
-	tmpDir, cleanUp := makeTempDir(t, appFS)
-	gitopsDir := filepath.Join(tmpDir, "gitops")
-	err := appFS.Mkdir(gitopsDir, 0755)
-	if err != nil {
-		t.Fatalf("failed to create gitops directory")
-	}
-	return gitopsDir, cleanUp
-}
-
-func makeTempDir(t *testing.T, f afero.Fs) (string, func()) {
+func assertFileExists(t *testing.T, testFs afero.Fs, path string) {
 	t.Helper()
-	dir, err := ioutil.TempDir(os.TempDir(), "test")
+	exists, err := afero.Exists(testFs, path)
 	assertNoError(t, err)
-	return dir, func() {
-		err := f.RemoveAll(dir)
-		assertNoError(t, err)
+	if !exists {
+		t.Fatalf("unable to find file %q", path)
+	}
+	isDir, err := afero.DirExists(testFs, path)
+	assertNoError(t, err)
+	if isDir {
+		t.Fatalf("%q is a directory", path)
 	}
 }
 

@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 
 	"github.com/openshift/client-go/route/clientset/versioned/scheme"
 	"github.com/openshift/odo/pkg/manifest/clientconfig"
 	"github.com/openshift/odo/pkg/manifest/meta"
+	"github.com/spf13/afero"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -105,7 +105,7 @@ func openCertCluster(c clientv1.CoreV1Interface) (io.ReadCloser, error) {
 
 // Reads and parses a public key from a reader
 func parseKey(r io.Reader) (*rsa.PublicKey, error) {
-	data, err := ioutil.ReadAll(r)
+	data, err := afero.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func createDockerConfigSecret(name types.NamespacedName, in io.Reader) (*corev1.
 }
 
 func createSecret(name types.NamespacedName, key string, st corev1.SecretType, in io.Reader) (*corev1.Secret, error) {
-	data, err := ioutil.ReadAll(in)
+	data, err := afero.ReadAll(in)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read secret data: %w", err)
 	}

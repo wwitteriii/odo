@@ -3,7 +3,6 @@ package manifest
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -116,8 +115,8 @@ func Init(o *InitParameters) error {
 		return err
 	}
 
-	// TODO: look into whether or not this can use afero.
-	exists, err := ioutils.IsExisting(o.Output)
+	fs := afero.NewOsFs()
+	exists, err := ioutils.IsExisting(fs, o.Output)
 	if exists {
 		return err
 	}
@@ -126,8 +125,7 @@ func Init(o *InitParameters) error {
 	if err != nil {
 		return err
 	}
-	appFs := afero.NewOsFs()
-	_, err = yaml.WriteResources(appFs, o.Output, outputs)
+	_, err = yaml.WriteResources(fs, o.Output, outputs)
 	return err
 }
 
@@ -185,8 +183,8 @@ func CreateDockerSecret(dockerConfigJSONFilename, ns string) (*ssv1alpha1.Sealed
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate path to file: %w", err)
 	}
-
-	f, err := os.Open(authJSONPath)
+	fs := afero.NewOsFs()
+	f, err := fs.Open(authJSONPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read docker file '%s' : %w", authJSONPath, err)
 	}
