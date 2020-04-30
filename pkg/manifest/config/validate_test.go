@@ -2,11 +2,14 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/mkmik/multierror"
 	"github.com/openshift/odo/pkg/manifest/ioutils"
+	"github.com/spf13/afero"
 	"knative.dev/pkg/apis"
 )
 
@@ -54,7 +57,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			"duplicate environment name error",
-			"testdata/duplicate_environment.yaml",
+			"testdata/duplicate_environment_error.yaml",
 			multierror.Join(
 				[]error{
 					duplicateFieldsError([]string{"duplicate-environment"}, []string{"environments.duplicate-environment"}),
@@ -63,7 +66,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			"duplicate application name error",
-			"testdata/duplicate_application.yaml",
+			"testdata/duplicate_application_error.yaml",
 			multierror.Join(
 				[]error{
 					duplicateFieldsError([]string{"my-app-1"}, []string{"environments.app-environment.apps.my-app-1"}),
@@ -72,7 +75,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			"duplicate service name error",
-			"testdata/duplicate_service.yaml",
+			"testdata/duplicate_service_error.yaml",
 			multierror.Join(
 				[]error{
 					duplicateFieldsError([]string{"app-1-service-http"}, []string{"environments.duplicate-service.services.app-1-service-http"}),
@@ -96,8 +99,33 @@ func TestValidate(t *testing.T) {
 	}
 }
 
+func TestValidManifestFiles(t *testing.T) {
+	fs := ioutils.NewFilesystem()
+	files, err := listValidFiles(fs, "testdata")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, file := range files {
+		manifest, err := ParseFile(fs, file)
+		if err != nil {
+			t.Fatalf("failed to parse file:%v", err)
+		}
+		got := manifest.Validate()
+		err = matchMultiErrors(t, got, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func matchMultiErrors(t *testing.T, a error, b error) error {
 	t.Helper()
+	if a == nil || b == nil {
+		if a != b {
+			return fmt.Errorf("did not match error, got %v want %v", a, b)
+		}
+		return nil
+	}
 	got, want := multierror.Split(a), multierror.Split(b)
 	if len(got) != len(want) {
 		return fmt.Errorf("did not match error, got %v want %v", got, want)
@@ -108,4 +136,24 @@ func matchMultiErrors(t *testing.T, a error, b error) error {
 		}
 	}
 	return nil
+}
+
+func listValidFiles(fs afero.Fs, root string) ([]string, error) {
+	files := []string{}
+	err := afero.Walk(fs, root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil
+			}
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		if !strings.HasSuffix(path, "_error.yaml") {
+			files = append(files, path)
+		}
+		return nil
+	})
+	return files, err
 }
