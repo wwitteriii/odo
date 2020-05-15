@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
+	"github.com/openshift/odo/pkg/odo/cli/pipelines/scm"
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/ioutils"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
@@ -32,7 +33,7 @@ func TestCreateManifest(t *testing.T) {
 
 func TestInitialFiles(t *testing.T) {
 	prefix := "tst-"
-	gitOpsURL := "https://gibhub.com/foo/test-repo"
+	gitOpsURL := "https://github.com/foo/test-repo"
 	gitOpsWebhook := "123"
 	defer func(f secrets.PublicKeyFunc) {
 		secrets.DefaultPublicKeyFunc = f
@@ -46,8 +47,9 @@ func TestInitialFiles(t *testing.T) {
 		return &key.PublicKey, nil
 	}
 	fakeFs := ioutils.NewMapFilesystem()
-
-	got, err := createInitialFiles(fakeFs, prefix, gitOpsURL, gitOpsWebhook, "")
+	repo, err := scm.NewRepository(gitOpsURL)
+	assertNoError(t, err)
+	got, err := createInitialFiles(fakeFs, repo, prefix, gitOpsURL, gitOpsWebhook, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +61,7 @@ func TestInitialFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resources, err := createCICDResources(fakeFs, testCICDEnv, gitOpsRepo, gitOpsWebhook, "")
+	resources, err := createCICDResources(fakeFs, repo, testCICDEnv, gitOpsRepo, gitOpsWebhook, "")
 	if err != nil {
 		t.Fatalf("CreatePipelineResources() failed due to :%s\n", err)
 	}

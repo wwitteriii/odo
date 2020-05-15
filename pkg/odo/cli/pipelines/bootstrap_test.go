@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/openshift/odo/pkg/odo/genericclioptions"
-	"github.com/openshift/odo/pkg/pipelines"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +19,7 @@ func TestCompleteBootstrapParameters(t *testing.T) {
 	}
 
 	for _, tt := range completeTests {
-		o := BootstrapParameters{&pipelines.BootstrapOptions{Prefix: tt.prefix}, &genericclioptions.Context{}}
+		o := BootstrapParameters{prefix: tt.prefix, Context: &genericclioptions.Context{}}
 
 		err := o.Complete("test", &cobra.Command{}, []string{"test", "test/repo"})
 
@@ -28,8 +27,8 @@ func TestCompleteBootstrapParameters(t *testing.T) {
 			t.Errorf("Complete() %#v failed: ", err)
 		}
 
-		if o.Prefix != tt.wantPrefix {
-			t.Errorf("Complete() %#v prefix: got %s, want %s", tt.name, o.Prefix, tt.wantPrefix)
+		if o.prefix != tt.wantPrefix {
+			t.Errorf("Complete() %#v prefix: got %s, want %s", tt.name, o.prefix, tt.wantPrefix)
 		}
 	}
 }
@@ -46,11 +45,9 @@ func TestValidateBootstrapParameters(t *testing.T) {
 
 	for _, tt := range optionTests {
 		o := BootstrapParameters{
-			&pipelines.BootstrapOptions{
-				GitOpsRepoURL: tt.gitRepo,
-				Prefix:        "test",
-			},
-			&genericclioptions.Context{},
+			gitOpsRepoURL: tt.gitRepo,
+			prefix:        "test",
+			Context:       &genericclioptions.Context{},
 		}
 		err := o.Validate()
 

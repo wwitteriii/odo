@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
+	"github.com/openshift/odo/pkg/odo/cli/pipelines/scm"
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
 	"github.com/openshift/odo/pkg/pipelines/ioutils"
@@ -32,7 +33,7 @@ import (
 // InitParameters is a struct that provides flags for the Init command.
 type InitParameters struct {
 	DockerConfigJSONFilename string
-	GitOpsRepoURL            string
+	GitOpsRepo               scm.Repository
 	GitOpsWebhookSecret      string
 	ImageRepo                string
 	InternalRegistryHostname string
@@ -104,12 +105,13 @@ const (
 
 // Init bootstraps a GitOps pipelines and repository structure.
 func Init(o *InitParameters, fs afero.Fs) error {
+
 	exists, err := ioutils.IsExisting(fs, o.OutputPath)
 	if exists {
 		return err
 	}
 
-	outputs, err := createInitialFiles(fs, o.Prefix, o.GitOpsRepoURL, o.GitOpsWebhookSecret, o.DockerConfigJSONFilename)
+	outputs, err := createInitialFiles(fs, o.GitOpsRepo, o.Prefix, o.GitOpsRepo.GetURL(), o.GitOpsWebhookSecret, o.DockerConfigJSONFilename)
 	if err != nil {
 		return err
 	}
@@ -142,7 +144,7 @@ func CreateDockerSecret(fs afero.Fs, dockerConfigJSONFilename, ns string) (*ssv1
 
 }
 
-func createInitialFiles(fs afero.Fs, prefix, gitOpsURL, gitOpsWebhookSecret, dockerConfigPath string) (res.Resources, error) {
+func createInitialFiles(fs afero.Fs, repo scm.Repository, prefix, gitOpsURL, gitOpsWebhookSecret, dockerConfigPath string) (res.Resources, error) {
 	cicdEnv := &config.Environment{Name: prefix + "cicd", IsCICD: true}
 	pipelines := createManifest(gitOpsURL, cicdEnv)
 	initialFiles := res.Resources{
@@ -152,7 +154,7 @@ func createInitialFiles(fs afero.Fs, prefix, gitOpsURL, gitOpsWebhookSecret, doc
 	if err != nil {
 		return nil, err
 	}
-	resources, err := createCICDResources(fs, cicdEnv, orgRepo, gitOpsWebhookSecret, dockerConfigPath)
+	resources, err := createCICDResources(fs, repo, cicdEnv, orgRepo, gitOpsWebhookSecret, dockerConfigPath)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +170,7 @@ func createInitialFiles(fs afero.Fs, prefix, gitOpsURL, gitOpsWebhookSecret, doc
 }
 
 // createCICDResources creates resources assocated to pipelines.
-func createCICDResources(fs afero.Fs, cicdEnv *config.Environment, gitOpsRepo, gitOpsWebhookSecret, dockerConfigJSONPath string) (res.Resources, error) {
+func createCICDResources(fs afero.Fs, repo scm.Repository, cicdEnv *config.Environment, gitOpsRepo, gitOpsWebhookSecret, dockerConfigJSONPath string) (res.Resources, error) {
 	cicdNamespace := cicdEnv.Name
 	// key: path of the resource
 	// value: YAML content of the resource
@@ -202,8 +204,8 @@ func createCICDResources(fs afero.Fs, cicdEnv *config.Environment, gitOpsRepo, g
 	outputs[ciPipelinesPath] = pipelines.CreateCIPipeline(meta.NamespacedName(cicdNamespace, "ci-dryrun-from-pr-pipeline"), cicdNamespace)
 	outputs[cdPipelinesPath] = pipelines.CreateCDPipeline(meta.NamespacedName(cicdNamespace, "cd-deploy-from-push-pipeline"), cicdNamespace)
 	outputs[appCiPipelinesPath] = pipelines.CreateAppCIPipeline(meta.NamespacedName(cicdNamespace, "app-ci-pipeline"), false)
-	outputs[prBindingPath] = triggers.CreatePRBinding(cicdNamespace)
-	outputs[pushBindingPath] = triggers.CreatePushBinding(cicdNamespace)
+	outputs[prBindingPath], _ = repo.CreatePRBinding(cicdNamespace)
+	outputs[pushBindingPath], _ = repo.CreatePushBinding(cicdNamespace)
 	outputs[prTemplatePath] = triggers.CreateCIDryRunTemplate(cicdNamespace, saName)
 	outputs[pushTemplatePath] = triggers.CreateCDPushTemplate(cicdNamespace, saName)
 	outputs[appCIBuildPRTemplatePath] = triggers.CreateDevCIBuildPRTemplate(cicdNamespace, saName)
