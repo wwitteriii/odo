@@ -12,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	"github.com/openshift/odo/pkg/odo/cli/pipelines/scm"
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/deployment"
 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
@@ -35,14 +36,14 @@ var defaultPipelines = &config.Pipelines{
 
 // BootstrapOptions is a struct that provides the optional flags
 type BootstrapOptions struct {
-	GitOpsRepoURL            string // This is where the pipelines and configuration are.
-	GitOpsWebhookSecret      string // This is the secret for authenticating hooks from your GitOps repo.
-	AppRepoURL               string // This is the full URL to your GitHub repository for your app source.
-	AppWebhookSecret         string // This is the secret for authenticating hooks from your app source.
-	InternalRegistryHostname string // This is the internal registry hostname used for pushing images.
-	ImageRepo                string // This is where built images are pushed to.
-	Prefix                   string // Used to prefix generated environment names in a shared cluster.
-	OutputPath               string // Where to write the bootstrapped files to?
+	GitOpsRepo               scm.Repository // This is the repository for GitOps config
+	GitOpsWebhookSecret      string         // This is the secret for authenticating hooks from your GitOps repo.
+	AppRepo                  scm.Repository // This is the repository for your app source.
+	AppWebhookSecret         string         // This is the secret for authenticating hooks from your app source.
+	InternalRegistryHostname string         // This is the internal registry hostname used for pushing images.
+	ImageRepo                string         // This is where built images are pushed to.
+	Prefix                   string         // Used to prefix generated environment names in a shared cluster.
+	OutputPath               string         // Where to write the bootstrapped files to?
 	DockerConfigJSONFilename string
 }
 
@@ -56,7 +57,7 @@ func Bootstrap(o *BootstrapOptions, appFs afero.Fs) error {
 	buildParams := &BuildParameters{
 		ManifestFilename: pipelinesFile,
 		OutputPath:       o.OutputPath,
-		RepositoryURL:    o.GitOpsRepoURL,
+		RepositoryURL:    o.GitOpsRepo.GetURL(),
 	}
 
 	m := bootstrapped[pipelinesFile].(*config.Manifest)
@@ -74,23 +75,23 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	if err != nil {
 		return nil, err
 	}
-	repoName, err := repoFromURL(o.AppRepoURL)
+	repoName, err := repoFromURL(o.AppRepo.GetURL())
 	if err != nil {
 		return nil, fmt.Errorf("invalid app repo URL: %w", err)
 	}
 
-	bootstrapped, err := createInitialFiles(appFs, o.Prefix, o.GitOpsRepoURL, o.GitOpsWebhookSecret, o.DockerConfigJSONFilename)
+	bootstrapped, err := createInitialFiles(appFs, o.GitOpsRepo, o.Prefix, o.GitOpsRepo.GetURL(), o.GitOpsWebhookSecret, o.DockerConfigJSONFilename)
 	if err != nil {
 		return nil, err
 	}
 
 	ns := namespaces.NamesWithPrefix(o.Prefix)
 	secretName := secrets.MakeServiceWebhookSecretName(repoToServiceName(repoName))
-	envs, err := bootstrapEnvironments(o.Prefix, o.AppRepoURL, secretName, ns)
+	envs, err := bootstrapEnvironments(o.Prefix, o.AppRepo.GetURL(), secretName, ns)
 	if err != nil {
 		return nil, err
 	}
-	m := createManifest(o.GitOpsRepoURL, envs...)
+	m := createManifest(o.GitOpsRepo.GetURL(), envs...)
 
 	devEnv := m.GetEnvironment(ns["dev"])
 	if devEnv == nil {
