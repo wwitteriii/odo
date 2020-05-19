@@ -3,6 +3,7 @@ package pipelines
 import (
 	"fmt"
 
+	"github.com/openshift/odo/pkg/log"
 	"github.com/openshift/odo/pkg/pipelines/argocd"
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/environments"
@@ -32,6 +33,10 @@ func BuildResources(o *BuildParameters, appFs afero.Fs) error {
 		return err
 	}
 	_, err = yaml.WriteResources(appFs, o.OutputPath, resources)
+
+	if err == nil {
+		log.Successf("Build successful!!")
+	}
 	return err
 }
 
@@ -54,5 +59,6 @@ func buildResources(fs afero.Fs, o *BuildParameters, m *config.Manifest) (res.Re
 		return nil, err
 	}
 	resources = res.Merge(argoApps, resources)
+
 	return resources, nil
 }

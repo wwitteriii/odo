@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/openshift/odo/pkg/log"
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/environments"
 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
 	"github.com/openshift/odo/pkg/pipelines/meta"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
-
 	"github.com/openshift/odo/pkg/pipelines/secrets"
 	"github.com/openshift/odo/pkg/pipelines/yaml"
 	"github.com/spf13/afero"
@@ -43,6 +43,7 @@ func AddService(gitRepoURL, envName, appName, serviceName, webhookSecret, manife
 			return err
 		}
 	}
+	log.Successf("Service %s added successfully in  %s environment!!", serviceName, envName)
 	return nil
 }
 
