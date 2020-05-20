@@ -8,7 +8,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/openshift/odo/pkg/log"
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/deployment"
 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
@@ -65,11 +64,7 @@ func Bootstrap(o *BootstrapOptions, appFs afero.Fs) error {
 	}
 	bootstrapped = res.Merge(built, bootstrapped)
 	_, err = yaml.WriteResources(appFs, o.OutputPath, bootstrapped)
-	orgRepo, _ := orgRepoFromURL(o.GitOpsRepoURL)
 
-	if err == nil {
-		log.Successf(fmt.Sprintf("Bootstrapped the %s repo at %s!!", orgRepo, o.OutputPath))
-	}
 	return err
 }
 

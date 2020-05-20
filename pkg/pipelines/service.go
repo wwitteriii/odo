@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/openshift/odo/pkg/log"
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/environments"
 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
@@ -43,7 +42,6 @@ func AddService(gitRepoURL, envName, appName, serviceName, webhookSecret, manife
 			return err
 		}
 	}
-	log.Successf("Service %s added successfully in  %s environment!!", serviceName, envName)
 	return nil
 }
 

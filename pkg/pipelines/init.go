@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
-	"github.com/openshift/odo/pkg/log"
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
 	"github.com/openshift/odo/pkg/pipelines/ioutils"
@@ -115,11 +114,6 @@ func Init(o *InitParameters, fs afero.Fs) error {
 	}
 	_, err = yaml.WriteResources(fs, o.OutputPath, outputs)
 
-	orgRepo, _ := orgRepoFromURL(o.GitOpsRepoURL)
-
-	if err == nil {
-		log.Successf(fmt.Sprintf("Intialised the %s repo at %s!!", orgRepo, o.OutputPath))
-	}
 	return err
 }
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/openshift/odo/pkg/log"
 	"github.com/openshift/odo/pkg/pipelines/config"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
 	"github.com/openshift/odo/pkg/pipelines/yaml"
@@ -46,8 +45,6 @@ func AddEnv(o *EnvParameters, appFs afero.Fs) error {
 	}
 	files = res.Merge(built, files)
 	_, err = yaml.WriteResources(appFs, outputPath, files)
-	if err == nil {
-		log.Successf("Environment added successfully at %s/environments!!", outputPath)
-	}
+
 	return err
 }
