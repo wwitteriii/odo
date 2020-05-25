@@ -13,5 +13,8 @@ type Repository interface {
 	CreateInterceptor(secretName, secretNs string) *triggersv1.EventInterceptor
 	CreateCITrigger(name, secretName, secretNs, template string, bindings []string) v1alpha1.EventListenerTrigger
 	CreateCDTrigger(name, secretName, secretNs, template string, bindings []string) v1alpha1.EventListenerTrigger
+	CreateWebhook(listenerURL, secret string) (string, error)
+	ListWebhooks(listenerURL string) ([]string, error)
+	DeleteWebhooks(ids []string) ([]string, error)
 	URL() string
 }

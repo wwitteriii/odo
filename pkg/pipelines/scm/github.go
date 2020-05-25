@@ -1,9 +1,13 @@
 package scm
 
 import (
+	"context"
+	"fmt"
 	"net/url"
 	"strings"
 
+	"github.com/jenkins-x/go-scm/scm"
+	"github.com/jenkins-x/go-scm/scm/factory"
 	"github.com/openshift/odo/pkg/pipelines/meta"
 	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
@@ -28,12 +32,13 @@ const (
 
 // GitHubRepository represents a service on a GitHub repo
 type GitHubRepository struct {
-	url  *url.URL
-	path string // GitHub repo path eg: (org/name)
+	client *scm.Client
+	url    *url.URL
+	path   string // GitHub repo path eg: (org/name)
 }
 
 // NewGitHubRepository returns an instance of GitHubRepository
-func NewGitHubRepository(rawURL string) (*GitHubRepository, error) {
+func NewGitHubRepository(rawURL, token string) (*GitHubRepository, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, err
@@ -47,8 +52,19 @@ func NewGitHubRepository(rawURL string) (*GitHubRepository, error) {
 	if len(components) < 2 {
 		return nil, invalidRepoPathError(rawURL)
 	}
+	driverName, err := getDriverName(rawURL)
+	if err != nil {
+		return nil, err
+	}
+	var client *scm.Client
+	if token != "" {
+		client, err = factory.NewClient(driverName, "", token)
+		if err != nil {
+			return nil, err
+		}
+	}
 	path := components[0] + "/" + strings.TrimSuffix(components[1], ".git")
-	return &GitHubRepository{url: parsedURL, path: path}, nil
+	return &GitHubRepository{url: parsedURL, path: path, client: client}, nil
 }
 
 // CreatePRBinding returns a TriggerBinding for GitHub PullRequest hooks.
@@ -124,4 +140,47 @@ func (repo *GitHubRepository) CreateInterceptor(secretName, secretNs string) *tr
 			},
 		},
 	}
+}
+
+// ListWebhooks returns a list of webhook IDs of the given listener in this repository
+func (repo *GitHubRepository) ListWebhooks(listenerURL string) ([]string, error) {
+	hooks, _, err := repo.client.Repositories.ListHooks(context.Background(), repo.path, scm.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	ids := []string{}
+	for _, hook := range hooks {
+		if hook.Target == listenerURL {
+			ids = append(ids, hook.ID)
+		}
+	}
+	return ids, nil
+}
+
+// DeleteWebhooks deletes all webhooks that associate with the given listener in this repository
+func (repo *GitHubRepository) DeleteWebhooks(ids []string) ([]string, error) {
+	deleted := []string{}
+	for _, id := range ids {
+		_, err := repo.client.Repositories.DeleteHook(context.Background(), repo.path, id)
+		if err != nil {
+			return deleted, fmt.Errorf("failed to delete webhook id %s: %w", id, err)
+		}
+		deleted = append(deleted, id)
+	}
+	return deleted, nil
+}
+
+// CreateWebhook creates a new webhook in the repository
+// It returns ID of the created webhook
+func (repo *GitHubRepository) CreateWebhook(listenerURL, secret string) (string, error) {
+	in := &scm.HookInput{
+		Target: listenerURL,
+		Secret: secret,
+		Events: scm.HookEvents{
+			PullRequest: true,
+			Push:        true,
+		},
+	}
+	created, _, err := repo.client.Repositories.CreateHook(context.Background(), repo.path, in)
+	return created.ID, err
 }

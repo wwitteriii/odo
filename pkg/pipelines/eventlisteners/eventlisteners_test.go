@@ -76,7 +76,7 @@ func TestGenerateEventListener(t *testing.T) {
 			},
 		},
 	}
-	repo, err := scm.NewRepository("http://github.com/org/test")
+	repo, err := scm.NewRepository("http://github.com/org/test", "")
 	if err != nil {
 		t.Fatal(err)
 	}

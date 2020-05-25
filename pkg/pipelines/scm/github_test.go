@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/h2non/gock"
 	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	triggersv1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,8 +13,15 @@ import (
 
 var _ Repository = (*GitHubRepository)(nil)
 
+var mockHeaders = map[string]string{
+	"X-GitHub-Request-Id":   "DD0E:6011:12F21A8:1926790:5A2064E2",
+	"X-RateLimit-Limit":     "60",
+	"X-RateLimit-Remaining": "59",
+	"X-RateLimit-Reset":     "1512076018",
+}
+
 func TestCreatePRBindingForGithub(t *testing.T) {
-	repo, err := NewGitHubRepository("http://github.com/org/test")
+	repo, err := NewGitHubRepository("http://github.com/org/test", "")
 	assertNoError(t, err)
 	want := triggersv1.TriggerBinding{
 		TypeMeta: triggerBindingTypeMeta,
@@ -64,7 +72,7 @@ func TestCreatePRBindingForGithub(t *testing.T) {
 }
 
 func TestCreatePushBindingForGithub(t *testing.T) {
-	repo, err := NewGitHubRepository("http://github.com/org/test")
+	repo, err := NewGitHubRepository("http://github.com/org/test", "")
 	assertNoError(t, err)
 	want := triggersv1.TriggerBinding{
 		TypeMeta: triggerBindingTypeMeta,
@@ -108,7 +116,7 @@ func TestCreatePushBindingForGithub(t *testing.T) {
 }
 
 func TestCreateCITriggerForGithub(t *testing.T) {
-	repo, err := NewGitHubRepository("http://github.com/org/test")
+	repo, err := NewGitHubRepository("http://github.com/org/test", "")
 	assertNoError(t, err)
 	want := triggersv1.EventListenerTrigger{
 		Name: "test",
@@ -136,7 +144,7 @@ func TestCreateCITriggerForGithub(t *testing.T) {
 }
 
 func TestCreateCDTriggersForGithub(t *testing.T) {
-	repo, err := NewGitHubRepository("http://github.com/org/test")
+	repo, err := NewGitHubRepository("http://github.com/org/test", "")
 	assertNoError(t, err)
 	want := triggersv1.EventListenerTrigger{
 		Name: "test",
@@ -198,7 +206,7 @@ func TestNewGitHubRepository(t *testing.T) {
 
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("Test %d", i), func(rt *testing.T) {
-			repo, err := NewGitHubRepository(tt.url)
+			repo, err := NewGitHubRepository(tt.url, "")
 			if err != nil {
 				if diff := cmp.Diff(tt.errMsg, err.Error()); diff != "" {
 					rt.Fatalf("repo path errMsg mismatch: \n%s", diff)
@@ -210,5 +218,125 @@ func TestNewGitHubRepository(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestWebhookWithFakeClient(t *testing.T) {
+
+	repo, err := NewGitHubRepository("https://fake.com/foo/bar.git", "token")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	listenerURL := "http://example.com/webhook"
+	ids, err := repo.ListWebhooks(listenerURL)
+	assertNoError(t, err)
+
+	// start with no webhooks
+	if len(ids) > 0 {
+		t.Fatal(err)
+	}
+
+	// create a webhook
+	id, err := repo.CreateWebhook(listenerURL, "secret")
+	assertNoError(t, err)
+	if len(ids) > 0 {
+		t.Fatal(err)
+	}
+
+	// verify and remember our ID
+	if id == "" {
+		t.Fatal(err)
+	}
+
+	// list again
+	ids, err = repo.ListWebhooks(listenerURL)
+	assertNoError(t, err)
+
+	// verify ID from list
+	if diff := cmp.Diff(ids, []string{id}); diff != "" {
+		t.Fatalf("created id mismatch got\n%s", diff)
+	}
+
+	// delete webhook
+	deleted, err := repo.DeleteWebhooks(ids)
+	assertNoError(t, err)
+
+	// verify deleted IDs
+	if diff := cmp.Diff(ids, deleted); diff != "" {
+		t.Fatalf("deleted ids mismatch got\n%s", diff)
+	}
+
+	ids, err = repo.ListWebhooks(listenerURL)
+	assertNoError(t, err)
+
+	// verify no webhooks
+	if len(ids) > 0 {
+		t.Fatal(err)
+	}
+}
+
+func TestListWebHooks(t *testing.T) {
+
+	defer gock.Off()
+
+	gock.New("https://api.github.com").
+		Get("/repos/foo/bar/hooks").
+		Reply(200).
+		Type("application/json").
+		SetHeaders(mockHeaders).
+		File("testdata/hooks.json")
+
+	repo, err := NewGitHubRepository("https://github.com/foo/bar.git", "token")
+	assertNoError(t, err)
+
+	ids, err := repo.ListWebhooks("http://example.com/webhook")
+	assertNoError(t, err)
+
+	if diff := cmp.Diff(ids, []string{"1"}); diff != "" {
+		t.Errorf("driver errMsg mismatch got\n%s", diff)
+	}
+}
+
+func TestDeleteWebHooks(t *testing.T) {
+
+	defer gock.Off()
+
+	gock.New("https://api.github.com").
+		Delete("/repos/foo/bar/hooks/1").
+		Reply(204).
+		Type("application/json").
+		SetHeaders(mockHeaders)
+
+	repo, err := NewGitHubRepository("https://github.com/foo/bar.git", "token")
+	assertNoError(t, err)
+
+	deleted, err := repo.DeleteWebhooks([]string{"1"})
+	assertNoError(t, err)
+
+	if diff := cmp.Diff([]string{"1"}, deleted); diff != "" {
+		t.Errorf("deleted mismatch got\n%s", diff)
+	}
+}
+
+func TestCreateWebHook(t *testing.T) {
+
+	defer gock.Off()
+
+	gock.New("https://api.github.com").
+		Post("/repos/foo/bar/hooks").
+		Reply(201).
+		Type("application/json").
+		SetHeaders(mockHeaders).
+		File("testdata/hook.json")
+
+	repo, err := NewGitHubRepository("https://github.com/foo/bar.git", "token")
+	assertNoError(t, err)
+
+	created, err := repo.CreateWebhook("http://example.com/webhook", "mysecret")
+	assertNoError(t, err)
+
+	if diff := cmp.Diff("1", created); diff != "" {
+		t.Errorf("deleted mismatch got\n%s", diff)
 	}
 }

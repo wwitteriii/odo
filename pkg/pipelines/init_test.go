@@ -19,7 +19,7 @@ var testCICDEnv = &config.Environment{Name: "tst-cicd", IsCICD: true}
 
 func TestCreateManifest(t *testing.T) {
 	repoURL := "https://github.com/foo/bar.git"
-	repo, err := scm.NewRepository(repoURL)
+	repo, err := scm.NewRepository(repoURL, "")
 	assertNoError(t, err)
 	want := &config.Manifest{
 		GitOpsURL: repoURL,
@@ -49,7 +49,7 @@ func TestInitialFiles(t *testing.T) {
 		return &key.PublicKey, nil
 	}
 	fakeFs := ioutils.NewMapFilesystem()
-	repo, err := scm.NewRepository(gitOpsURL)
+	repo, err := scm.NewRepository(gitOpsURL, "")
 	assertNoError(t, err)
 	got, err := createInitialFiles(fakeFs, repo, prefix, gitOpsWebhook, "")
 	if err != nil {

@@ -109,7 +109,7 @@ func Init(o *InitParameters, fs afero.Fs) error {
 	if exists {
 		return err
 	}
-	gitOpsRepo, err := scm.NewRepository(o.GitOpsRepoURL)
+	gitOpsRepo, err := scm.NewRepository(o.GitOpsRepoURL, "")
 	if err != nil {
 		return err
 	}

@@ -182,7 +182,7 @@ func fakeTiggers(t *testing.T, m *config.Manifest, gitOpsRepo string) []v1alpha1
 	assertNoError(t, err)
 	svc := testService()
 	pipelines := getPipelines(devEnv, svc)
-	repo, err := scm.NewRepository(svc.SourceURL)
+	repo, err := scm.NewRepository(svc.SourceURL, "")
 	assertNoError(t, err)
 	devCITrigger := repo.CreateCITrigger(fmt.Sprintf("app-ci-build-from-pr-%s", svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, pipelines.Integration.Template, pipelines.Integration.Bindings)
 	triggers = append(triggers, devCITrigger)

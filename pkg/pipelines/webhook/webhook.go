@@ -6,15 +6,15 @@ import (
 
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
-	"github.com/openshift/odo/pkg/pipelines/git"
 	"github.com/openshift/odo/pkg/pipelines/ioutils"
 	"github.com/openshift/odo/pkg/pipelines/routes"
+	"github.com/openshift/odo/pkg/pipelines/scm"
 	"github.com/openshift/odo/pkg/pipelines/secrets"
 )
 
 type webhookInfo struct {
 	clusterResource *resources
-	repository      *git.Repository
+	repository      scm.Repository
 	gitRepoURL      string
 	cicdNamepace    string
 	listenerURL     string
@@ -101,7 +101,7 @@ func newWebhookInfo(accessToken, pipelinesFile string, serviceName *QualifiedSer
 		return nil, err
 	}
 
-	repository, err := git.NewRepository(gitRepoURL, accessToken)
+	repository, err := scm.NewRepository(gitRepoURL, accessToken)
 	if err != nil {
 		return nil, err
 	}

@@ -75,11 +75,11 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	if err != nil {
 		return nil, err
 	}
-	gitOpsRepo, err := scm.NewRepository(o.GitOpsRepoURL)
+	gitOpsRepo, err := scm.NewRepository(o.GitOpsRepoURL, "")
 	if err != nil {
 		return nil, err
 	}
-	appRepo, err := scm.NewRepository(o.AppRepoURL)
+	appRepo, err := scm.NewRepository(o.AppRepoURL, "")
 	if err != nil {
 		return nil, err
 	}
