@@ -99,7 +99,6 @@ func (m *Manifest) GetArgoCDConfig() *ArgoCDConfig {
 		return m.Config.ArgoCD
 	}
 	return nil
-
 }
 
 // Environment is a slice of Apps, these are the named apps in the namespace.

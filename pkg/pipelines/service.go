@@ -171,11 +171,11 @@ func createService(serviceName, url string) (*config.Service, error) {
 
 func updateKustomization(fs afero.Fs, base string) error {
 	files := res.Resources{}
-	list, err := environments.ListFiles(fs, base)
+	filenames, err := environments.ListFiles(fs, base)
 	if err != nil {
 		return err
 	}
-	files[Kustomize] = &res.Kustomization{Resources: environments.ExtractFilenames(list)}
+	files[Kustomize] = &res.Kustomization{Resources: filenames.Items()}
 	_, err = yaml.WriteResources(fs, base, files)
 	return err
 }

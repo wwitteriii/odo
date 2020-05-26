@@ -109,14 +109,26 @@ func TestServiceResourcesWithCICD(t *testing.T) {
 	}
 }
 
-func TestServiceResourcesWithoutCICD(t *testing.T) {
+func TestServiceResourcesWithArgoCD(t *testing.T) {
+	defer func(f secrets.PublicKeyFunc) {
+		secrets.DefaultPublicKeyFunc = f
+	}(secrets.DefaultPublicKeyFunc)
+
+	secrets.DefaultPublicKeyFunc = func() (*rsa.PublicKey, error) {
+		key, err := rsa.GenerateKey(rand.Reader, 1024)
+		if err != nil {
+			t.Fatalf("failed to generate a private RSA key: %s", err)
+		}
+		return &key.PublicKey, nil
+	}
+
 	fakeFs := ioutils.NewMapFilesystem()
 	m := buildManifest(false, true)
+
 	want := res.Resources{
-		"environments/test-dev/apps/test-app/base/kustomization.yaml":     &res.Kustomization{Bases: []string{"../../../services/test-svc", "../../../services/test"}},
+		"environments/test-dev/apps/test-app/base/kustomization.yaml":     &res.Kustomization{Bases: []string{"../../../services/test-svc", "../../../services/test", "../../../env/base"}},
 		"environments/test-dev/apps/test-app/kustomization.yaml":          &res.Kustomization{Bases: []string{"overlays"}},
 		"environments/test-dev/apps/test-app/overlays/kustomization.yaml": &res.Kustomization{Bases: []string{"../base"}},
-		"environments/test-dev/env/base/kustomization.yaml":               &res.Kustomization{Resources: []string{"test-dev-environment.yaml"}},
 		"pipelines.yaml": &config.Manifest{
 			Config: &config.Config{
 				ArgoCD: &config.ArgoCDConfig{
@@ -161,6 +173,60 @@ func TestServiceResourcesWithoutCICD(t *testing.T) {
 	})
 	assertNoError(t, err)
 	if diff := cmp.Diff(got, want, cmpopts.IgnoreMapEntries(func(k string, v interface{}) bool {
+		_, ok := want[k]
+		return !ok
+	})); diff != "" {
+		t.Fatalf("serviceResources() failed: %v", diff)
+	}
+}
+
+func TestServiceResourcesWithoutArgoCD(t *testing.T) {
+	fakeFs := ioutils.NewMapFilesystem()
+	m := buildManifest(false, false)
+	want := res.Resources{
+		"environments/test-dev/apps/test-app/base/kustomization.yaml":     &res.Kustomization{Bases: []string{"../../../services/test-svc", "../../../services/test"}},
+		"environments/test-dev/apps/test-app/kustomization.yaml":          &res.Kustomization{Bases: []string{"overlays"}},
+		"environments/test-dev/apps/test-app/overlays/kustomization.yaml": &res.Kustomization{Bases: []string{"../base"}},
+		"environments/test-dev/env/base/kustomization.yaml":               &res.Kustomization{Resources: []string{"test-dev-environment.yaml"}, Bases: []string{"../../apps/test-app/overlays"}},
+		"pipelines.yaml": &config.Manifest{
+			GitOpsURL: "http://github.com/org/test",
+			Environments: []*config.Environment{
+				{
+					Name: "test-dev",
+					Apps: []*config.Application{
+						{
+							Name: "test-app",
+							ServiceRefs: []string{
+								"test-svc",
+								"test",
+							},
+						},
+					},
+					Services: []*config.Service{
+						{
+							Name:      "test-svc",
+							SourceURL: "https://github.com/myproject/test-svc",
+						},
+						{
+							Name:      "test",
+							SourceURL: "http://github.com/org/test",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	got, err := serviceResources(m, fakeFs, &AddServiceParameters{
+		AppName:       "test-app",
+		EnvName:       "test-dev",
+		GitRepoURL:    "http://github.com/org/test",
+		Manifest:      pipelinesFile,
+		WebhookSecret: "123",
+		ServiceName:   "test",
+	})
+	assertNoError(t, err)
+	if diff := cmp.Diff(want, got, cmpopts.IgnoreMapEntries(func(k string, v interface{}) bool {
 		_, ok := want[k]
 		return !ok
 	})); diff != "" {

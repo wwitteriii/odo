@@ -34,7 +34,6 @@ func (m *Manifest) Validate() error {
 	if err != nil {
 		vv.errs = append(vv.errs, err)
 	}
-
 	vv.errs = append(vv.errs, vv.validateServiceURLs(m.GitOpsURL)...)
 
 	if len(vv.errs) == 0 {

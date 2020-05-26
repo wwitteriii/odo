@@ -2,6 +2,7 @@ package pipelines
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/openshift/odo/pkg/pipelines/argocd"
 	"github.com/openshift/odo/pkg/pipelines/config"
@@ -37,7 +38,16 @@ func BuildResources(o *BuildParameters, appFs afero.Fs) error {
 
 func buildResources(fs afero.Fs, o *BuildParameters, m *config.Manifest) (res.Resources, error) {
 	resources := res.Resources{}
-	envs, err := environments.Build(fs, m, saName)
+
+	argoCD := m.GetArgoCDConfig()
+	log.Printf("KEVIN!!!! %#v\n", argoCD)
+	appLinks := environments.EnvironmentsToApps
+	if argoCD != nil {
+		log.Println("switching to AppsToEnvironments")
+		appLinks = environments.AppsToEnvironments
+	}
+
+	envs, err := environments.Build(fs, m, saName, appLinks)
 	if err != nil {
 		return nil, err
 	}
