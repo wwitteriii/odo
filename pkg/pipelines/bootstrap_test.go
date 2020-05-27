@@ -114,6 +114,8 @@ func TestBootstrapManifest(t *testing.T) {
 		"05-pipelines/ci-dryrun-from-pr-pipeline.yaml",
 		"06-bindings/github-pr-binding.yaml",
 		"06-bindings/github-push-binding.yaml",
+		"06-bindings/gitlab-pr-binding.yaml",
+		"06-bindings/gitlab-push-binding.yaml",
 		"06-bindings/tst-dev-http-api-svc-binding.yaml",
 		"07-templates/app-ci-build-pr-template.yaml",
 		"07-templates/cd-deploy-from-push-template.yaml",

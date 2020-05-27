@@ -1,8 +1,8 @@
 package scm
 
 import (
-	"testing"
 	"fmt"
+	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
@@ -11,7 +11,8 @@ import (
 )
 
 func TestPRbindingForGitlab(t *testing.T) {
-	repo := fakeGitlabRepository(t, "http://gitlab.com/org/")
+	repo, err := NewGitLabRepository("http://gitlab.com/org/test")
+	assertNoError(t, err)
 	want := triggersv1.TriggerBinding{
 		TypeMeta: triggerBindingTypeMeta,
 		ObjectMeta: v1.ObjectMeta{
@@ -51,7 +52,7 @@ func TestPRbindingForGitlab(t *testing.T) {
 			},
 		},
 	}
-	got, name := repo.CreateGitlabPRBinding("testns")
+	got, name := repo.CreatePRBinding("testns")
 	if name != gitlabPRBindingName {
 		t.Fatalf("CreatePushBinding() returned a wrong binding: want %v got %v", gitlabPRBindingName, name)
 	}
@@ -61,7 +62,8 @@ func TestPRbindingForGitlab(t *testing.T) {
 }
 
 func TestCreatePushBindingForGitlab(t *testing.T) {
-	repo := fakeGitlabRepository(t, "https://gitlab.com/dpalodka/firstproject")
+	repo, err := NewGitLabRepository("https://gitlab.com/org/test")
+	assertNoError(t, err)
 	want := triggersv1.TriggerBinding{
 		TypeMeta: triggerBindingTypeMeta,
 		ObjectMeta: v1.ObjectMeta{
@@ -94,7 +96,7 @@ func TestCreatePushBindingForGitlab(t *testing.T) {
 			},
 		},
 	}
-	got, name := repo.CreateGitlabPushBinding("testns")
+	got, name := repo.CreatePushBinding("testns")
 	if name != gitlabPushBindingName {
 		t.Fatalf("CreatePushBinding() returned a wrong binding: want %v got %v", gitlabPushBindingName, name)
 	}
@@ -103,16 +105,8 @@ func TestCreatePushBindingForGitlab(t *testing.T) {
 	}
 }
 
-func fakeGitlabRepository(t *testing.T, rawURL string) *GitlabRepository {
-	repo, err := NewGitlabRepository("https://gitlab.com/dpalodka/firstproject")
-	if err != nil {
-		t.Fatal(err)
-	}
-	return repo
-}
-
 func TestCreateCITriggerForGitLab(t *testing.T) {
-	repo, err := NewGitlabRepository("http://github.com/org/test")
+	repo, err := NewGitLabRepository("http://gitlab.com/org/test")
 	assertNoError(t, err)
 	want := triggersv1.EventListenerTrigger{
 		Name: "test",
@@ -140,7 +134,7 @@ func TestCreateCITriggerForGitLab(t *testing.T) {
 }
 
 func TestCreateCDTriggersForGitLab(t *testing.T) {
-	repo, err := NewGitlabRepository("http://github.com/org/test")
+	repo, err := NewGitLabRepository("http://gitlab.com/org/test")
 	assertNoError(t, err)
 	want := triggersv1.EventListenerTrigger{
 		Name: "test",
@@ -189,20 +183,20 @@ func TestNewGitlabRepository(t *testing.T) {
 			"",
 		},
 		{
-			"https://gitlaB.com/foo/bar.git",
-			"foo/bar",
+			"https://gitlab.com/group/subgroup/subgroup/repo.git",
+			"group/subgroup/subgroup/repo",
 			"",
 		},
 		{
 			"https://gitlaB.com/foo/bar/test.git",
-			"foo/bar",
+			"foo/bar/test",
 			"",
 		},
 	}
 
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("Test %d", i), func(rt *testing.T) {
-			repo, err := NewGitlabRepository(tt.url)
+			repo, err := NewGitLabRepository(tt.url)
 			if err != nil {
 				if diff := cmp.Diff(tt.errMsg, err.Error()); diff != "" {
 					rt.Fatalf("repo path errMsg mismatch: \n%s", diff)

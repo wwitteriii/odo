@@ -15,15 +15,18 @@ const (
 	gitlabPushBindingName = "gitlab-push-binding"
 
 	gitlabCIDryRunFilters = "( header.match ( ‘X-Gitlab-Event’ , ‘Merge Request Hook’ ) && body.object_kind == ‘merge_request’ ) && body.object_attributes.state == ‘opened’ && body.project.path_with_namespace == %s  && body.project.default_branch == body.object_attributes.target_branch )"
+
 	gitlabCDDeployFilters = "( header.match ( ‘X-Gitlab-Event’ , ‘Push Hook’ ) && body.object_kind == ‘push’ && body.project.path_with_namespace == %s && body.ref.EndsWith (body.project.default_branch )"
 )
 
-type GitlabRepository struct {
-	URL  *url.URL
-	path string // GitLab repo path eg: (org/name)
+// GitLabRepository represents a service on a GitLab repo
+type GitLabRepository struct {
+	url  *url.URL
+	path string // GitLab repo path eg: (group/subgroup/../repo)
 }
 
-func NewGitlabRepository(rawURL string) (*GitlabRepository, error) {
+// NewGitLabRepository returns an instance of GitLabRepository
+func NewGitLabRepository(rawURL string) (*GitLabRepository, error) {
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, err
@@ -37,12 +40,14 @@ func NewGitlabRepository(rawURL string) (*GitlabRepository, error) {
 	if len(components) < 2 {
 		return nil, invalidRepoPathError(rawURL)
 	}
-	path := components[0] + "/" + strings.TrimSuffix(components[1], ".git")
-	return &GitlabRepository{URL: parsedURL, path: path}, nil
+	components[len(components)-1] = strings.TrimSuffix(components[len(components)-1], ".git")
+	path := strings.Join(components, "/")
+	return &GitLabRepository{url: parsedURL, path: path}, nil
 
 }
 
-func (repo *GitlabRepository) CreateGitlabPRBinding(ns string) (triggersv1.TriggerBinding, string) {
+// CreatePRBinding returns a TriggerBinding for GitLab merge request hooks
+func (repo *GitLabRepository) CreatePRBinding(ns string) (triggersv1.TriggerBinding, string) {
 	return triggersv1.TriggerBinding{
 		TypeMeta:   triggerBindingTypeMeta,
 		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, gitlabPRBindingName)),
@@ -58,7 +63,8 @@ func (repo *GitlabRepository) CreateGitlabPRBinding(ns string) (triggersv1.Trigg
 
 }
 
-func (repo *GitlabRepository) CreateGitlabPushBinding(ns string) (triggersv1.TriggerBinding, string) {
+// CreatePushBinding returns a TriggerBinding for GitLab push hooks
+func (repo *GitLabRepository) CreatePushBinding(ns string) (triggersv1.TriggerBinding, string) {
 	return triggersv1.TriggerBinding{
 		TypeMeta:   triggerBindingTypeMeta,
 		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, gitlabPushBindingName)),
@@ -72,7 +78,13 @@ func (repo *GitlabRepository) CreateGitlabPushBinding(ns string) (triggersv1.Tri
 	}, gitlabPushBindingName
 }
 
-func (repo *GitlabRepository) CreateCITrigger(name, secretName, secretNS, template string, bindings []string) v1alpha1.EventListenerTrigger {
+// URL returns the URL of the GitLab repository
+func (repo *GitLabRepository) URL() string {
+	return repo.url.String()
+}
+
+// CreateCITrigger creates a CI eventlistener trigger for GitLab
+func (repo *GitLabRepository) CreateCITrigger(name, secretName, secretNS, template string, bindings []string) v1alpha1.EventListenerTrigger {
 	return triggersv1.EventListenerTrigger{
 		Name: name,
 		Interceptors: []*triggersv1.EventInterceptor{
@@ -84,7 +96,8 @@ func (repo *GitlabRepository) CreateCITrigger(name, secretName, secretNS, templa
 	}
 }
 
-func (repo *GitlabRepository) CreateCDTrigger(name, secretName, secretNS, template string, bindings []string) v1alpha1.EventListenerTrigger {
+// CreateCDTrigger creates a CD eventlistener trigger for GitLab
+func (repo *GitLabRepository) CreateCDTrigger(name, secretName, secretNS, template string, bindings []string) v1alpha1.EventListenerTrigger {
 	return triggersv1.EventListenerTrigger{
 		Name: name,
 		Interceptors: []*triggersv1.EventInterceptor{
@@ -96,7 +109,8 @@ func (repo *GitlabRepository) CreateCDTrigger(name, secretName, secretNS, templa
 	}
 }
 
-func (repo *GitlabRepository) CreateInterceptor(secretName, secretNs string) *triggersv1.EventInterceptor {
+// CreateInterceptor returns a GitLab eventlistener
+func (repo *GitLabRepository) CreateInterceptor(secretName, secretNs string) *triggersv1.EventInterceptor {
 	return &triggersv1.EventInterceptor{
 		GitLab: &triggersv1.GitLabInterceptor{
 			SecretRef: &triggersv1.SecretRef{
