@@ -20,7 +20,7 @@ const kustomization = "kustomization.yaml"
 
 type envBuilder struct {
 	files   res.Resources
-	cicdEnv *config.Environment
+	cicdEnv *config.Cicd
 	fs      afero.Fs
 	saName  string
 }
@@ -62,7 +62,7 @@ func (b *envBuilder) Service(env *config.Environment, svc *config.Service) error
 	envBasePath := filepath.Join(config.PathForEnvironment(env), "env", "base")
 	envBindingPath := filepath.Join(envBasePath, fmt.Sprintf("%s-rolebinding.yaml", env.Name))
 	if _, ok := b.files[envBindingPath]; !ok {
-		b.files[envBindingPath] = createRoleBinding(env, envBasePath, b.cicdEnv.Name, b.saName)
+		b.files[envBindingPath] = createRoleBinding(env, envBasePath, b.cicdEnv.Namespace, b.saName)
 	}
 	return nil
 }

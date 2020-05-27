@@ -94,7 +94,7 @@ func newWebhookInfo(accessToken, pipelinesFile string, serviceName *QualifiedSer
 	if err != nil {
 		return nil, fmt.Errorf("failed to get CICD environment: %w", err)
 	}
-	cicdNamepace := cicdEnv.Name
+	cicdNamepace := cicdEnv.Namespace
 
 	clusterResources, err := newResources()
 	if err != nil {

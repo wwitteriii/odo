@@ -36,7 +36,7 @@ func AddService(gitRepoURL, envName, appName, serviceName, webhookSecret, manife
 		return err
 	}
 	if cicdEnv != nil {
-		base := filepath.Join(outputPath, config.PathForEnvironment(cicdEnv), "base", "pipelines")
+		base := filepath.Join(outputPath, pathForEnvironment(cicdEnv), "base", "pipelines")
 		err = updateKustomization(fs, base)
 		if err != nil {
 			return err
@@ -63,17 +63,17 @@ func serviceResources(m *config.Manifest, fs afero.Fs, gitRepoURL, envName, appN
 	// add the secret only if CI/CD env is present
 	if cicdEnv != nil {
 		secretName := secrets.MakeServiceWebhookSecretName(svc.Name)
-		hookSecret, err := secrets.CreateSealedSecret(meta.NamespacedName(cicdEnv.Name, secretName), webhookSecret, eventlisteners.WebhookSecretKey)
+		hookSecret, err := secrets.CreateSealedSecret(meta.NamespacedName(cicdEnv.Namespace, secretName), webhookSecret, eventlisteners.WebhookSecretKey)
 		if err != nil {
 			return nil, err
 		}
 		svc.Webhook = &config.Webhook{
 			Secret: &config.Secret{
 				Name:      secretName,
-				Namespace: cicdEnv.Name,
+				Namespace: cicdEnv.Namespace,
 			},
 		}
-		secretPath := filepath.Join(config.PathForEnvironment(cicdEnv), "base", "pipelines")
+		secretPath := filepath.Join(pathForEnvironment(cicdEnv), "base", "pipelines")
 		files[filepath.Join(secretPath, "03-secrets", secretName+".yaml")] = hookSecret
 	}
 

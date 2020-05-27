@@ -143,8 +143,10 @@ func CreateDockerSecret(fs afero.Fs, dockerConfigJSONFilename, ns string) (*ssv1
 }
 
 func createInitialFiles(fs afero.Fs, prefix, gitOpsURL, gitOpsWebhookSecret, dockerConfigPath string) (res.Resources, error) {
-	cicdEnv := &config.Environment{Name: prefix + "cicd", IsCICD: true}
-	pipelines := createManifest(gitOpsURL, cicdEnv)
+	cicd := &config.Cicd{Namespace: prefix + "cicd", IsCICD: true}
+	cicdEnv := &config.Special{CICDEnv: cicd}
+	envs := &config.Environment{}
+	pipelines := createManifest(gitOpsURL, cicdEnv, envs)
 	initialFiles := res.Resources{
 		pipelinesFile: pipelines,
 	}
@@ -152,24 +154,24 @@ func createInitialFiles(fs afero.Fs, prefix, gitOpsURL, gitOpsWebhookSecret, doc
 	if err != nil {
 		return nil, err
 	}
-	resources, err := createCICDResources(fs, cicdEnv, orgRepo, gitOpsWebhookSecret, dockerConfigPath)
+	resources, err := createCICDResources(fs, cicd, orgRepo, gitOpsWebhookSecret, dockerConfigPath)
 	if err != nil {
 		return nil, err
 	}
 
 	files := getResourceFiles(resources)
-	prefixedResources := addPrefixToResources(pipelinesPath(pipelines), resources)
+	prefixedResources := addPrefixToResources(pipelinesPath(pipelines.Config), resources)
 	initialFiles = res.Merge(prefixedResources, initialFiles)
 
-	cicdKustomizations := addPrefixToResources(cicdEnvironmentPath(pipelines), getCICDKustomization(files))
+	cicdKustomizations := addPrefixToResources(cicdEnvironmentPath(pipelines.Config), getCICDKustomization(files))
 	initialFiles = res.Merge(cicdKustomizations, initialFiles)
 
 	return initialFiles, nil
 }
 
 // createCICDResources creates resources assocated to pipelines.
-func createCICDResources(fs afero.Fs, cicdEnv *config.Environment, gitOpsRepo, gitOpsWebhookSecret, dockerConfigJSONPath string) (res.Resources, error) {
-	cicdNamespace := cicdEnv.Name
+func createCICDResources(fs afero.Fs, cicdEnv *config.Cicd, gitOpsRepo, gitOpsWebhookSecret, dockerConfigJSONPath string) (res.Resources, error) {
+	cicdNamespace := cicdEnv.Namespace
 	// key: path of the resource
 	// value: YAML content of the resource
 	outputs := map[string]interface{}{}
@@ -197,7 +199,7 @@ func createCICDResources(fs afero.Fs, cicdEnv *config.Environment, gitOpsRepo, g
 	}
 
 	outputs[rolebindingsPath] = roles.CreateClusterRoleBinding(meta.NamespacedName("", roleBindingName), sa, "ClusterRole", roles.ClusterRoleName)
-	outputs[gitopsTasksPath] = tasks.CreateDeployFromSourceTask(cicdNamespace, filepath.Join(config.PathForEnvironment(cicdEnv), "base"))
+	outputs[gitopsTasksPath] = tasks.CreateDeployFromSourceTask(cicdNamespace, filepath.Join(pathForEnvironment(cicdEnv), "base"))
 	outputs[appTaskPath] = tasks.CreateDeployUsingKubectlTask(cicdNamespace)
 	outputs[ciPipelinesPath] = pipelines.CreateCIPipeline(meta.NamespacedName(cicdNamespace, "ci-dryrun-from-pr-pipeline"), cicdNamespace)
 	outputs[cdPipelinesPath] = pipelines.CreateCDPipeline(meta.NamespacedName(cicdNamespace, "cd-deploy-from-push-pipeline"), cicdNamespace)
@@ -213,10 +215,11 @@ func createCICDResources(fs afero.Fs, cicdEnv *config.Environment, gitOpsRepo, g
 	return outputs, nil
 }
 
-func createManifest(gitOpsURL string, envs ...*config.Environment) *config.Manifest {
+func createManifest(gitOpsURL string, configEnv *config.Special, envs ...*config.Environment) *config.Manifest {
 	return &config.Manifest{
 		GitOpsURL:    gitOpsURL,
 		Environments: envs,
+		Config:       configEnv,
 	}
 }
 
@@ -234,11 +237,11 @@ func getCICDKustomization(files []string) res.Resources {
 	}
 }
 
-func pathForEnvironment(env *config.Environment) string {
-	return filepath.Join("environments", env.Name)
+func pathForEnvironment(cicd *config.Cicd) string {
+	return filepath.Join("config", cicd.Namespace)
 }
 
-func pipelinesPath(m *config.Manifest) string {
+func pipelinesPath(m *config.Special) string {
 	return filepath.Join(cicdEnvironmentPath(m), "base/pipelines")
 }
 
@@ -251,8 +254,8 @@ func addPrefixToResources(prefix string, files res.Resources) map[string]interfa
 }
 
 // TODO: this should probably use the .FindCICDEnvironment on the pipelines.
-func cicdEnvironmentPath(m *config.Manifest) string {
-	return pathForEnvironment(m.Environments[0])
+func cicdEnvironmentPath(m *config.Special) string {
+	return pathForEnvironment(m.CICDEnv)
 }
 
 func getResourceFiles(res res.Resources) []string {

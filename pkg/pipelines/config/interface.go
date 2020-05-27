@@ -14,3 +14,8 @@ type ApplicationVisitor interface {
 type ServiceVisitor interface {
 	Service(*Environment, *Service) error
 }
+
+//ArgoEnvironmentVisitor is an interface for accessing specifically the argocd environments
+type ArgoEnvironmentVisitor interface {
+	Environment(*Argo) error
+}

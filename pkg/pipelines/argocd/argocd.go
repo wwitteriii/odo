@@ -45,20 +45,20 @@ func Build(argoNS, repoURL string, m *config.Manifest) (res.Resources, error) {
 	}
 
 	files := make(res.Resources)
-	eb := &argocdBuilder{repoURL: repoURL, files: files, argoEnv: argoEnv, argoNS: argoNS}
+	eb := &argocdBuilder{repoURL: repoURL, files: files, argoEnv: argoEnv, argoNS: argoEnv.Namespace}
 	err = m.Walk(eb)
 	return eb.files, err
 }
 
 type argocdBuilder struct {
 	repoURL string
-	argoEnv *config.Environment
+	argoEnv *config.Argo
 	files   res.Resources
 	argoNS  string
 }
 
 func (b *argocdBuilder) Application(env *config.Environment, app *config.Application) error {
-	basePath := filepath.Join(config.PathForEnvironment(b.argoEnv), "config")
+	basePath := filepath.Join(pathForEnvironmentArgo(b.argoNS), "config")
 	argoFiles := res.Resources{}
 	filename := filepath.Join(basePath, env.Name+"-"+app.Name+"-app.yaml")
 	argoFiles[filename] = makeApplication(env.Name+"-"+app.Name, b.argoNS, defaultProject, env.Name, defaultServer, makeSource(env, app, b.repoURL))
@@ -66,11 +66,11 @@ func (b *argocdBuilder) Application(env *config.Environment, app *config.Applica
 	return nil
 }
 
-func (b *argocdBuilder) Environment(env *config.Environment) error {
-	if !env.IsArgoCD {
+func (b *argocdBuilder) Environment(argo *config.Argo) error {
+	if !argo.IsArgoCD {
 		return nil
 	}
-	basePath := filepath.Join(config.PathForEnvironment(b.argoEnv), "config")
+	basePath := filepath.Join(pathForEnvironmentArgo(b.argoNS), "config")
 	filename := filepath.Join(basePath, "kustomization.yaml")
 	resourceNames := []string{}
 	for k, _ := range b.files {
@@ -94,7 +94,9 @@ func makeSource(env *config.Environment, app *config.Application, repoURL string
 		TargetRevision: app.ConfigRepo.TargetRevision,
 	}
 }
-
+func pathForEnvironmentArgo(NS string) string {
+	return filepath.Join("config", NS)
+}
 func makeApplication(appName, argoNS, project, ns, server string, source argoappv1.ApplicationSource) *argoappv1.Application {
 	return &argoappv1.Application{
 		TypeMeta:   applicationTypeMeta,

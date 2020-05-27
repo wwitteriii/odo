@@ -1,7 +1,6 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -19,13 +18,19 @@ func PathForApplication(env *Environment, app *Application) string {
 
 // PathForEnvironment gives a repo-rooted path within a repository.
 func PathForEnvironment(env *Environment) string {
-	return filepath.Join("environments", env.Name)
+	if env.IsCICD || env.IsArgoCD {
+		return filepath.Join("config", env.Name)
+	} else {
+		return filepath.Join("environments", env.Name)
+	}
+
 }
 
 // Manifest describes a set of environments, apps and services for deployment.
 type Manifest struct {
 	GitOpsURL    string         `json:"gitops_url,omitempty"`
 	Environments []*Environment `json:"environments,omitempty"`
+	Config       *Special       `json:"config,omitempty"`
 }
 
 func (m *Manifest) GetEnvironment(n string) *Environment {
@@ -71,37 +76,44 @@ func (m *Manifest) AddService(envName, appName string, svc *Service) error {
 }
 
 // GetCICDEnvironment returns the CICD Environment if one exists.
-func (m *Manifest) GetCICDEnvironment() (*Environment, error) {
-	envs := []*Environment{}
-	for _, env := range m.Environments {
-		if env.IsCICD {
-			envs = append(envs, env)
-		}
+func (m *Manifest) GetCICDEnvironment() (*Cicd, error) {
+	if m.Config.CICDEnv.IsCICD == true {
+		return m.Config.CICDEnv, nil
 	}
-	if len(envs) > 1 {
-		return nil, errors.New("found multiple CI/CD environments")
-	}
-	if len(envs) == 0 {
-		return nil, nil
-	}
-	return envs[0], nil
+	return nil, nil
+	// for _, env := range m.Environments {
+	// 	if env.IsCICD {
+	// 		envs = append(envs, env)
+	// 	}
+	// }
+	// if len(envs) > 1 {
+	// 	return nil, errors.New("found multiple CI/CD environments")
+	// }
+	// if len(envs) == 0 {
+	// 	return nil, nil
+	// }
+	// return envs[0], nil
 }
 
 // GetArgoCDEnvironment returns the ArgoCD Environment if one exists.
-func (m *Manifest) GetArgoCDEnvironment() (*Environment, error) {
-	envs := []*Environment{}
-	for _, env := range m.Environments {
-		if env.IsArgoCD {
-			envs = append(envs, env)
-		}
+func (m *Manifest) GetArgoCDEnvironment() (*Argo, error) {
+	if m.Config.ArgoCDEnv.IsArgoCD == true {
+		return m.Config.ArgoCDEnv, nil
 	}
-	if len(envs) > 1 {
-		return nil, errors.New("found multiple ArgoCD environments")
-	}
-	if len(envs) == 0 {
-		return nil, errors.New("could not find ArgoCD environment")
-	}
-	return envs[0], nil
+	return nil, nil
+	// envs := []*Environment{}
+	// for _, env := range m.Environments {
+	// 	if env.IsArgoCD {
+	// 		envs = append(envs, env)
+	// 	}
+	// }
+	// if len(envs) > 1 {
+	// 	return nil, errors.New("found multiple ArgoCD environments")
+	// }
+	// if len(envs) == 0 {
+	// 	return nil, errors.New("could not find ArgoCD environment")
+	// }
+	// return envs[0], nil
 }
 
 // Environment is a slice of Apps, these are the named apps in the namespace.
@@ -185,6 +197,24 @@ type TemplateBinding struct {
 	Bindings []string `json:"bindings,omitempty"`
 }
 
+//Special are the special environments that constitute the argocd and cicd environments
+type Special struct {
+	CICDEnv   *Cicd `json:"cicdenv,omitempty"`
+	ArgoCDEnv *Argo `json:"argocdenv,omitempty"`
+}
+
+//Cicd checks for the cicd environments
+type Cicd struct {
+	Namespace string `json:"namespace,omitempty"`
+	IsCICD    bool   `json:"isCICD,omitempty"`
+}
+
+//Argo checks for the cicd environments
+type Argo struct {
+	Namespace string `json:"namespace,omitempty"`
+	IsArgoCD  bool   `json:"isArgoCD,omitempty"`
+}
+
 // Walk implements post-node visiting of each element in the manifest.
 //
 // Every App, Service and Environment is called once, and any error from the
@@ -217,6 +247,12 @@ func (m Manifest) Walk(visitor interface{}) error {
 			if err != nil {
 				return err
 			}
+		}
+	}
+	if v, ok := visitor.(ArgoEnvironmentVisitor); ok {
+		err := v.Environment(m.Config.ArgoCDEnv)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
