@@ -10,6 +10,9 @@ func NewRepository(rawURL string) (Repository, error) {
 	switch repoType {
 	case "github":
 		return NewGitHubRepository(rawURL)
+	case "gitlab":
+		return NewGitLabRepository(rawURL)
 	}
+
 	return nil, invalidRepoTypeError(rawURL)
 }
