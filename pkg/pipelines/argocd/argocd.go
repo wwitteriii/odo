@@ -52,32 +52,36 @@ func Build(argoNS, repoURL string, m *config.Manifest) (res.Resources, error) {
 
 type argocdBuilder struct {
 	repoURL string
-	argoEnv *config.Environment
+	argoEnv *config.Argo
 	files   res.Resources
 	argoNS  string
 }
 
 func (b *argocdBuilder) Application(env *config.Environment, app *config.Application) error {
-	basePath := filepath.Join(config.PathForEnvironment(b.argoEnv), "config")
+	basePath := filepath.Join(config.PathForArgoEnvironment(b.argoEnv), "config")
 	argoFiles := res.Resources{}
 	filename := filepath.Join(basePath, env.Name+"-"+app.Name+"-app.yaml")
 	argoFiles[filename] = makeApplication(env.Name+"-"+app.Name, b.argoNS, defaultProject, env.Name, defaultServer, makeSource(env, app, b.repoURL))
 	b.files = res.Merge(argoFiles, b.files)
+	err := argoEnvironmentResources(b.argoEnv, b.files)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func (b *argocdBuilder) Environment(env *config.Environment) error {
-	if !env.IsArgoCD {
+func argoEnvironmentResources(env *config.Argo, files res.Resources) error {
+	if env.Namespace == "" {
 		return nil
 	}
-	basePath := filepath.Join(config.PathForEnvironment(b.argoEnv), "config")
+	basePath := filepath.Join(config.PathForArgoEnvironment(env), "config")
 	filename := filepath.Join(basePath, "kustomization.yaml")
 	resourceNames := []string{}
-	for k, _ := range b.files {
+	for k, _ := range files {
 		resourceNames = append(resourceNames, filepath.Base(k))
 	}
 	sort.Strings(resourceNames)
-	b.files[filename] = &res.Kustomization{Resources: resourceNames}
+	files[filename] = &res.Kustomization{Resources: resourceNames}
 	return nil
 }
 

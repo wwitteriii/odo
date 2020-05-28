@@ -1,7 +1,6 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -25,6 +24,10 @@ func PathForEnvironment(env *Environment) string {
 //PathForCICDEnvironment returns the path only for the CICD environment
 func PathForCICDEnvironment(cicd *Cicd) string {
 	return filepath.Join("config", cicd.Namespace)
+}
+
+func PathForArgoEnvironment(argo *Argo) string {
+	return filepath.Join("config", argo.Namespace)
 }
 
 // Manifest describes a set of environments, apps and services for deployment.
@@ -82,20 +85,21 @@ func (m *Manifest) GetCICDEnvironment() (*Cicd, error) {
 }
 
 // GetArgoCDEnvironment returns the ArgoCD Environment if one exists.
-func (m *Manifest) GetArgoCDEnvironment() (*Environment, error) {
-	envs := []*Environment{}
-	for _, env := range m.Environments {
-		if env.IsArgoCD {
-			envs = append(envs, env)
-		}
-	}
-	if len(envs) > 1 {
-		return nil, errors.New("found multiple ArgoCD environments")
-	}
-	if len(envs) == 0 {
-		return nil, errors.New("could not find ArgoCD environment")
-	}
-	return envs[0], nil
+func (m *Manifest) GetArgoCDEnvironment() (*Argo, error) {
+	return m.Config.ArgoCDEnv, nil
+	// envs := []*Environment{}
+	// for _, env := range m.Environments {
+	// 	if env.IsArgoCD {
+	// 		envs = append(envs, env)
+	// 	}
+	// }
+	// if len(envs) > 1 {
+	// 	return nil, errors.New("found multiple ArgoCD environments")
+	// }
+	// if len(envs) == 0 {
+	// 	return nil, errors.New("could not find ArgoCD environment")
+	// }
+	// return envs[0], nil
 }
 
 // Environment is a slice of Apps, these are the named apps in the namespace.
