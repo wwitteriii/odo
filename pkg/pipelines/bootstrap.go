@@ -96,11 +96,11 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	ns := namespaces.NamesWithPrefix(o.Prefix)
 	serviceName := repoToServiceName(repoName)
 	secretName := secrets.MakeServiceWebhookSecretName(serviceName)
-	envs, err := bootstrapEnvironments(o.Prefix, appRepo.URL(), secretName, ns)
+	envs, configEnv, err := bootstrapEnvironments(o.Prefix, appRepo.URL(), secretName, ns)
 	if err != nil {
 		return nil, err
 	}
-	m := createManifest(gitOpsRepo, envs...)
+	m := createManifest(o.GitOpsRepoURL, configEnv, envs...)
 
 	devEnv := m.GetEnvironment(ns["dev"])
 	if devEnv == nil {
@@ -122,19 +122,19 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		return nil, fmt.Errorf("bootstrap environments: %w", err)
 	}
 	secretFilename := filepath.Join("03-secrets", secretName+".yaml")
-	secretsPath := filepath.Join(config.PathForEnvironment(cicdEnv), "base", "pipelines", secretFilename)
+	secretsPath := filepath.Join(config.PathForCICDEnvironment(cicdEnv), "base", "pipelines", secretFilename)
 	bootstrapped[secretsPath] = hookSecret
 
 	bindingName, imageRepoBindingFilename, svcImageBinding := createSvcImageBinding(cicdEnv, devEnv, serviceName, imageRepo, !isInternalRegistry)
 	bootstrapped = res.Merge(svcImageBinding, bootstrapped)
 
-	kustomizePath := filepath.Join(config.PathForEnvironment(cicdEnv), "base", "pipelines", "kustomization.yaml")
+	kustomizePath := filepath.Join(config.PathForCICDEnvironment(cicdEnv), "base", "pipelines", "kustomization.yaml")
 	k, ok := bootstrapped[kustomizePath].(res.Kustomization)
 	if !ok {
 		return nil, fmt.Errorf("no kustomization for the %s environment found", kustomizePath)
 	}
 	if isInternalRegistry {
-		filenames, resources, err := imagerepo.CreateInternalRegistryResources(cicdEnv, roles.CreateServiceAccount(meta.NamespacedName(cicdEnv.Name, saName)), imageRepo)
+		filenames, resources, err := imagerepo.CreateInternalRegistryResources(cicdEnv, roles.CreateServiceAccount(meta.NamespacedName(cicdEnv.Namespace, saName)), imageRepo)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get resources for internal image repository: %w", err)
 		}
@@ -170,31 +170,40 @@ func bootstrapServiceDeployment(dev *config.Environment) (res.Resources, error) 
 	return resources, nil
 }
 
-func bootstrapEnvironments(prefix, repoURL, secretName string, ns map[string]string) ([]*config.Environment, error) {
+func bootstrapEnvironments(prefix, repoURL, secretName string, ns map[string]string) ([]*config.Environment, *config.Special, error) {
 	envs := []*config.Environment{}
+	cicdEnv := &config.Special{}
+	cicd := &config.Cicd{}
+	argo := &config.Argo{}
 	for k, v := range ns {
-		env := &config.Environment{Name: v}
 		if k == "cicd" {
-			env.IsCICD = true
+			cicd = &config.Cicd{Namespace: prefix + "cicd"}
+
 		}
 		if k == "dev" {
+			env := &config.Environment{Name: v}
 			svc, err := serviceFromRepo(repoURL, secretName, ns["cicd"])
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			app, err := applicationFromRepo(repoURL, svc.Name)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			env.Apps = []*config.Application{app}
 			env.Services = []*config.Service{svc}
 			env.Pipelines = defaultPipelines
+			envs = append(envs, env)
 		}
-		envs = append(envs, env)
+		if k == "stage" {
+			env := &config.Environment{Name: v}
+			envs = append(envs, env)
+
+		}
 	}
-	envs = append(envs, &config.Environment{Name: prefix + "argocd", IsArgoCD: true})
-	sort.Sort(config.ByName(envs))
-	return envs, nil
+	argo = &config.Argo{Namespace: prefix + "argocd"}
+	cicdEnv = &config.Special{CICDEnv: cicd, ArgoCDEnv: argo}
+	return envs, cicdEnv, nil
 }
 
 func serviceFromRepo(repoURL, secretName, secretNS string) (*config.Service, error) {
