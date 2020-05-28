@@ -15,19 +15,21 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/secrets"
 )
 
-var testCICDEnv = &config.Environment{Name: "tst-cicd", IsCICD: true}
+var testCICDEnv = &config.Cicd{Namespace: "tst-cicd"}
+var testargocdEnv = &config.Argo{Namespace: "tst-argocd"}
+
+//var testdevEnv = &config.Environment{Name: "tst-dev"}
+var special = &config.Special{ArgoCDEnv: testargocdEnv, CICDEnv: testCICDEnv}
 
 func TestCreateManifest(t *testing.T) {
 	repoURL := "https://github.com/foo/bar.git"
-	repo, err := scm.NewRepository(repoURL)
-	assertNoError(t, err)
+	// repo, err := scm.NewRepository(repoURL)
+	// assertNoError(t, err)
 	want := &config.Manifest{
 		GitOpsURL: repoURL,
-		Environments: []*config.Environment{
-			testCICDEnv,
-		},
+		Config:    special,
 	}
-	got := createManifest(repo, testCICDEnv)
+	got := createManifest(repoURL, special)
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatalf("pipelines didn't match: %s\n", diff)
 	}
@@ -57,7 +59,7 @@ func TestInitialFiles(t *testing.T) {
 	}
 
 	want := res.Resources{
-		pipelinesFile: createManifest(repo, testCICDEnv),
+		pipelinesFile: createManifest(gitOpsURL, &config.Special{CICDEnv: testCICDEnv}),
 	}
 	resources, err := createCICDResources(fakeFs, repo, testCICDEnv, gitOpsWebhook, "")
 	if err != nil {
@@ -65,8 +67,8 @@ func TestInitialFiles(t *testing.T) {
 	}
 	files := getResourceFiles(resources)
 
-	want = res.Merge(addPrefixToResources("environments/tst-cicd/base/pipelines", resources), want)
-	want = res.Merge(addPrefixToResources("environments/tst-cicd", getCICDKustomization(files)), want)
+	want = res.Merge(addPrefixToResources("config/tst-cicd/base/pipelines", resources), want)
+	want = res.Merge(addPrefixToResources("config/tst-cicd", getCICDKustomization(files)), want)
 
 	if diff := cmp.Diff(want, got, cmpopts.IgnoreMapEntries(ignoreSecrets)); diff != "" {
 		t.Fatalf("outputs didn't match: %s\n", diff)
@@ -74,7 +76,7 @@ func TestInitialFiles(t *testing.T) {
 }
 
 func ignoreSecrets(k string, v interface{}) bool {
-	if k == "environments/tst-cicd/base/pipelines/03-secrets/gitops-webhook-secret.yaml" {
+	if k == "config/tst-cicd/base/pipelines/03-secrets/gitops-webhook-secret.yaml" {
 		return true
 	}
 	return false
