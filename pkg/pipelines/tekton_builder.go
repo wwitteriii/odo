@@ -64,15 +64,15 @@ func (tk *tektonBuilder) Service(env *config.Environment, svc *config.Service) e
 }
 
 func (tk *tektonBuilder) Environment(env *config.Environment) error {
-	if env.IsCICD {
-		cicdEnv, err := tk.manifest.GetCICDEnvironment()
+	cicdEnv, _ := tk.manifest.GetCICDEnvironment()
+	if cicdEnv != nil {
 		triggers, err := createTriggersForCICD(tk.gitOpsRepo, cicdEnv)
 		if err != nil {
 			return err
 		}
 		tk.triggers = append(tk.triggers, triggers...)
 		cicdPath := config.PathForCICDEnvironment(cicdEnv)
-		tk.files[getEventListenerPath(cicdPath)] = eventlisteners.CreateELFromTriggers(env.Name, saName, tk.triggers)
+		tk.files[getEventListenerPath(cicdPath)] = eventlisteners.CreateELFromTriggers(cicdEnv.Namespace, saName, tk.triggers)
 	}
 	return nil
 }

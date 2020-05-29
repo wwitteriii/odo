@@ -2,6 +2,7 @@ package pipelines
 
 import (
 	"fmt"
+	"log"
 	"path/filepath"
 	"strconv"
 
@@ -43,16 +44,19 @@ func AddService(p *AddServiceParameters, fs afero.Fs) error {
 		return err
 	}
 	outputPath := filepath.Dir(p.Manifest)
-
+	log.Println("Point-1")
 	files, err := serviceResources(m, fs, p)
 	if err != nil {
 		return err
 	}
+	log.Println("Point-2")
 
 	_, err = yaml.WriteResources(fs, outputPath, files)
 	if err != nil {
 		return err
 	}
+	log.Println("Point-3")
+
 	if cicdEnv != nil {
 		base := filepath.Join(outputPath, config.PathForCICDEnvironment(cicdEnv), "base", "pipelines")
 		err = updateKustomization(fs, base)
@@ -60,11 +64,24 @@ func AddService(p *AddServiceParameters, fs afero.Fs) error {
 			return err
 		}
 	}
+	log.Println("Point-4")
+
 	return nil
 }
 
 func serviceResources(m *config.Manifest, fs afero.Fs, p *AddServiceParameters) (res.Resources, error) {
+
 	files := res.Resources{}
+	// if m.Config.CICDEnv != nil {
+	// 	if m.Config.CICDEnv.Namespace == p.ServiceName {
+	// 		return nil, fmt.Errorf("The service cannot be added to the special environments")
+	// 	}
+	// }
+	// if m.Config.ArgoCDEnv != nil {
+	// 	if m.Config.ArgoCDEnv.Namespace == p.ServiceName {
+	// 		return nil, fmt.Errorf("The service cannot be added to the special environments")
+	// 	}
+	// }
 
 	svc, err := createService(p.ServiceName, p.GitRepoURL)
 	if err != nil {
@@ -84,9 +101,9 @@ func serviceResources(m *config.Manifest, fs afero.Fs, p *AddServiceParameters) 
 		return nil, fmt.Errorf("environment %s does not exist.", p.EnvName)
 	}
 
-	if env.IsSpecial() {
-		return nil, fmt.Errorf("service cannot be added to a special environment %s", p.EnvName)
-	}
+	// if env.IsSpecial() {
+	// 	return nil, fmt.Errorf("service cannot be added to a special environment %s", p.EnvName)
+	// }
 
 	// add the secret only if CI/CD env is present
 	if cicdEnv != nil {
