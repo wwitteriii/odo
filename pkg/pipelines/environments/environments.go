@@ -68,9 +68,9 @@ func (b *envBuilder) Service(env *config.Environment, svc *config.Service) error
 }
 
 func (b *envBuilder) Environment(env *config.Environment) error {
-	if env.IsSpecial() {
-		return nil
-	}
+	// if env.IsSpecial() {
+	// 	return nil
+	// }
 	envPath := filepath.Join(config.PathForEnvironment(env), "env")
 	basePath := filepath.Join(envPath, "base")
 	envFiles := filesForEnvironment(basePath, env)
