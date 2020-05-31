@@ -46,9 +46,17 @@ func TestBuildEnvironmentFiles(t *testing.T) {
 func TestBuildEnvironmentsDoesNotOutputCIorArgo(t *testing.T) {
 	var appFs = ioutils.NewMapFilesystem()
 	m := &config.Manifest{
-		Environments: []*config.Environment{
-			{Name: "test-ci", IsCICD: true},
-			{Name: "test-argo", IsArgoCD: true},
+		// Environments: []*config.Environment{
+		// 	{Name: "test-ci", IsCICD: true},
+		// 	{Name: "test-argo", IsArgoCD: true},
+		// },
+		Config: &config.Special{
+			CICDEnv: &config.Cicd{
+				Namespace: "cicd",
+			},
+			ArgoCDEnv: &config.Argo{
+				Namespace: "argocd",
+			},
 		},
 	}
 
@@ -71,9 +79,14 @@ func TestBuildEnvironmentsAddsKustomizedFiles(t *testing.T) {
 	afero.WriteFile(appFs, "environments/test-dev/base/routes/01-route.yaml", []byte(`this is a file`), 0644)
 
 	m := &config.Manifest{
+		Config: &config.Special{
+			CICDEnv: &config.Cicd{
+				Namespace: "cicd",
+			},
+		},
 		Environments: []*config.Environment{
 			{Name: "test-dev"},
-			{Name: "cicd", IsCICD: true},
+			// {Name: "cicd", IsCICD: true},
 		},
 	}
 
@@ -135,36 +148,90 @@ func filesFromResources(r res.Resources) []string {
 }
 
 func buildManifest(withCICD bool) *config.Manifest {
-	cfg := &config.Manifest{
-		Environments: []*config.Environment{
-			{
-				Name: "test-dev",
-				Apps: []*config.Application{
-					{
-						Name: "my-app-1",
-						ServiceRefs: []string{
-							"service-http",
-							"service-metrics",
+	// cfg := &config.Manifest{
+	// 	Environments: []*config.Environment{
+	// 		{
+	// 			Name: "test-dev",
+	// 			Apps: []*config.Application{
+	// 				{
+	// 					Name: "my-app-1",
+	// 					ServiceRefs: []string{
+	// 						"service-http",
+	// 						"service-metrics",
+	// 					},
+	// 				},
+	// 			},
+	// 			Services: []*config.Service{
+	// 				{
+	// 					Name:      "service-http",
+	// 					SourceURL: "https://github.com/myproject/myservice.git",
+	// 				},
+	// 				{
+	// 					Name: "service-metrics",
+	// 				},
+	// 			},
+	// 		},
+	// 	},
+	// }
+
+	if withCICD {
+		return &config.Manifest{
+			Config: &config.Special{
+				CICDEnv: &config.Cicd{
+					Namespace: "cicd",
+				},
+			},
+			Environments: []*config.Environment{
+				{
+					Name: "test-dev",
+					Apps: []*config.Application{
+						{
+							Name: "my-app-1",
+							ServiceRefs: []string{
+								"service-http",
+								"service-metrics",
+							},
+						},
+					},
+					Services: []*config.Service{
+						{
+							Name:      "service-http",
+							SourceURL: "https://github.com/myproject/myservice.git",
+						},
+						{
+							Name: "service-metrics",
 						},
 					},
 				},
-				Services: []*config.Service{
-					{
-						Name:      "service-http",
-						SourceURL: "https://github.com/myproject/myservice.git",
+			},
+		}
+	}
+	if !withCICD {
+		return &config.Manifest{
+			Environments: []*config.Environment{
+				{
+					Name: "test-dev",
+					Apps: []*config.Application{
+						{
+							Name: "my-app-1",
+							ServiceRefs: []string{
+								"service-http",
+								"service-metrics",
+							},
+						},
 					},
-					{
-						Name: "service-metrics",
+					Services: []*config.Service{
+						{
+							Name:      "service-http",
+							SourceURL: "https://github.com/myproject/myservice.git",
+						},
+						{
+							Name: "service-metrics",
+						},
 					},
 				},
 			},
-		},
+		}
 	}
-	if withCICD == true {
-		cfg.Environments = append(cfg.Environments, &config.Environment{
-			Name:   "cicd",
-			IsCICD: true,
-		})
-	}
-	return cfg
+	return nil
 }

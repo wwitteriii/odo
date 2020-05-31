@@ -29,6 +29,7 @@ type tektonBuilder struct {
 	files      res.Resources
 	gitOpsRepo string
 	triggers   []v1alpha1.EventListenerTrigger
+	manifest   *config.Manifest
 }
 
 func buildEventListenerResources(gitOpsRepo string, m *config.Manifest) (res.Resources, error) {
@@ -43,7 +44,8 @@ func buildEventListenerResources(gitOpsRepo string, m *config.Manifest) (res.Res
 		return nil, nil
 	}
 	files := make(res.Resources)
-	tb := &tektonBuilder{files: files, gitOpsRepo: gitOpsRepo}
+	// tb := &tektonBuilder{files: files, gitOpsRepo: gitOpsRepo}
+	tb := &tektonBuilder{files: files, gitOpsRepo: gitOpsRepo, manifest: m}
 	err = m.Walk(tb)
 	return tb.files, err
 }
@@ -63,14 +65,19 @@ func (tk *tektonBuilder) Service(env *config.Environment, svc *config.Service) e
 }
 
 func (tk *tektonBuilder) Environment(env *config.Environment) error {
-	if env.IsCICD {
-		triggers, err := createTriggersForCICD(tk.gitOpsRepo, env)
+	// if env.IsCICD {
+	// 	triggers, err := createTriggersForCICD(tk.gitOpsRepo, env)
+	cicdEnv, _ := tk.manifest.GetCICDEnvironment()
+	if cicdEnv != nil {
+		triggers, err := createTriggersForCICD(tk.gitOpsRepo, cicdEnv)
 		if err != nil {
 			return err
 		}
 		tk.triggers = append(tk.triggers, triggers...)
-		cicdPath := config.PathForEnvironment(env)
-		tk.files[getEventListenerPath(cicdPath)] = eventlisteners.CreateELFromTriggers(env.Name, saName, tk.triggers)
+		// cicdPath := config.PathForEnvironment(env)
+		// tk.files[getEventListenerPath(cicdPath)] = eventlisteners.CreateELFromTriggers(env.Name, saName, tk.triggers)
+		cicdPath := config.PathForCICDEnvironment(cicdEnv)
+		tk.files[getEventListenerPath(cicdPath)] = eventlisteners.CreateELFromTriggers(cicdEnv.Namespace, saName, tk.triggers)
 	}
 	return nil
 }
@@ -79,17 +86,23 @@ func getEventListenerPath(cicdPath string) string {
 	return filepath.Join(cicdPath, "base", "pipelines", eventListenerPath)
 }
 
-func createTriggersForCICD(gitOpsRepo string, env *config.Environment) ([]v1alpha1.EventListenerTrigger, error) {
+func createTriggersForCICD(gitOpsRepo string, env *config.Cicd) ([]v1alpha1.EventListenerTrigger, error) {
 	triggers := []v1alpha1.EventListenerTrigger{}
 	repo, err := scm.NewRepository(gitOpsRepo)
 	if err != nil {
 		return []v1alpha1.EventListenerTrigger{}, err
 	}
-	_, prBindingName := repo.CreatePRBinding(env.Name)
-	ciTrigger := repo.CreateCITrigger("ci-dryrun-from-pr", eventlisteners.GitOpsWebhookSecret, env.Name, "ci-dry-run-from-pr-template", []string{prBindingName})
-	_, pushBindingName := repo.CreatePushBinding(env.Name)
-	cdTrigger := repo.CreateCDTrigger("cd-deploy-from-push", eventlisteners.GitOpsWebhookSecret, env.Name, "cd-deploy-from-push-template", []string{pushBindingName})
+	// _, prBindingName := repo.CreatePRBinding(env.Name)
+	// ciTrigger := repo.CreateCITrigger("ci-dryrun-from-pr", eventlisteners.GitOpsWebhookSecret, env.Name, "ci-dry-run-from-pr-template", []string{prBindingName})
+	// _, pushBindingName := repo.CreatePushBinding(env.Name)
+	// cdTrigger := repo.CreateCDTrigger("cd-deploy-from-push", eventlisteners.GitOpsWebhookSecret, env.Name, "cd-deploy-from-push-template", []string{pushBindingName})
+	_, prBindingName := repo.CreatePRBinding(env.Namespace)
+	ciTrigger := repo.CreateCITrigger("ci-dryrun-from-pr", eventlisteners.GitOpsWebhookSecret, env.Namespace, "ci-dry-run-from-pr-template", []string{prBindingName})
+	_, pushBindingName := repo.CreatePushBinding(env.Namespace)
+	cdTrigger := repo.CreateCDTrigger("cd-deploy-from-push", eventlisteners.GitOpsWebhookSecret, env.Namespace, "cd-deploy-from-push-template", []string{pushBindingName})
+
 	triggers = append(triggers, ciTrigger, cdTrigger)
+
 	return triggers, nil
 }
 

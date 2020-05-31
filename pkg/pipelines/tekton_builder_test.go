@@ -2,6 +2,7 @@ package pipelines
 
 import (
 	"fmt"
+	"log"
 	"path/filepath"
 	"testing"
 
@@ -15,15 +16,16 @@ import (
 
 func TestBuildEventListener(t *testing.T) {
 	m := &config.Manifest{
-		Environments: []*config.Environment{
-			{
-				Name:   "test-cicd",
-				IsCICD: true,
+		Config: &config.Special{
+			CICDEnv: &config.Cicd{
+				Namespace: "test-cicd",
 			},
+		},
+		Environments: []*config.Environment{
 			testEnv(testService()),
 		},
 	}
-	cicdPath := filepath.Join("environments", "test-cicd")
+	cicdPath := filepath.Join("config", "test-cicd")
 	gitOpsRepo := "http://github.com/org/gitops.git"
 	got, err := buildEventListenerResources(gitOpsRepo, m)
 	assertNoError(t, err)
@@ -37,17 +39,21 @@ func TestBuildEventListener(t *testing.T) {
 
 func TestBuildEventListenerWithServiceWithNoURL(t *testing.T) {
 	m := &config.Manifest{
-		Environments: []*config.Environment{
-			{
-				Name:   "test-cicd",
-				IsCICD: true,
+
+		Config: &config.Special{
+			CICDEnv: &config.Cicd{
+				Namespace: "test-cicd",
 			},
+		},
+		Environments: []*config.Environment{
 			testEnv(testService()),
 		},
 	}
-	cicdPath := filepath.Join("environments", "test-cicd")
+	cicdPath := filepath.Join("config", "test-cicd")
 	gitOpsRepo := "http://github.com/org/gitops.git"
 	got, err := buildEventListenerResources(gitOpsRepo, m)
+	log.Println("This is the got files", got)
+	log.Println("")
 	assertNoError(t, err)
 	want := res.Resources{
 		getEventListenerPath(cicdPath): eventlisteners.CreateELFromTriggers("test-cicd", saName, fakeTiggers(t, m, gitOpsRepo)),

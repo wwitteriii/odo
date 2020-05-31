@@ -81,11 +81,7 @@ func serviceResources(m *config.Manifest, fs afero.Fs, p *AddServiceParameters) 
 
 	env := m.GetEnvironment(p.EnvName)
 	if env == nil {
-		return nil, fmt.Errorf("environment %s does not exist.", p.EnvName)
-	}
-
-	if env.IsSpecial() {
-		return nil, fmt.Errorf("service cannot be added to a special environment %s", p.EnvName)
+		return nil, fmt.Errorf("environment %s does not exist", p.EnvName)
 	}
 
 	// add the secret only if CI/CD env is present

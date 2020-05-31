@@ -61,9 +61,9 @@ func (vv *validateVisitor) Environment(env *Environment) error {
 
 func (vv *validateVisitor) Application(env *Environment, app *Application) error {
 	appPath := yamlPath(PathForApplication(env, app))
-	if env.IsSpecial() {
-		vv.errs = append(vv.errs, invalidEnvironment(env.Name, "A special environment cannot contain applications.", []string{appPath}))
-	}
+	// if env.IsSpecial() {
+	// 	vv.errs = append(vv.errs, invalidEnvironment(env.Name, "A special environment cannot contain applications.", []string{appPath}))
+	// }
 	if err := checkDuplicate(app.Name, appPath, vv.appNames); err != nil {
 		vv.errs = append(vv.errs, err)
 	}
@@ -95,9 +95,9 @@ func (vv *validateVisitor) Application(env *Environment, app *Application) error
 
 func (vv *validateVisitor) Service(env *Environment, svc *Service) error {
 	svcPath := yamlPath(PathForService(env, svc.Name))
-	if env.IsSpecial() {
-		vv.errs = append(vv.errs, invalidEnvironment(env.Name, "A special environment cannot contain services.", []string{svcPath}))
-	}
+	// if env.IsSpecial() {
+	// 	vv.errs = append(vv.errs, invalidEnvironment(env.Name, "A special environment cannot contain services.", []string{svcPath}))
+	// }
 	if svc.SourceURL != "" {
 		previous, ok := vv.serviceURLs[svc.SourceURL]
 		if !ok {
