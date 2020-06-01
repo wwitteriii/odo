@@ -97,7 +97,7 @@ func createTriggersForCICD(gitOpsRepo string, env *config.Cicd) ([]v1alpha1.Even
 	// _, pushBindingName := repo.CreatePushBinding(env.Name)
 	// cdTrigger := repo.CreateCDTrigger("cd-deploy-from-push", eventlisteners.GitOpsWebhookSecret, env.Name, "cd-deploy-from-push-template", []string{pushBindingName})
 	_, prBindingName := repo.CreatePRBinding(env.Namespace)
-	ciTrigger := repo.CreateCITrigger("ci-dryrun-from-pr", eventlisteners.GitOpsWebhookSecret, env.Namespace, "ci-dry-run-from-pr-template", []string{prBindingName})
+	ciTrigger := repo.CreateCITrigger("ci-dryrun-from-pr", eventlisteners.GitOpsWebhookSecret, env.Namespace, "ci-dryrun-from-pr-template", []string{prBindingName})
 	_, pushBindingName := repo.CreatePushBinding(env.Namespace)
 	cdTrigger := repo.CreateCDTrigger("cd-deploy-from-push", eventlisteners.GitOpsWebhookSecret, env.Namespace, "cd-deploy-from-push-template", []string{pushBindingName})
 
