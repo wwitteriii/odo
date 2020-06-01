@@ -99,8 +99,7 @@ func TestParse(t *testing.T) {
 					},
 				},
 				{
-					Name:   "tst-cicd",
-					IsCICD: true,
+					Name: "tst-cicd",
 				},
 			},
 		},

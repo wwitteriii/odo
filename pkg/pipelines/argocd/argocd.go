@@ -38,18 +38,14 @@ func Build(argoNS, repoURL string, m *config.Manifest) (res.Resources, error) {
 	if repoURL == "" {
 		return res.Resources{}, nil
 	}
-	argoEnv, err := m.GetArgoCDEnvironment()
-	// If there's no ArgoCD environment, then we don't need to do anything.
-	// if err != nil {
-	// 	return res.Resources{}, nil
-	// }
+	argoEnv := m.GetArgoCDConfig()
 	if argoEnv == nil {
 		return res.Resources{}, nil
 	}
 
 	files := make(res.Resources)
 	eb := &argocdBuilder{repoURL: repoURL, files: files, argoEnv: argoEnv, argoNS: argoNS}
-	err = m.Walk(eb)
+	err := m.Walk(eb)
 	return eb.files, err
 }
 
@@ -61,7 +57,6 @@ type argocdBuilder struct {
 }
 
 func (b *argocdBuilder) Application(env *config.Environment, app *config.Application) error {
-	// basePath := filepath.Join(config.PathForArgoEnvironment(b.argoEnv), "config")
 	basePath := filepath.Join(config.PathForArgoEnvironment(), "config")
 	argoFiles := res.Resources{}
 	filename := filepath.Join(basePath, env.Name+"-"+app.Name+"-app.yaml")
@@ -75,10 +70,9 @@ func (b *argocdBuilder) Application(env *config.Environment, app *config.Applica
 }
 
 func argoEnvironmentResources(env *config.Argo, files res.Resources) error {
-	if env.Namespace == "" {
+	if env.Name == "" {
 		return nil
 	}
-	// basePath := filepath.Join(config.PathForArgoEnvironment(env), "config")
 	basePath := filepath.Join(config.PathForArgoEnvironment(), "config")
 	filename := filepath.Join(basePath, "kustomization.yaml")
 	resourceNames := []string{}

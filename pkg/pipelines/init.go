@@ -148,8 +148,8 @@ func CreateDockerSecret(fs afero.Fs, dockerConfigJSONFilename, ns string) (*ssv1
 }
 
 func createInitialFiles(fs afero.Fs, repo scm.Repository, prefix, gitOpsWebhookSecret, dockerConfigPath string) (res.Resources, error) {
-	cicd := &config.Cicd{Namespace: prefix + "cicd"}
-	cicdEnv := &config.Special{CICDEnv: cicd}
+	cicd := &config.Cicd{Name: prefix + "cicd"}
+	cicdEnv := &config.Config{CICDEnv: cicd}
 	pipelines := createManifest(repo.URL(), cicdEnv)
 	initialFiles := res.Resources{
 		pipelinesFile: pipelines,
@@ -171,7 +171,7 @@ func createInitialFiles(fs afero.Fs, repo scm.Repository, prefix, gitOpsWebhookS
 
 // createCICDResources creates resources assocated to pipelines.
 func createCICDResources(fs afero.Fs, repo scm.Repository, cicdEnv *config.Cicd, gitOpsWebhookSecret, dockerConfigJSONPath string) (res.Resources, error) {
-	cicdNamespace := cicdEnv.Namespace
+	cicdNamespace := cicdEnv.Name
 	// key: path of the resource
 	// value: YAML content of the resource
 	outputs := map[string]interface{}{}
@@ -214,7 +214,7 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, cicdEnv *config.Cicd,
 	return outputs, nil
 }
 
-func createManifest(gitOpsURL string, configEnv *config.Special, envs ...*config.Environment) *config.Manifest {
+func createManifest(gitOpsURL string, configEnv *config.Config, envs ...*config.Environment) *config.Manifest {
 	return &config.Manifest{
 		GitOpsURL:    gitOpsURL,
 		Environments: envs,
@@ -240,7 +240,7 @@ func pathForEnvironment(env *config.Environment) string {
 	return filepath.Join("environments", env.Name)
 }
 
-func pipelinesPath(m *config.Special) string {
+func pipelinesPath(m *config.Config) string {
 	return filepath.Join(cicdEnvironmentPath(m), "base/pipelines")
 }
 
@@ -253,7 +253,7 @@ func addPrefixToResources(prefix string, files res.Resources) map[string]interfa
 }
 
 // TODO: this should probably use the .FindCICDEnvironment on the pipelines.
-func cicdEnvironmentPath(m *config.Special) string {
+func cicdEnvironmentPath(m *config.Config) string {
 	return config.PathForCICDEnvironment(m.CICDEnv)
 }
 

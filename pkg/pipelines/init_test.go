@@ -15,21 +15,17 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/secrets"
 )
 
-var testCICDEnv = &config.Cicd{Namespace: "tst-cicd"}
-var testargocdEnv = &config.Argo{Namespace: "tst-argocd"}
-
-//var testdevEnv = &config.Environment{Name: "tst-dev"}
-var special = &config.Special{ArgoCDEnv: testargocdEnv, CICDEnv: testCICDEnv}
+var testCICDEnv = &config.Cicd{Name: "tst-cicd"}
+var testargocdEnv = &config.Argo{Name: "tst-argocd"}
+var Config = &config.Config{ArgoCDEnv: testargocdEnv, CICDEnv: testCICDEnv}
 
 func TestCreateManifest(t *testing.T) {
 	repoURL := "https://github.com/foo/bar.git"
-	// repo, err := scm.NewRepository(repoURL)
-	// assertNoError(t, err)
 	want := &config.Manifest{
 		GitOpsURL: repoURL,
-		Config:    special,
+		Config:    Config,
 	}
-	got := createManifest(repoURL, special)
+	got := createManifest(repoURL, Config)
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatalf("pipelines didn't match: %s\n", diff)
 	}
@@ -59,7 +55,7 @@ func TestInitialFiles(t *testing.T) {
 	}
 
 	want := res.Resources{
-		pipelinesFile: createManifest(gitOpsURL, &config.Special{CICDEnv: testCICDEnv}),
+		pipelinesFile: createManifest(gitOpsURL, &config.Config{CICDEnv: testCICDEnv}),
 	}
 	resources, err := createCICDResources(fakeFs, repo, testCICDEnv, gitOpsWebhook, "")
 	if err != nil {

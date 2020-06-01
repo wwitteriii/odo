@@ -16,9 +16,9 @@ import (
 
 func TestBuildEventListener(t *testing.T) {
 	m := &config.Manifest{
-		Config: &config.Special{
+		Config: &config.Config{
 			CICDEnv: &config.Cicd{
-				Namespace: "test-cicd",
+				Name: "test-cicd",
 			},
 		},
 		Environments: []*config.Environment{
@@ -40,9 +40,9 @@ func TestBuildEventListener(t *testing.T) {
 func TestBuildEventListenerWithServiceWithNoURL(t *testing.T) {
 	m := &config.Manifest{
 
-		Config: &config.Special{
+		Config: &config.Config{
 			CICDEnv: &config.Cicd{
-				Namespace: "test-cicd",
+				Name: "test-cicd",
 			},
 		},
 		Environments: []*config.Environment{
@@ -67,8 +67,7 @@ func TestBuildEventListenerWithNoGitOpsURL(t *testing.T) {
 	m := &config.Manifest{
 		Environments: []*config.Environment{
 			{
-				Name:   "test-cicd",
-				IsCICD: true,
+				Name: "test-cicd",
 			},
 			testEnv(testService()),
 		},
@@ -184,7 +183,7 @@ func TestGetPipelines(t *testing.T) {
 func fakeTiggers(t *testing.T, m *config.Manifest, gitOpsRepo string) []v1alpha1.EventListenerTrigger {
 	triggers := []v1alpha1.EventListenerTrigger{}
 	devEnv := m.GetEnvironment("test-dev")
-	cicdEnv, err := m.GetCICDEnvironment()
+	cicdEnv, err := m.GetPipelineConfig()
 	assertNoError(t, err)
 	svc := testService()
 	pipelines := getPipelines(devEnv, svc)

@@ -15,7 +15,7 @@ import (
 func TestCreateInternalRegistryRoleBinding(t *testing.T) {
 
 	cicd := &config.Cicd{
-		Namespace: "test-cicd",
+		Name: "test-cicd",
 	}
 	sa := roles.CreateServiceAccount(meta.NamespacedName("test-cicd", "pipeline"))
 	gotFilename, got := createInternalRegistryRoleBinding(cicd, "new-proj", sa)

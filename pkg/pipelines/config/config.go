@@ -23,7 +23,7 @@ func PathForEnvironment(env *Environment) string {
 
 //PathForCICDEnvironment returns the path only for the CICD environment
 func PathForCICDEnvironment(cicd *Cicd) string {
-	return filepath.Join("config", cicd.Namespace)
+	return filepath.Join("config", cicd.Name)
 }
 
 // func PathForArgoEnvironment(argo *Argo) string {
@@ -37,7 +37,7 @@ func PathForArgoEnvironment() string {
 type Manifest struct {
 	GitOpsURL    string         `json:"gitops_url,omitempty"`
 	Environments []*Environment `json:"environments,omitempty"`
-	Config       *Special       `json:"config,omitempty"`
+	Config       *Config        `json:"config,omitempty"`
 }
 
 func (m *Manifest) GetEnvironment(n string) *Environment {
@@ -82,8 +82,8 @@ func (m *Manifest) AddService(envName, appName string, svc *Service) error {
 	return nil
 }
 
-// GetCICDEnvironment returns the CICD Environment if one exists.
-func (m *Manifest) GetCICDEnvironment() (*Cicd, error) {
+// GetPipelineConfig returns the CICD Environment if one exists.
+func (m *Manifest) GetPipelineConfig() (*Cicd, error) {
 	if m.Config != nil {
 		if m.Config.CICDEnv != nil {
 			return m.Config.CICDEnv, nil
@@ -92,27 +92,14 @@ func (m *Manifest) GetCICDEnvironment() (*Cicd, error) {
 	return nil, nil
 }
 
-// GetArgoCDEnvironment returns the ArgoCD Environment if one exists.
-func (m *Manifest) GetArgoCDEnvironment() (*Argo, error) {
-	// envs := []*Environment{}
-	// for _, env := range m.Environments {
-	// 	if env.IsArgoCD {
-	// 		envs = append(envs, env)
-	// 	}
-	// }
-	// if len(envs) > 1 {
-	// 	return nil, errors.New("found multiple ArgoCD environments")
-	// }
-	// if len(envs) == 0 {
-	// 	return nil, errors.New("could not find ArgoCD environment")
-	// }
-	// return envs[0], nil
+// GetArgoCDConfig returns the ArgoCD Environment if one exists.
+func (m *Manifest) GetArgoCDConfig() *Argo {
 	if m.Config != nil {
 		if m.Config.ArgoCDEnv != nil {
-			return m.Config.ArgoCDEnv, nil
+			return m.Config.ArgoCDEnv
 		}
 	}
-	return nil, nil
+	return nil
 
 }
 
@@ -128,36 +115,28 @@ type Environment struct {
 	Apps      []*Application `json:"apps,omitempty"`
 	// TODO: this should check that there is 0 or 1 CICD environment in the
 	// manfifest.
-	IsCICD   bool `json:"cicd,omitempty"`
-	IsArgoCD bool `json:"argo,omitempty"`
 }
 
-//Special are the special environments that constitute the argocd and cicd environment
-type Special struct {
+//Special are the Config environments that constitute the argocd and cicd environment
+type Config struct {
 	CICDEnv   *Cicd `json:"cicdenv,omitempty"`
 	ArgoCDEnv *Argo `json:"argocdenv,omitempty"`
 }
 
 //Cicd checks for the cicd environments
 type Cicd struct {
-	Namespace string `json:"namespace,omitempty"`
+	Name string `json:"namespace,omitempty"`
 }
 
 //Argo checks for the cicd environments
 type Argo struct {
-	Namespace string `json:"namespace,omitempty"`
+	Name string `json:"namespace,omitempty"`
 }
 
 // GoString return environment name
 func (e Environment) GoString() string {
 	return e.Name
 }
-
-// IsSpecial returns true if the environment is a special environment reserved
-// for specific files.
-// func (e Environment) IsSpecial() bool {
-// 	return e.IsCICD || e.IsArgoCD
-// }
 
 // Application has many services.
 //
@@ -255,11 +234,5 @@ type ByName []*Environment
 func (a ByName) Len() int      { return len(a) }
 func (a ByName) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a ByName) Less(i, j int) bool {
-	// if a[i].IsSpecial() {
-	// 	return false
-	// }
-	// if a[j].IsSpecial() {
-	// 	return true
-	// }
 	return a[i].Name < a[j].Name
 }

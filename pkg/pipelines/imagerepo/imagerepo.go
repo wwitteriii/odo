@@ -67,12 +67,10 @@ func CreateInternalRegistryResources(env *config.Cicd, sa *corev1.ServiceAccount
 	resources := res.Resources{}
 	filenames := []string{}
 
-	if !namespaceExists {
-		filename := filepath.Join("01-namespaces", fmt.Sprintf("%s.yaml", namespace))
-		namespacePath := filepath.Join(config.PathForCICDEnvironment(env), "base", "pipelines", filename)
-		resources[namespacePath] = namespaces.Create(namespace)
-		filenames = append(filenames, filename)
-	}
+	filename := filepath.Join("01-namespaces", fmt.Sprintf("%s.yaml", namespace))
+	namespacePath := filepath.Join(config.PathForCICDEnvironment(env), "base", "pipelines", filename)
+	resources[namespacePath] = namespaces.Create(namespace)
+	filenames = append(filenames, filename)
 
 	filename, roleBinding := createInternalRegistryRoleBinding(env, namespace, sa)
 	return append(filenames, filename), res.Merge(roleBinding, resources), nil

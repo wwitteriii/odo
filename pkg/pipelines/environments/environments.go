@@ -27,7 +27,7 @@ type envBuilder struct {
 
 func Build(fs afero.Fs, m *config.Manifest, saName string) (res.Resources, error) {
 	files := res.Resources{}
-	cicdEnv, err := m.GetCICDEnvironment()
+	cicdEnv, err := m.GetPipelineConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -62,15 +62,12 @@ func (b *envBuilder) Service(env *config.Environment, svc *config.Service) error
 	envBasePath := filepath.Join(config.PathForEnvironment(env), "env", "base")
 	envBindingPath := filepath.Join(envBasePath, fmt.Sprintf("%s-rolebinding.yaml", env.Name))
 	if _, ok := b.files[envBindingPath]; !ok {
-		b.files[envBindingPath] = createRoleBinding(env, envBasePath, b.cicdEnv.Namespace, b.saName)
+		b.files[envBindingPath] = createRoleBinding(env, envBasePath, b.cicdEnv.Name, b.saName)
 	}
 	return nil
 }
 
 func (b *envBuilder) Environment(env *config.Environment) error {
-	// if env.IsSpecial() {
-	// 	return nil
-	// }
 	envPath := filepath.Join(config.PathForEnvironment(env), "env")
 	basePath := filepath.Join(envPath, "base")
 	envFiles := filesForEnvironment(basePath, env)

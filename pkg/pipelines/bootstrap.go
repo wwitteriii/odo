@@ -117,7 +117,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate GitHub Webhook Secret: %w", err)
 	}
-	cicdEnv, err := m.GetCICDEnvironment()
+	cicdEnv, err := m.GetPipelineConfig()
 	if err != nil {
 		return nil, fmt.Errorf("bootstrap environments: %w", err)
 	}
@@ -134,7 +134,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		return nil, fmt.Errorf("no kustomization for the %s environment found", kustomizePath)
 	}
 	if isInternalRegistry {
-		filenames, resources, err := imagerepo.CreateInternalRegistryResources(cicdEnv, roles.CreateServiceAccount(meta.NamespacedName(cicdEnv.Namespace, saName)), imageRepo)
+		filenames, resources, err := imagerepo.CreateInternalRegistryResources(cicdEnv, roles.CreateServiceAccount(meta.NamespacedName(cicdEnv.Name, saName)), imageRepo)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get resources for internal image repository: %w", err)
 		}
@@ -170,14 +170,14 @@ func bootstrapServiceDeployment(dev *config.Environment) (res.Resources, error) 
 	return resources, nil
 }
 
-func bootstrapEnvironments(prefix, repoURL, secretName string, ns map[string]string) ([]*config.Environment, *config.Special, error) {
+func bootstrapEnvironments(prefix, repoURL, secretName string, ns map[string]string) ([]*config.Environment, *config.Config, error) {
 	envs := []*config.Environment{}
-	cicdEnv := &config.Special{}
+	cicdEnv := &config.Config{}
 	cicd := &config.Cicd{}
 	argo := &config.Argo{}
 	for k, v := range ns {
 		if k == "cicd" {
-			cicd = &config.Cicd{Namespace: prefix + "cicd"}
+			cicd = &config.Cicd{Name: prefix + "cicd"}
 
 		}
 		if k == "dev" {
@@ -201,8 +201,8 @@ func bootstrapEnvironments(prefix, repoURL, secretName string, ns map[string]str
 
 		}
 	}
-	argo = &config.Argo{Namespace: prefix + "argocd"}
-	cicdEnv = &config.Special{CICDEnv: cicd, ArgoCDEnv: argo}
+	argo = &config.Argo{Name: prefix + "argocd"}
+	cicdEnv = &config.Config{CICDEnv: cicd, ArgoCDEnv: argo}
 	return envs, cicdEnv, nil
 }
 
