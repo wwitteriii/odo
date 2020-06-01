@@ -37,7 +37,7 @@ func PathForArgoEnvironment() string {
 type Manifest struct {
 	GitOpsURL    string         `json:"gitops_url,omitempty"`
 	Environments []*Environment `json:"environments,omitempty"`
-	Config       *Special       `json:"config,omitempty"`
+	Config       *Config        `json:"config,omitempty"`
 }
 
 func (m *Manifest) GetEnvironment(n string) *Environment {
@@ -83,17 +83,17 @@ func (m *Manifest) AddService(envName, appName string, svc *Service) error {
 }
 
 // GetCICDEnvironment returns the CICD Environment if one exists.
-func (m *Manifest) GetCICDEnvironment() (*Cicd, error) {
+func (m *Manifest) GetCICD() (*Cicd, error) {
 	if m.Config != nil {
-		if m.Config.CICDEnv != nil {
-			return m.Config.CICDEnv, nil
+		if m.Config.CICD != nil {
+			return m.Config.CICD, nil
 		}
 	}
 	return nil, nil
 }
 
-// GetArgoCDEnvironment returns the ArgoCD Environment if one exists.
-func (m *Manifest) GetArgoCDEnvironment() (*Argo, error) {
+// GetArgoironment returns the ArgoCD Environment if one exists.
+func (m *Manifest) GetArgoironment() (*Argo, error) {
 	// envs := []*Environment{}
 	// for _, env := range m.Environments {
 	// 	if env.IsArgoCD {
@@ -108,8 +108,8 @@ func (m *Manifest) GetArgoCDEnvironment() (*Argo, error) {
 	// }
 	// return envs[0], nil
 	if m.Config != nil {
-		if m.Config.ArgoCDEnv != nil {
-			return m.Config.ArgoCDEnv, nil
+		if m.Config.Argo != nil {
+			return m.Config.Argo, nil
 		}
 	}
 	return nil, nil
@@ -132,10 +132,10 @@ type Environment struct {
 	IsArgoCD bool `json:"argo,omitempty"`
 }
 
-//Special are the special environments that constitute the argocd and cicd environment
-type Special struct {
-	CICDEnv   *Cicd `json:"cicdenv,omitempty"`
-	ArgoCDEnv *Argo `json:"argocdenv,omitempty"`
+//Config are the Config environments that constitute the argocd and cicd environment
+type Config struct {
+	CICD *Cicd `json:"CICD,omitempty"`
+	Argo *Argo `json:"Argo,omitempty"`
 }
 
 //Cicd checks for the cicd environments

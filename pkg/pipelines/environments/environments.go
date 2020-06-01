@@ -27,7 +27,7 @@ type envBuilder struct {
 
 func Build(fs afero.Fs, m *config.Manifest, saName string) (res.Resources, error) {
 	files := res.Resources{}
-	cicdEnv, err := m.GetCICDEnvironment()
+	cicdEnv, err := m.GetCICD()
 	if err != nil {
 		return nil, err
 	}

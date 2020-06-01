@@ -47,8 +47,8 @@ func TestServiceResourcesWithCICD(t *testing.T) {
 		"environments/test-dev/apps/test-app/kustomization.yaml":                &res.Kustomization{Bases: []string{"overlays"}},
 		"environments/test-dev/apps/test-app/overlays/kustomization.yaml":       &res.Kustomization{Bases: []string{"../base"}},
 		"pipelines.yaml": &config.Manifest{
-			Config: &config.Special{
-				CICDEnv: &config.Cicd{
+			Config: &config.Config{
+				CICD: &config.Cicd{
 					Namespace: "cicd",
 				},
 			},
@@ -118,8 +118,8 @@ func TestServiceResourcesWithoutCICD(t *testing.T) {
 		"environments/test-dev/apps/test-app/overlays/kustomization.yaml": &res.Kustomization{Bases: []string{"../base"}},
 		"environments/test-dev/env/base/kustomization.yaml":               &res.Kustomization{Resources: []string{"test-dev-environment.yaml"}},
 		"pipelines.yaml": &config.Manifest{
-			Config: &config.Special{
-				ArgoCDEnv: &config.Argo{
+			Config: &config.Config{
+				Argo: &config.Argo{
 					Namespace: "argocd",
 				},
 			},
@@ -298,11 +298,11 @@ func TestServiceWithArgoCD(t *testing.T) {
 	m := buildManifest(true, true)
 	want := res.Resources{
 		"pipelines.yaml": &config.Manifest{
-			Config: &config.Special{
-				CICDEnv: &config.Cicd{
+			Config: &config.Config{
+				CICD: &config.Cicd{
 					Namespace: "cicd",
 				},
-				ArgoCDEnv: &config.Argo{
+				Argo: &config.Argo{
 					Namespace: "argocd",
 				},
 			},
@@ -365,8 +365,8 @@ func TestServiceWithArgoCD(t *testing.T) {
 func buildManifest(withCICD, withArgoCD bool) *config.Manifest {
 	if !withCICD && withArgoCD {
 		return &config.Manifest{
-			Config: &config.Special{
-				ArgoCDEnv: &config.Argo{
+			Config: &config.Config{
+				Argo: &config.Argo{
 					Namespace: "argocd",
 				},
 			},
@@ -401,11 +401,11 @@ func buildManifest(withCICD, withArgoCD bool) *config.Manifest {
 	}
 	if withCICD && withArgoCD {
 		return &config.Manifest{
-			Config: &config.Special{
-				CICDEnv: &config.Cicd{
+			Config: &config.Config{
+				CICD: &config.Cicd{
 					Namespace: "cicd",
 				},
-				ArgoCDEnv: &config.Argo{
+				Argo: &config.Argo{
 					Namespace: "argocd",
 				},
 			},
@@ -439,8 +439,8 @@ func buildManifest(withCICD, withArgoCD bool) *config.Manifest {
 	}
 	if withCICD && !withArgoCD {
 		return &config.Manifest{
-			Config: &config.Special{
-				CICDEnv: &config.Cicd{
+			Config: &config.Config{
+				CICD: &config.Cicd{
 					Namespace: "cicd",
 				},
 			},
@@ -506,13 +506,13 @@ func buildManifest(withCICD, withArgoCD bool) *config.Manifest {
 }
 
 func TestCreateSvcImageBinding(t *testing.T) {
-	cicdEnv := &config.Cicd{
+	CICD := &config.Cicd{
 		Namespace: "cicd",
 	}
 	env := &config.Environment{
 		Name: "new-env",
 	}
-	bindingName, bindingFilename, resources := createSvcImageBinding(cicdEnv, env, "new-svc", "quay.io/user/app", false)
+	bindingName, bindingFilename, resources := createSvcImageBinding(CICD, env, "new-svc", "quay.io/user/app", false)
 
 	if diff := cmp.Diff(bindingName, "new-env-new-svc-binding"); diff != "" {
 		t.Errorf("bindingName failed: %v", diff)

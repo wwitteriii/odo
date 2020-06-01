@@ -41,9 +41,9 @@ func TestBuildCreatesArgoCD(t *testing.T) {
 		Environments: []*config.Environment{
 			testEnv,
 		},
-		Config: &config.Special{
+		Config: &config.Config{
 
-			ArgoCDEnv: &config.Argo{Namespace: "argocd"},
+			Argo: &config.Argo{Namespace: "argocd"},
 		},
 	}
 
@@ -86,9 +86,9 @@ func TestBuildCreatesArgoCDWithMultipleApps(t *testing.T) {
 			prodEnv,
 			testEnv,
 		},
-		Config: &config.Special{
+		Config: &config.Config{
 
-			ArgoCDEnv: &config.Argo{Namespace: "argocd"},
+			Argo: &config.Argo{Namespace: "argocd"},
 		},
 	}
 
@@ -111,9 +111,9 @@ func TestBuildWithNoRepoURL(t *testing.T) {
 		Environments: []*config.Environment{
 			testEnv,
 		},
-		Config: &config.Special{
+		Config: &config.Config{
 
-			ArgoCDEnv: &config.Argo{Namespace: "argocd"},
+			Argo: &config.Argo{Namespace: "argocd"},
 		},
 	}
 
@@ -127,7 +127,7 @@ func TestBuildWithNoRepoURL(t *testing.T) {
 	}
 }
 
-func TestBuildWithNoArgoCDEnv(t *testing.T) {
+func TestBuildWithNoArgo(t *testing.T) {
 	m := &config.Manifest{
 		Environments: []*config.Environment{
 			testEnv,
@@ -156,9 +156,9 @@ func TestBuildWithRepoConfig(t *testing.T) {
 		Environments: []*config.Environment{
 			prodEnv,
 		},
-		Config: &config.Special{
+		Config: &config.Config{
 
-			ArgoCDEnv: &config.Argo{Namespace: "argocd"},
+			Argo: &config.Argo{Namespace: "argocd"},
 		},
 	}
 

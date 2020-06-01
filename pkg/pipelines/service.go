@@ -38,7 +38,7 @@ func AddService(p *AddServiceParameters, fs afero.Fs) error {
 		return fmt.Errorf("failed to parse manifest: %w", err)
 	}
 
-	cicdEnv, err := m.GetCICDEnvironment()
+	cicdEnv, err := m.GetCICD()
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func serviceResources(m *config.Manifest, fs afero.Fs, p *AddServiceParameters) 
 		return nil, err
 	}
 
-	cicdEnv, err := m.GetCICDEnvironment()
+	cicdEnv, err := m.GetCICD()
 	if err != nil {
 		return nil, err
 	}

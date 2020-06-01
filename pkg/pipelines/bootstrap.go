@@ -117,7 +117,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate GitHub Webhook Secret: %w", err)
 	}
-	cicdEnv, err := m.GetCICDEnvironment()
+	cicdEnv, err := m.GetCICD()
 	if err != nil {
 		return nil, fmt.Errorf("bootstrap environments: %w", err)
 	}
@@ -170,9 +170,9 @@ func bootstrapServiceDeployment(dev *config.Environment) (res.Resources, error) 
 	return resources, nil
 }
 
-func bootstrapEnvironments(prefix, repoURL, secretName string, ns map[string]string) ([]*config.Environment, *config.Special, error) {
+func bootstrapEnvironments(prefix, repoURL, secretName string, ns map[string]string) ([]*config.Environment, *config.Config, error) {
 	envs := []*config.Environment{}
-	cicdEnv := &config.Special{}
+	cicdEnv := &config.Config{}
 	cicd := &config.Cicd{}
 	argo := &config.Argo{}
 	for k, v := range ns {
@@ -202,7 +202,7 @@ func bootstrapEnvironments(prefix, repoURL, secretName string, ns map[string]str
 		}
 	}
 	argo = &config.Argo{Namespace: prefix + "argocd"}
-	cicdEnv = &config.Special{CICDEnv: cicd, ArgoCDEnv: argo}
+	cicdEnv = &config.Config{CICD: cicd, Argo: argo}
 	return envs, cicdEnv, nil
 }
 

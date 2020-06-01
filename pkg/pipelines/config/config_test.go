@@ -12,11 +12,11 @@ import (
 
 func TestManifestWalk(t *testing.T) {
 	m := &Manifest{
-		Config: &Special{
-			CICDEnv: &Cicd{
+		Config: &Config{
+			CICD: &Cicd{
 				Namespace: "cicd",
 			},
-			ArgoCDEnv: &Argo{
+			Argo: &Argo{
 				Namespace: "argocd",
 			},
 		},
@@ -198,8 +198,8 @@ func TestFindCICDEnviroment(t *testing.T) {
 		// {[]testEnv{{"test-cicd", true, false}, {"staging", false, false}, {"dev", false, false}}, "test-cicd", ""},
 		// {[]testEnv{{"test-cicd", true, false}, {"oc-cicd", true, false}, {"dev", false, false}}, "", "found multiple CI/CD environments"},
 		{&Manifest{
-			Config: &Special{
-				CICDEnv: &Cicd{
+			Config: &Config{
+				CICD: &Cicd{
 					Namespace: "cicd",
 				},
 			},
@@ -207,8 +207,8 @@ func TestFindCICDEnviroment(t *testing.T) {
 			Namespace: "cicd",
 		}, ""},
 		{&Manifest{
-			Config: &Special{
-				ArgoCDEnv: &Argo{
+			Config: &Config{
+				Argo: &Argo{
 					Namespace: "argocd",
 				},
 			},
@@ -218,9 +218,9 @@ func TestFindCICDEnviroment(t *testing.T) {
 	for i, tt := range envTests {
 		t.Run(fmt.Sprintf("test %d", i), func(rt *testing.T) {
 			// m := &Manifest{Environments: makeEnvs(tt.names)}
-			// env, err := m.GetCICDEnvironment()
+			// env, err := m.GetCICD()
 			m := tt.manifest
-			_, err := m.GetCICDEnvironment()
+			_, err := m.GetCICD()
 			if !matchErrorString(t, tt.err, err) {
 				rt.Errorf("did not match error, got %s, want %s", err, tt.err)
 				return

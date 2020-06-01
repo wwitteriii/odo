@@ -36,7 +36,7 @@ func buildEventListenerResources(gitOpsRepo string, m *config.Manifest) (res.Res
 	if gitOpsRepo == "" {
 		return res.Resources{}, nil
 	}
-	cicd, err := m.GetCICDEnvironment()
+	cicd, err := m.GetCICD()
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (tk *tektonBuilder) Service(env *config.Environment, svc *config.Service) e
 func (tk *tektonBuilder) Environment(env *config.Environment) error {
 	// if env.IsCICD {
 	// 	triggers, err := createTriggersForCICD(tk.gitOpsRepo, env)
-	cicdEnv, _ := tk.manifest.GetCICDEnvironment()
+	cicdEnv, _ := tk.manifest.GetCICD()
 	if cicdEnv != nil {
 		triggers, err := createTriggersForCICD(tk.gitOpsRepo, cicdEnv)
 		if err != nil {

@@ -38,7 +38,7 @@ func Build(argoNS, repoURL string, m *config.Manifest) (res.Resources, error) {
 	if repoURL == "" {
 		return res.Resources{}, nil
 	}
-	argoEnv, err := m.GetArgoCDEnvironment()
+	argoEnv, err := m.GetArgoironment()
 	// If there's no ArgoCD environment, then we don't need to do anything.
 	// if err != nil {
 	// 	return res.Resources{}, nil

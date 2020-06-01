@@ -50,11 +50,11 @@ func TestBuildEnvironmentsDoesNotOutputCIorArgo(t *testing.T) {
 		// 	{Name: "test-ci", IsCICD: true},
 		// 	{Name: "test-argo", IsArgoCD: true},
 		// },
-		Config: &config.Special{
-			CICDEnv: &config.Cicd{
+		Config: &config.Config{
+			CICD: &config.Cicd{
 				Namespace: "cicd",
 			},
-			ArgoCDEnv: &config.Argo{
+			Argo: &config.Argo{
 				Namespace: "argocd",
 			},
 		},
@@ -79,8 +79,8 @@ func TestBuildEnvironmentsAddsKustomizedFiles(t *testing.T) {
 	afero.WriteFile(appFs, "environments/test-dev/base/routes/01-route.yaml", []byte(`this is a file`), 0644)
 
 	m := &config.Manifest{
-		Config: &config.Special{
-			CICDEnv: &config.Cicd{
+		Config: &config.Config{
+			CICD: &config.Cicd{
 				Namespace: "cicd",
 			},
 		},
@@ -107,7 +107,7 @@ func TestBuildEnvironmentsAddsKustomizedFiles(t *testing.T) {
 	}
 }
 
-func TestBuildEnvironmentFilesWithNoCICDEnv(t *testing.T) {
+func TestBuildEnvironmentFilesWithNoCICD(t *testing.T) {
 	var appFs = ioutils.NewMapFilesystem()
 	m := buildManifest(false)
 
@@ -176,8 +176,8 @@ func buildManifest(withCICD bool) *config.Manifest {
 
 	if withCICD {
 		return &config.Manifest{
-			Config: &config.Special{
-				CICDEnv: &config.Cicd{
+			Config: &config.Config{
+				CICD: &config.Cicd{
 					Namespace: "cicd",
 				},
 			},
