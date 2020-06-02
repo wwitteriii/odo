@@ -176,12 +176,11 @@ func (vv *validateVisitor) validateConfig(manifest *Manifest) []error {
 	errs := []error{}
 	if manifest.Config != nil {
 		if manifest.Config.ArgoCDConfig != nil {
-			err := validateName(manifest.Config.ArgoCDConfig.Name, fmt.Sprintf("config.%s", manifest.Config.ArgoCDConfig.Name))
-			fmt.Println("There was an error here", err)
+			err := validateName(manifest.Config.ArgoCDConfig.Namespace, fmt.Sprintf("config.%s", manifest.Config.ArgoCDConfig.Namespace))
 			if err != nil {
 				errs = append(errs, err)
 			}
-			vv.configNames[manifest.Config.ArgoCDConfig.Name] = true
+			vv.configNames[manifest.Config.ArgoCDConfig.Namespace] = true
 		}
 		if manifest.Config.PipelineConfig != nil {
 			err := validateName(manifest.Config.PipelineConfig.Name, fmt.Sprintf("config.%s", manifest.Config.PipelineConfig.Name))

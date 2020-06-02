@@ -17,7 +17,7 @@ func TestManifestWalk(t *testing.T) {
 				Name: "cicd",
 			},
 			ArgoCDConfig: &ArgoCD{
-				Name: "argocd",
+				Namespace: "argocd",
 			},
 		},
 		Environments: []*Environment{
@@ -102,7 +102,7 @@ func TestFindCICDEnviroment(t *testing.T) {
 		{&Manifest{
 			Config: &Config{
 				ArgoCDConfig: &ArgoCD{
-					Name: "argocd",
+					Namespace: "argocd",
 				},
 			},
 		}, nil, ""},

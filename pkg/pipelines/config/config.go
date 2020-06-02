@@ -129,7 +129,7 @@ type Pipeline struct {
 
 //Argo checks for the argocd environments
 type ArgoCD struct {
-	Name string `json:"name,omitempty"`
+	Namespace string `json:"name,omitempty"`
 }
 
 // GoString return environment name

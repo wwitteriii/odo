@@ -70,13 +70,13 @@ func (b *argocdBuilder) Application(env *config.Environment, app *config.Applica
 }
 
 func ArgoCDConfigironmentResources(env *config.ArgoCD, files res.Resources) error {
-	if env.Name == "" {
+	if env.Namespace == "" {
 		return nil
 	}
 	basePath := filepath.Join(config.PathForArgoCDConfig(), "config")
 	filename := filepath.Join(basePath, "kustomization.yaml")
 	resourceNames := []string{}
-	for k, _ := range files {
+	for k := range files {
 		resourceNames = append(resourceNames, filepath.Base(k))
 	}
 	sort.Strings(resourceNames)

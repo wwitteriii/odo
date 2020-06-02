@@ -51,7 +51,7 @@ func TestBuildEnvironmentsDoesNotOutputCIorArgo(t *testing.T) {
 				Name: "cicd",
 			},
 			ArgoCDConfig: &config.ArgoCD{
-				Name: "argocd",
+				Namespace: "argocd",
 			},
 		},
 	}
@@ -150,55 +150,37 @@ func buildManifest(withCICD bool) *config.Manifest {
 					Name: "cicd",
 				},
 			},
-			Environments: []*config.Environment{
-				{
-					Name: "test-dev",
-					Apps: []*config.Application{
-						{
-							Name: "my-app-1",
-							ServiceRefs: []string{
-								"service-http",
-								"service-metrics",
-							},
-						},
-					},
-					Services: []*config.Service{
-						{
-							Name:      "service-http",
-							SourceURL: "https://github.com/myproject/myservice.git",
-						},
-						{
-							Name: "service-metrics",
-						},
-					},
-				},
-			},
+			Environments: createEnvironment(),
 		}
 	}
 	return &config.Manifest{
-		Environments: []*config.Environment{
-			{
-				Name: "test-dev",
-				Apps: []*config.Application{
-					{
-						Name: "my-app-1",
-						ServiceRefs: []string{
-							"service-http",
-							"service-metrics",
-						},
+		Environments: createEnvironment(),
+	}
+
+}
+
+func createEnvironment() []*config.Environment {
+	return []*config.Environment{
+		{
+			Name: "test-dev",
+			Apps: []*config.Application{
+				{
+					Name: "my-app-1",
+					ServiceRefs: []string{
+						"service-http",
+						"service-metrics",
 					},
 				},
-				Services: []*config.Service{
-					{
-						Name:      "service-http",
-						SourceURL: "https://github.com/myproject/myservice.git",
-					},
-					{
-						Name: "service-metrics",
-					},
+			},
+			Services: []*config.Service{
+				{
+					Name:      "service-http",
+					SourceURL: "https://github.com/myproject/myservice.git",
+				},
+				{
+					Name: "service-metrics",
 				},
 			},
 		},
 	}
-
 }

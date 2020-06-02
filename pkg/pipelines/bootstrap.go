@@ -201,7 +201,7 @@ func bootstrapEnvironments(prefix, repoURL, secretName string, ns map[string]str
 
 		}
 	}
-	argo = &config.ArgoCD{Name: prefix + "argocd"}
+	argo = &config.ArgoCD{Namespace: prefix + "argocd"}
 	pipelineconfig = &config.Config{PipelineConfig: cicd, ArgoCDConfig: argo}
 	return envs, pipelineconfig, nil
 }

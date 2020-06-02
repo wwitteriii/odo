@@ -43,7 +43,7 @@ func TestBuildCreatesArgoCD(t *testing.T) {
 		},
 		Config: &config.Config{
 
-			ArgoCDConfig: &config.ArgoCD{Name: "argocd"},
+			ArgoCDConfig: &config.ArgoCD{Namespace: "argocd"},
 		},
 	}
 
@@ -88,7 +88,7 @@ func TestBuildCreatesArgoCDWithMultipleApps(t *testing.T) {
 		},
 		Config: &config.Config{
 
-			ArgoCDConfig: &config.ArgoCD{Name: "argocd"},
+			ArgoCDConfig: &config.ArgoCD{Namespace: "argocd"},
 		},
 	}
 
@@ -113,7 +113,7 @@ func TestBuildWithNoRepoURL(t *testing.T) {
 		},
 		Config: &config.Config{
 
-			ArgoCDConfig: &config.ArgoCD{Name: "argocd"},
+			ArgoCDConfig: &config.ArgoCD{Namespace: "argocd"},
 		},
 	}
 
@@ -158,7 +158,7 @@ func TestBuildWithRepoConfig(t *testing.T) {
 		},
 		Config: &config.Config{
 
-			ArgoCDConfig: &config.ArgoCD{Name: "argocd"},
+			ArgoCDConfig: &config.ArgoCD{Namespace: "argocd"},
 		},
 	}
 

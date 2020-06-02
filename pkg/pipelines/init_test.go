@@ -16,7 +16,7 @@ import (
 )
 
 var testpipelineConfig = &config.Pipeline{Name: "tst-cicd"}
-var testArgoCDConfig = &config.ArgoCD{Name: "tst-argocd"}
+var testArgoCDConfig = &config.ArgoCD{Namespace: "tst-argocd"}
 var Config = &config.Config{ArgoCDConfig: testArgoCDConfig, PipelineConfig: testpipelineConfig}
 
 func TestCreateManifest(t *testing.T) {
