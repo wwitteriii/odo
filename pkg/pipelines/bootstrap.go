@@ -96,7 +96,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	if err != nil {
 		return nil, err
 	}
-	m := createManifest(o.GitOpsRepoURL, configEnv, envs...)
+	m := createManifest(gitOpsRepo.URL(), configEnv, envs...)
 
 	devEnv := m.GetEnvironment(ns["dev"])
 	if devEnv == nil {

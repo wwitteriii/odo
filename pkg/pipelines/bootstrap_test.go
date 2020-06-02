@@ -52,10 +52,10 @@ func TestBootstrapManifest(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := res.Resources{
-		"config/tst-cicd/base/pipelines/03-secrets/github-webhook-secret-http-api-svc.yaml": hookSecret,
-		"environments/tst-dev/services/http-api-svc/base/config/100-deployment.yaml":        deployment.Create("tst-dev", "http-api-svc", bootstrapImage, deployment.ContainerPort(8080)),
-		"environments/tst-dev/services/http-api-svc/base/config/200-service.yaml":           createBootstrapService("tst-dev", "http-api-svc"),
-		"environments/tst-dev/services/http-api-svc/base/config/kustomization.yaml":         &res.Kustomization{Resources: []string{"100-deployment.yaml", "200-service.yaml"}},
+		"config/tst-cicd/base/pipelines/03-secrets/webhook-secret-tst-dev-http-api-svc.yaml": hookSecret,
+		"environments/tst-dev/services/http-api-svc/base/config/100-deployment.yaml":         deployment.Create("tst-dev", "http-api-svc", bootstrapImage, deployment.ContainerPort(8080)),
+		"environments/tst-dev/services/http-api-svc/base/config/200-service.yaml":            createBootstrapService("tst-dev", "http-api-svc"),
+		"environments/tst-dev/services/http-api-svc/base/config/kustomization.yaml":          &res.Kustomization{Resources: []string{"100-deployment.yaml", "200-service.yaml"}},
 		pipelinesFile: &config.Manifest{
 			GitOpsURL: "https://github.com/my-org/gitops.git",
 			Environments: []*config.Environment{

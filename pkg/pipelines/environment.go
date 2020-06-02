@@ -54,7 +54,7 @@ func AddEnv(o *EnvParameters, appFs afero.Fs) error {
 }
 
 func newEnvironment(m *config.Manifest, name string) (*config.Environment, error) {
-	cicd, err := m.GetCICDEnvironment()
+	cicd, err := m.GetPipelineConfig()
 	if err != nil {
 		return nil, err
 	}

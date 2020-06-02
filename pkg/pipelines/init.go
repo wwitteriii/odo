@@ -219,9 +219,9 @@ func createTriggerBindings(r scm.Repository, outputs res.Resources, ns string) {
 	outputs[filepath.Join("06-bindings", pushBindingName+".yaml")] = pushBinding
 }
 
-func createManifest(gitOpsRepo scm.Repository, configEnv *config.Config, envs ...*config.Environment) *config.Manifest {
+func createManifest(gitOpsRepoURL string, configEnv *config.Config, envs ...*config.Environment) *config.Manifest {
 	return &config.Manifest{
-		GitOpsURL:    gitOpsRepo.URL(),
+		GitOpsURL:    gitOpsRepoURL,
 		Environments: envs,
 		Config:       configEnv,
 	}

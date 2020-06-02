@@ -86,10 +86,14 @@ func TestNewEnvironment(t *testing.T) {
 		{
 			m: &config.Manifest{
 				GitOpsURL: "https://github.com/foo/bar",
+				Config: &config.Config{
+					PipelineConfig: &config.Pipeline{
+						Name: "my-cicd",
+					},
+				},
 				Environments: []*config.Environment{
 					{
-						IsCICD: true,
-						Name:   "my-cicd",
+						Name: "myenv1",
 					},
 				},
 			},
@@ -108,10 +112,14 @@ func TestNewEnvironment(t *testing.T) {
 		{
 			m: &config.Manifest{
 				GitOpsURL: "https://gitlab.com/foo/bar",
+				Config: &config.Config{
+					PipelineConfig: &config.Pipeline{
+						Name: "my-cicd",
+					},
+				},
 				Environments: []*config.Environment{
 					{
-						IsCICD: true,
-						Name:   "my-cicd",
+						Name: "my-cicd",
 					},
 				},
 			},
@@ -130,10 +138,14 @@ func TestNewEnvironment(t *testing.T) {
 		{
 			m: &config.Manifest{
 				// no GitOpsURL -> no Pipelines
+				Config: &config.Config{
+					PipelineConfig: &config.Pipeline{
+						Name: "my-cicd",
+					},
+				},
 				Environments: []*config.Environment{
 					{
-						IsCICD: true,
-						Name:   "my-cicd",
+						Name: "my-env2",
 					},
 				},
 			},
@@ -149,8 +161,7 @@ func TestNewEnvironment(t *testing.T) {
 				Environments: []*config.Environment{
 					{
 						// no CICD -> no Pipelines
-						IsCICD: false,
-						Name:   "my-cicd",
+						Name: "my-env4",
 					},
 				},
 			},

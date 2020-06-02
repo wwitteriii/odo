@@ -42,10 +42,10 @@ func TestServiceResourcesWithCICD(t *testing.T) {
 	assertNoError(t, err)
 
 	want := res.Resources{
-		"config/cicd/base/pipelines/03-secrets/github-webhook-secret-test.yaml": hookSecret,
-		"environments/test-dev/apps/test-app/base/kustomization.yaml":           &res.Kustomization{Bases: []string{"../../../services/test-svc", "../../../services/test"}},
-		"environments/test-dev/apps/test-app/kustomization.yaml":                &res.Kustomization{Bases: []string{"overlays"}},
-		"environments/test-dev/apps/test-app/overlays/kustomization.yaml":       &res.Kustomization{Bases: []string{"../base"}},
+		"config/cicd/base/pipelines/03-secrets/webhook-secret-test-dev-test.yaml": hookSecret,
+		"environments/test-dev/apps/test-app/base/kustomization.yaml":             &res.Kustomization{Bases: []string{"../../../services/test-svc", "../../../services/test"}},
+		"environments/test-dev/apps/test-app/kustomization.yaml":                  &res.Kustomization{Bases: []string{"overlays"}},
+		"environments/test-dev/apps/test-app/overlays/kustomization.yaml":         &res.Kustomization{Bases: []string{"../base"}},
 		"pipelines.yaml": &config.Manifest{
 			Config: &config.Config{
 				PipelineConfig: &config.Pipeline{
@@ -140,9 +140,6 @@ func TestServiceResourcesWithoutCICD(t *testing.T) {
 						{
 							Name:      "test-svc",
 							SourceURL: "https://github.com/myproject/test-svc",
-							Webhook: &config.Webhook{
-								Secret: &config.Secret{Name: "webhook-secret-test-dev-test-svc", Namespace: "cicd"},
-							},
 						},
 						{
 							Name:      "test",
@@ -201,12 +198,6 @@ func TestAddServiceWithoutApp(t *testing.T) {
 						{
 							Name:      "test-svc",
 							SourceURL: "https://github.com/myproject/test-svc",
-							Webhook: &config.Webhook{
-								Secret: &config.Secret{
-									Name:      "webhook-secret-test-dev-test-svc",
-									Namespace: "cicd",
-								},
-							},
 						},
 						{Name: "test", SourceURL: "http://github.com/org/test"},
 					},
@@ -247,24 +238,26 @@ func TestAddService(t *testing.T) {
 	fakeFs := ioutils.NewMapFilesystem()
 	outputPath := afero.GetTempDir(fakeFs, "test")
 	manifestPath := filepath.Join(outputPath, pipelinesFile)
-	m := buildManifest(false, false)
+	m := buildManifest(true, true)
 	b, err := yaml.Marshal(m)
 	assertNoError(t, err)
 	err = afero.WriteFile(fakeFs, manifestPath, b, 0644)
 	assertNoError(t, err)
 	wantedPaths := []string{
-		"environments/test-dev/apps/test-app/base/kustomization.yaml",
-		"environments/test-dev/apps/test-app/overlays/kustomization.yaml",
-		"environments/test-dev/apps/test-app/kustomization.yaml",
+		"environments/test-dev/apps/new-app/base/kustomization.yaml",
+		"environments/test-dev/apps/new-app/overlays/kustomization.yaml",
+		"environments/test-dev/apps/new-app/kustomization.yaml",
 		"environments/test-dev/services/test/base/kustomization.yaml",
 		"environments/test-dev/services/test/overlays/kustomization.yaml",
 		"environments/test-dev/services/test/kustomization.yaml",
 		"config/cicd/base/pipelines/03-secrets/webhook-secret-test-dev-test.yaml",
 		"config/cicd/base/pipelines/kustomization.yaml",
 		"pipelines.yaml",
+		"config/argocd/config/test-dev-test-app-app.yaml",
+		"config/argocd/config/test-dev-new-app-app.yaml",
 	}
 	err = AddService(&AddServiceParameters{
-		AppName:       "test-app",
+		AppName:       "new-app",
 		EnvName:       "test-dev",
 		GitRepoURL:    "http://github.com/org/test",
 		Manifest:      manifestPath,
