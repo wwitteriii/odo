@@ -119,7 +119,7 @@ func TestServiceResourcesWithoutCICD(t *testing.T) {
 		"environments/test-dev/env/base/kustomization.yaml":               &res.Kustomization{Resources: []string{"test-dev-environment.yaml"}},
 		"pipelines.yaml": &config.Manifest{
 			Config: &config.Config{
-				ArgoCDEnv: &config.Argo{
+				ArgoCDConfig: &config.Argo{
 					Name: "argocd",
 				},
 			},
@@ -247,7 +247,7 @@ func TestAddService(t *testing.T) {
 	fakeFs := ioutils.NewMapFilesystem()
 	outputPath := afero.GetTempDir(fakeFs, "test")
 	manifestPath := filepath.Join(outputPath, pipelinesFile)
-	m := buildManifest(true, false)
+	m := buildManifest(false, false)
 	b, err := yaml.Marshal(m)
 	assertNoError(t, err)
 	err = afero.WriteFile(fakeFs, manifestPath, b, 0644)
@@ -259,8 +259,6 @@ func TestAddService(t *testing.T) {
 		"environments/test-dev/services/test/base/kustomization.yaml",
 		"environments/test-dev/services/test/overlays/kustomization.yaml",
 		"environments/test-dev/services/test/kustomization.yaml",
-		"config/cicd/base/pipelines/03-secrets/github-webhook-secret-test.yaml",
-		"config/cicd/base/pipelines/kustomization.yaml",
 		"pipelines.yaml",
 	}
 	err = AddService(&AddServiceParameters{
@@ -300,7 +298,7 @@ func TestServiceWithArgoCD(t *testing.T) {
 				CICDEnv: &config.Cicd{
 					Name: "cicd",
 				},
-				ArgoCDEnv: &config.Argo{
+				ArgoCDConfig: &config.Argo{
 					Name: "argocd",
 				},
 			},
@@ -364,7 +362,7 @@ func buildManifest(withCICD, withArgoCD bool) *config.Manifest {
 	if !withCICD && withArgoCD {
 		return &config.Manifest{
 			Config: &config.Config{
-				ArgoCDEnv: &config.Argo{
+				ArgoCDConfig: &config.Argo{
 					Name: "argocd",
 				},
 			},
@@ -403,7 +401,7 @@ func buildManifest(withCICD, withArgoCD bool) *config.Manifest {
 				CICDEnv: &config.Cicd{
 					Name: "cicd",
 				},
-				ArgoCDEnv: &config.Argo{
+				ArgoCDConfig: &config.Argo{
 					Name: "argocd",
 				},
 			},
