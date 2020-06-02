@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
+	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	triggersv1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -25,7 +25,7 @@ func TestCreateBindingParam(t *testing.T) {
 
 func TestCreateImageRepoBinding(t *testing.T) {
 	imageRepoBinding := triggersv1.TriggerBinding{
-		TypeMeta: triggerBindingTypeMeta,
+		TypeMeta: TriggerBindingTypeMeta,
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "test-binding",
 			Namespace: "testns",

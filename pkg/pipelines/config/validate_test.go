@@ -22,6 +22,15 @@ func TestValidate(t *testing.T) {
 		wantErr  error
 	}{
 		{
+			"service repo URL must be the same Git type as the GitOps URL",
+			"testdata/svc_git_type_mismatch.yaml",
+			multierror.Join(
+				[]error{
+					inconsistentGitTypeError("github", "https://gitlab.com/myproject/myservice.git", []string{"environments.test-dev.services.bus-svc"}),
+				},
+			),
+		},
+		{
 			"Environment Duplicate Name entry",
 			"testdata/environment_config_name.yaml",
 			multierror.Join(
