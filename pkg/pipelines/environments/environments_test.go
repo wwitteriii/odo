@@ -47,10 +47,10 @@ func TestBuildEnvironmentsDoesNotOutputCIorArgo(t *testing.T) {
 	var appFs = ioutils.NewMapFilesystem()
 	m := &config.Manifest{
 		Config: &config.Config{
-			CICDEnv: &config.Cicd{
+			PipelineConfig: &config.Pipeline{
 				Name: "cicd",
 			},
-			ArgoCDEnv: &config.Argo{
+			ArgoCDConfig: &config.ArgoCD{
 				Name: "argocd",
 			},
 		},
@@ -76,7 +76,7 @@ func TestBuildEnvironmentsAddsKustomizedFiles(t *testing.T) {
 
 	m := &config.Manifest{
 		Config: &config.Config{
-			CICDEnv: &config.Cicd{
+			PipelineConfig: &config.Pipeline{
 				Name: "cicd",
 			},
 		},
@@ -146,7 +146,7 @@ func buildManifest(withCICD bool) *config.Manifest {
 	if withCICD {
 		return &config.Manifest{
 			Config: &config.Config{
-				CICDEnv: &config.Cicd{
+				PipelineConfig: &config.Pipeline{
 					Name: "cicd",
 				},
 			},
@@ -175,32 +175,30 @@ func buildManifest(withCICD bool) *config.Manifest {
 			},
 		}
 	}
-	if !withCICD {
-		return &config.Manifest{
-			Environments: []*config.Environment{
-				{
-					Name: "test-dev",
-					Apps: []*config.Application{
-						{
-							Name: "my-app-1",
-							ServiceRefs: []string{
-								"service-http",
-								"service-metrics",
-							},
-						},
-					},
-					Services: []*config.Service{
-						{
-							Name:      "service-http",
-							SourceURL: "https://github.com/myproject/myservice.git",
-						},
-						{
-							Name: "service-metrics",
+	return &config.Manifest{
+		Environments: []*config.Environment{
+			{
+				Name: "test-dev",
+				Apps: []*config.Application{
+					{
+						Name: "my-app-1",
+						ServiceRefs: []string{
+							"service-http",
+							"service-metrics",
 						},
 					},
 				},
+				Services: []*config.Service{
+					{
+						Name:      "service-http",
+						SourceURL: "https://github.com/myproject/myservice.git",
+					},
+					{
+						Name: "service-metrics",
+					},
+				},
 			},
-		}
+		},
 	}
-	return nil
+
 }

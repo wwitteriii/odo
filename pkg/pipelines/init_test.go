@@ -15,9 +15,9 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/secrets"
 )
 
-var testCICDEnv = &config.Cicd{Name: "tst-cicd"}
-var testargocdEnv = &config.Argo{Name: "tst-argocd"}
-var Config = &config.Config{ArgoCDEnv: testargocdEnv, CICDEnv: testCICDEnv}
+var testpipelineConfig = &config.Pipeline{Name: "tst-cicd"}
+var testArgoCDConfig = &config.ArgoCD{Name: "tst-argocd"}
+var Config = &config.Config{ArgoCDConfig: testArgoCDConfig, PipelineConfig: testpipelineConfig}
 
 func TestCreateManifest(t *testing.T) {
 	repoURL := "https://github.com/foo/bar.git"
@@ -55,9 +55,9 @@ func TestInitialFiles(t *testing.T) {
 	}
 
 	want := res.Resources{
-		pipelinesFile: createManifest(gitOpsURL, &config.Config{CICDEnv: testCICDEnv}),
+		pipelinesFile: createManifest(gitOpsURL, &config.Config{PipelineConfig: testpipelineConfig}),
 	}
-	resources, err := createCICDResources(fakeFs, repo, testCICDEnv, gitOpsWebhook, "")
+	resources, err := createCICDResources(fakeFs, repo, testpipelineConfig, gitOpsWebhook, "")
 	if err != nil {
 		t.Fatalf("CreatePipelineResources() failed due to :%s\n", err)
 	}

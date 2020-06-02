@@ -148,9 +148,9 @@ func CreateDockerSecret(fs afero.Fs, dockerConfigJSONFilename, ns string) (*ssv1
 }
 
 func createInitialFiles(fs afero.Fs, repo scm.Repository, prefix, gitOpsWebhookSecret, dockerConfigPath string) (res.Resources, error) {
-	cicd := &config.Cicd{Name: prefix + "cicd"}
-	cicdEnv := &config.Config{CICDEnv: cicd}
-	pipelines := createManifest(repo.URL(), cicdEnv)
+	cicd := &config.Pipeline{Name: prefix + "cicd"}
+	pipelineConfig := &config.Config{PipelineConfig: cicd}
+	pipelines := createManifest(repo.URL(), pipelineConfig)
 	initialFiles := res.Resources{
 		pipelinesFile: pipelines,
 	}
@@ -170,8 +170,8 @@ func createInitialFiles(fs afero.Fs, repo scm.Repository, prefix, gitOpsWebhookS
 }
 
 // createCICDResources creates resources assocated to pipelines.
-func createCICDResources(fs afero.Fs, repo scm.Repository, cicdEnv *config.Cicd, gitOpsWebhookSecret, dockerConfigJSONPath string) (res.Resources, error) {
-	cicdNamespace := cicdEnv.Name
+func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *config.Pipeline, gitOpsWebhookSecret, dockerConfigJSONPath string) (res.Resources, error) {
+	cicdNamespace := pipelineConfig.Name
 	// key: path of the resource
 	// value: YAML content of the resource
 	outputs := map[string]interface{}{}
@@ -199,7 +199,7 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, cicdEnv *config.Cicd,
 	}
 
 	outputs[rolebindingsPath] = roles.CreateClusterRoleBinding(meta.NamespacedName("", roleBindingName), sa, "ClusterRole", roles.ClusterRoleName)
-	outputs[gitopsTasksPath] = tasks.CreateDeployFromSourceTask(cicdNamespace, filepath.Join(config.PathForCICDEnvironment(cicdEnv), "base"))
+	outputs[gitopsTasksPath] = tasks.CreateDeployFromSourceTask(cicdNamespace, filepath.Join(config.PathForPipelineConfig(pipelineConfig), "base"))
 	outputs[appTaskPath] = tasks.CreateDeployUsingKubectlTask(cicdNamespace)
 	outputs[ciPipelinesPath] = pipelines.CreateCIPipeline(meta.NamespacedName(cicdNamespace, "ci-dryrun-from-pr-pipeline"), cicdNamespace)
 	outputs[cdPipelinesPath] = pipelines.CreateCDPipeline(meta.NamespacedName(cicdNamespace, "cd-deploy-from-push-pipeline"), cicdNamespace)
@@ -254,7 +254,7 @@ func addPrefixToResources(prefix string, files res.Resources) map[string]interfa
 
 // TODO: this should probably use the .FindCICDEnvironment on the pipelines.
 func cicdEnvironmentPath(m *config.Config) string {
-	return config.PathForCICDEnvironment(m.CICDEnv)
+	return config.PathForPipelineConfig(m.PipelineConfig)
 }
 
 func getResourceFiles(res res.Resources) []string {

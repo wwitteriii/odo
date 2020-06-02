@@ -21,15 +21,15 @@ func PathForEnvironment(env *Environment) string {
 	return filepath.Join("environments", env.Name)
 }
 
-//PathForCICDEnvironment returns the path only for the CICD environment
-func PathForCICDEnvironment(cicd *Cicd) string {
-	return filepath.Join("config", cicd.Name)
+//PathForPipelineConfig returns the path only for the CICD environment
+func PathForPipelineConfig(pipeline *Pipeline) string {
+	return filepath.Join("config", pipeline.Name)
 }
 
-// func PathForArgoEnvironment(argo *Argo) string {
+// func PathForArgoCDConfig(argo *Argo) string {
 // 	return filepath.Join("config", argo.Namespace)
 // }
-func PathForArgoEnvironment() string {
+func PathForArgoCDConfig() string {
 	return filepath.Join("config", "argocd")
 }
 
@@ -83,20 +83,20 @@ func (m *Manifest) AddService(envName, appName string, svc *Service) error {
 }
 
 // GetPipelineConfig returns the CICD Environment if one exists.
-func (m *Manifest) GetPipelineConfig() (*Cicd, error) {
+func (m *Manifest) GetPipelineConfig() (*Pipeline, error) {
 	if m.Config != nil {
-		if m.Config.CICDEnv != nil {
-			return m.Config.CICDEnv, nil
+		if m.Config.PipelineConfig != nil {
+			return m.Config.PipelineConfig, nil
 		}
 	}
 	return nil, nil
 }
 
 // GetArgoCDConfig returns the ArgoCD Environment if one exists.
-func (m *Manifest) GetArgoCDConfig() *Argo {
+func (m *Manifest) GetArgoCDConfig() *ArgoCD {
 	if m.Config != nil {
-		if m.Config.ArgoCDEnv != nil {
-			return m.Config.ArgoCDEnv
+		if m.Config.ArgoCDConfig != nil {
+			return m.Config.ArgoCDConfig
 		}
 	}
 	return nil
@@ -105,32 +105,31 @@ func (m *Manifest) GetArgoCDConfig() *Argo {
 
 // Environment is a slice of Apps, these are the named apps in the namespace.
 //
-// The CICD environment will be used to automatically generate CI/CD resources
-// into.
-// The CICD environment should not have any applications defined.
+
 type Environment struct {
 	Name      string         `json:"name,omitempty"`
 	Pipelines *Pipelines     `json:"pipelines,omitempty"`
 	Services  []*Service     `json:"services,omitempty"`
 	Apps      []*Application `json:"apps,omitempty"`
-	// TODO: this should check that there is 0 or 1 CICD environment in the
-	// manfifest.
 }
 
-//Special are the Config environments that constitute the argocd and cicd environment
+//Config are the Config environments that constitute the argocd and pipeline environment
+// The PipelineConfig will be used to automatically generate CI/CD resources
+// into.
+// The PipelineConfig should not have any applications defined.
 type Config struct {
-	CICDEnv   *Cicd `json:"cicdenv,omitempty"`
-	ArgoCDEnv *Argo `json:"argocdenv,omitempty"`
+	PipelineConfig *Pipeline `json:"PipelineConfig,omitempty"`
+	ArgoCDConfig   *ArgoCD   `json:"ArgoCDConfig,omitempty"`
 }
 
-//Cicd checks for the cicd environments
-type Cicd struct {
-	Name string `json:"namespace,omitempty"`
+//Pipeline checks for the cicd environments
+type Pipeline struct {
+	Name string `json:"name,omitempty"`
 }
 
-//Argo checks for the cicd environments
-type Argo struct {
-	Name string `json:"namespace,omitempty"`
+//Argo checks for the argocd environments
+type ArgoCD struct {
+	Name string `json:"name,omitempty"`
 }
 
 // GoString return environment name

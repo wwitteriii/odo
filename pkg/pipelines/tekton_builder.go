@@ -64,15 +64,15 @@ func (tk *tektonBuilder) Service(env *config.Environment, svc *config.Service) e
 }
 
 func (tk *tektonBuilder) Environment(env *config.Environment) error {
-	cicdEnv, _ := tk.manifest.GetPipelineConfig()
-	if cicdEnv != nil {
-		triggers, err := createTriggersForCICD(tk.gitOpsRepo, cicdEnv)
+	pipelineConfig, _ := tk.manifest.GetPipelineConfig()
+	if pipelineConfig != nil {
+		triggers, err := createTriggersForCICD(tk.gitOpsRepo, pipelineConfig)
 		if err != nil {
 			return err
 		}
 		tk.triggers = append(tk.triggers, triggers...)
-		cicdPath := config.PathForCICDEnvironment(cicdEnv)
-		tk.files[getEventListenerPath(cicdPath)] = eventlisteners.CreateELFromTriggers(cicdEnv.Name, saName, tk.triggers)
+		cicdPath := config.PathForPipelineConfig(pipelineConfig)
+		tk.files[getEventListenerPath(cicdPath)] = eventlisteners.CreateELFromTriggers(pipelineConfig.Name, saName, tk.triggers)
 	}
 	return nil
 }
@@ -81,7 +81,7 @@ func getEventListenerPath(cicdPath string) string {
 	return filepath.Join(cicdPath, "base", "pipelines", eventListenerPath)
 }
 
-func createTriggersForCICD(gitOpsRepo string, env *config.Cicd) ([]v1alpha1.EventListenerTrigger, error) {
+func createTriggersForCICD(gitOpsRepo string, env *config.Pipeline) ([]v1alpha1.EventListenerTrigger, error) {
 	triggers := []v1alpha1.EventListenerTrigger{}
 	repo, err := scm.NewRepository(gitOpsRepo)
 	if err != nil {
