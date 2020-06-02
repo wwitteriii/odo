@@ -225,6 +225,7 @@ func (m Manifest) Walk(visitor interface{}) error {
 			}
 		}
 	}
+
 	return nil
 }
 

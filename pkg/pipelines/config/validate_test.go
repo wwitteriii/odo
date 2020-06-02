@@ -22,15 +22,24 @@ func TestValidate(t *testing.T) {
 		wantErr  error
 	}{
 		{
+			"Environment Duplicate Name entry",
+			"testdata/environment_config_name.yaml",
+			multierror.Join(
+				[]error{
+					fmt.Errorf("The environment tst-cicd cannot have the same name as the config names"),
+				},
+			),
+		},
+		{
 			"Invalid entity name error",
 			"testdata/name_error.yaml",
 			multierror.Join(
 				[]error{
+					invalidNameError("argo.cd", DNS1035Error, []string{"config.argo.cd"}),
 					invalidNameError("", DNS1035Error, []string{"environments.develo.pment.services"}),
 					invalidNameError("", DNS1035Error, []string{"environments.develo.pment.services.pipelines.integration.binding"}),
 					invalidNameError("app-1$.", DNS1035Error, []string{"environments.develo.pment.apps.app-1$."}),
 					invalidNameError("develo.pment", DNS1035Error, []string{"environments.develo.pment"}),
-					invalidNameError("test)cicd", DNS1035Error, []string{"environments.test)cicd"}),
 				},
 			),
 		},

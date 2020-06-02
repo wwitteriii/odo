@@ -13,10 +13,10 @@ import (
 func TestManifestWalk(t *testing.T) {
 	m := &Manifest{
 		Config: &Config{
-			PipelineConfig: &Cicd{
+			PipelineConfig: &Pipeline{
 				Name: "cicd",
 			},
-			ArgoCDConfig: &Argo{
+			ArgoCDConfig: &ArgoCD{
 				Name: "argocd",
 			},
 		},
@@ -87,21 +87,21 @@ func TestManifestWalk(t *testing.T) {
 func TestFindCICDEnviroment(t *testing.T) {
 	envTests := []struct {
 		manifest *Manifest
-		want     *Cicd
+		want     *Pipeline
 		err      string
 	}{
 		{&Manifest{
 			Config: &Config{
-				PipelineConfig: &Cicd{
+				PipelineConfig: &Pipeline{
 					Name: "cicd",
 				},
 			},
-		}, &Cicd{
+		}, &Pipeline{
 			Name: "cicd",
 		}, ""},
 		{&Manifest{
 			Config: &Config{
-				ArgoCDConfig: &Argo{
+				ArgoCDConfig: &ArgoCD{
 					Name: "argocd",
 				},
 			},

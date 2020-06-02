@@ -15,6 +15,7 @@ type validateVisitor struct {
 	appNames     map[string]bool
 	serviceNames map[string]bool
 	serviceURLs  map[string][]string
+	configNames  map[string]bool
 }
 
 func (m *Manifest) Validate() error {
@@ -24,7 +25,10 @@ func (m *Manifest) Validate() error {
 		appNames:     map[string]bool{},
 		serviceNames: map[string]bool{},
 		serviceURLs:  map[string][]string{},
+		configNames:  map[string]bool{},
 	}
+
+	vv.errs = append(vv.errs, vv.validateConfig(m)...)
 	err := m.Walk(vv)
 	if err != nil {
 		vv.errs = append(vv.errs, err)
@@ -50,6 +54,9 @@ func (vv *validateVisitor) validateServiceURLs() []error {
 
 func (vv *validateVisitor) Environment(env *Environment) error {
 	envPath := yamlPath(PathForEnvironment(env))
+	if _, ok := vv.configNames[env.Name]; ok {
+		vv.errs = append(vv.errs, fmt.Errorf("The environment %s cannot have the same name as the config names", env.Name))
+	}
 	if err := checkDuplicate(env.Name, envPath, vv.envNames); err != nil {
 		vv.errs = append(vv.errs, err)
 	}
@@ -89,7 +96,6 @@ func (vv *validateVisitor) Application(env *Environment, app *Application) error
 			}
 		}
 	}
-
 	return nil
 }
 
@@ -162,6 +168,27 @@ func validatePipelines(pipelines *Pipelines, path string) []error {
 	for _, name := range pipelines.Integration.Bindings {
 		if err := validateName(name, yamlJoin(path, "pipelines", "integration", "binding")); err != nil {
 			errs = append(errs, err)
+		}
+	}
+	return errs
+}
+func (vv *validateVisitor) validateConfig(manifest *Manifest) []error {
+	errs := []error{}
+	if manifest.Config != nil {
+		if manifest.Config.ArgoCDConfig != nil {
+			err := validateName(manifest.Config.ArgoCDConfig.Name, fmt.Sprintf("config.%s", manifest.Config.ArgoCDConfig.Name))
+			fmt.Println("There was an error here", err)
+			if err != nil {
+				errs = append(errs, err)
+			}
+			vv.configNames[manifest.Config.ArgoCDConfig.Name] = true
+		}
+		if manifest.Config.PipelineConfig != nil {
+			err := validateName(manifest.Config.PipelineConfig.Name, fmt.Sprintf("config.%s", manifest.Config.PipelineConfig.Name))
+			if err != nil {
+				errs = append(errs, err)
+			}
+			vv.configNames[manifest.Config.PipelineConfig.Name] = true
 		}
 	}
 	return errs
