@@ -198,19 +198,19 @@ func validatePipelines(pipelines *Pipelines, path string) []error {
 func (vv *validateVisitor) validateConfig(manifest *Manifest) []error {
 	errs := []error{}
 	if manifest.Config != nil {
-		if manifest.Config.ArgoCDConfig != nil {
-			err := validateName(manifest.Config.ArgoCDConfig.Namespace, fmt.Sprintf("config.%s", manifest.Config.ArgoCDConfig.Namespace))
+		if manifest.Config.ArgoCD != nil {
+			err := validateName(manifest.Config.ArgoCD.Namespace, fmt.Sprintf("config.%s", manifest.Config.ArgoCD.Namespace))
 			if err != nil {
 				errs = append(errs, err)
 			}
-			vv.configNames[manifest.Config.ArgoCDConfig.Namespace] = true
+			vv.configNames[manifest.Config.ArgoCD.Namespace] = true
 		}
-		if manifest.Config.PipelineConfig != nil {
-			err := validateName(manifest.Config.PipelineConfig.Name, fmt.Sprintf("config.%s", manifest.Config.PipelineConfig.Name))
+		if manifest.Config.Pipelines != nil {
+			err := validateName(manifest.Config.Pipelines.Name, fmt.Sprintf("config.%s", manifest.Config.Pipelines.Name))
 			if err != nil {
 				errs = append(errs, err)
 			}
-			vv.configNames[manifest.Config.PipelineConfig.Name] = true
+			vv.configNames[manifest.Config.Pipelines.Name] = true
 		}
 	}
 	return errs

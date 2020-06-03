@@ -21,15 +21,13 @@ func PathForEnvironment(env *Environment) string {
 	return filepath.Join("environments", env.Name)
 }
 
-//PathForPipelineConfig returns the path only for the CICD environment
-func PathForPipelineConfig(pipeline *Pipeline) string {
+// PathForPipelines returns the path only for the CICD environment.
+func PathForPipelines(pipeline *PipelinesConfig) string {
 	return filepath.Join("config", pipeline.Name)
 }
 
-// func PathForArgoCDConfig(argo *Argo) string {
-// 	return filepath.Join("config", argo.Namespace)
-// }
-func PathForArgoCDConfig() string {
+// PathForArgoCD returns the path for recording ArgoCD configuration.
+func PathForArgoCD() string {
 	return filepath.Join("config", "argocd")
 }
 
@@ -40,6 +38,7 @@ type Manifest struct {
 	Config       *Config        `json:"config,omitempty"`
 }
 
+// GetEnvironment returns a named environment if it exists in the configuration.
 func (m *Manifest) GetEnvironment(n string) *Environment {
 	for _, env := range m.Environments {
 		if env.Name == n {
@@ -49,19 +48,23 @@ func (m *Manifest) GetEnvironment(n string) *Environment {
 	return nil
 }
 
-func (m *Manifest) GetApplication(environment, application string) (*Application, error) {
+// GetApplication returns a named application, within an environment, if it
+// exists.
+func (m *Manifest) GetApplication(environment, application string) *Application {
 	for _, env := range m.Environments {
 		if env.Name == environment {
 			for _, app := range env.Apps {
 				if app.Name == application {
-					return app, nil
+					return app
 				}
 			}
 		}
 	}
-	return nil, fmt.Errorf("failed to find application: %s", application)
+	return nil
 }
 
+// AddService adds a new service to a specific environment and creates a
+// reference to it within an Application.
 func (m *Manifest) AddService(envName, appName string, svc *Service) error {
 	env := m.GetEnvironment(envName)
 	if env == nil {
@@ -72,8 +75,8 @@ func (m *Manifest) AddService(envName, appName string, svc *Service) error {
 			return fmt.Errorf("service %s already exists at %s", svc.Name, env.Name)
 		}
 	}
-	app, err := m.GetApplication(envName, appName)
-	if app == nil && err != nil {
+	app := m.GetApplication(envName, appName)
+	if app == nil {
 		app = &Application{Name: appName}
 		env.Apps = append(env.Apps, app)
 	}
@@ -82,22 +85,18 @@ func (m *Manifest) AddService(envName, appName string, svc *Service) error {
 	return nil
 }
 
-// GetPipelineConfig returns the CICD Environment if one exists.
-func (m *Manifest) GetPipelineConfig() (*Pipeline, error) {
+// GetPipelinesConfig returns the global Pipelines configuration, if one exists.
+func (m *Manifest) GetPipelinesConfig() *PipelinesConfig {
 	if m.Config != nil {
-		if m.Config.PipelineConfig != nil {
-			return m.Config.PipelineConfig, nil
-		}
+		return m.Config.Pipelines
 	}
-	return nil, nil
+	return nil
 }
 
-// GetArgoCDConfig returns the ArgoCD Environment if one exists.
-func (m *Manifest) GetArgoCDConfig() *ArgoCD {
+// GetArgoCDConfig returns the global ArgoCD configuration, if one exists.
+func (m *Manifest) GetArgoCDConfig() *ArgoCDConfig {
 	if m.Config != nil {
-		if m.Config.ArgoCDConfig != nil {
-			return m.Config.ArgoCDConfig
-		}
+		return m.Config.ArgoCD
 	}
 	return nil
 
@@ -105,7 +104,6 @@ func (m *Manifest) GetArgoCDConfig() *ArgoCD {
 
 // Environment is a slice of Apps, these are the named apps in the namespace.
 //
-
 type Environment struct {
 	Name      string         `json:"name,omitempty"`
 	Pipelines *Pipelines     `json:"pipelines,omitempty"`
@@ -113,22 +111,19 @@ type Environment struct {
 	Apps      []*Application `json:"apps,omitempty"`
 }
 
-//Config are the Config environments that constitute the argocd and pipeline environment
-// The PipelineConfig will be used to automatically generate CI/CD resources
-// into.
-// The PipelineConfig should not have any applications defined.
+// Config represents the configuration for non-application environments.
 type Config struct {
-	PipelineConfig *Pipeline `json:"PipelineConfig,omitempty"`
-	ArgoCDConfig   *ArgoCD   `json:"ArgoCDConfig,omitempty"`
+	Pipelines *PipelinesConfig `json:"pipelines,omitempty"`
+	ArgoCD    *ArgoCDConfig    `json:"argocd,omitempty"`
 }
 
-//Pipeline checks for the cicd environments
-type Pipeline struct {
+// PipelinesConfig provides configuration for the CI/CD pipelines.
+type PipelinesConfig struct {
 	Name string `json:"name,omitempty"`
 }
 
-//Argo checks for the argocd environments
-type ArgoCD struct {
+// ArgoCDConfig provides configuration for the ArgoCD application generation.
+type ArgoCDConfig struct {
 	Namespace string `json:"namespace,omitempty"`
 }
 
@@ -141,7 +136,6 @@ func (e Environment) GoString() string {
 //
 // The ConfigRepo indicates that the configuration for this application lives in
 // another repository.
-// TODO: validate that an app with a ConfigRepo has no services.
 type Application struct {
 	Name        string      `json:"name,omitempty"`
 	ServiceRefs []string    `json:"services,omitempty"`

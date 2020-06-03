@@ -13,10 +13,10 @@ import (
 func TestManifestWalk(t *testing.T) {
 	m := &Manifest{
 		Config: &Config{
-			PipelineConfig: &Pipeline{
+			Pipelines: &PipelinesConfig{
 				Name: "cicd",
 			},
-			ArgoCDConfig: &ArgoCD{
+			ArgoCD: &ArgoCDConfig{
 				Namespace: "argocd",
 			},
 		},
@@ -84,37 +84,70 @@ func TestManifestWalk(t *testing.T) {
 	}
 }
 
-func TestFindCICDEnviroment(t *testing.T) {
-	envTests := []struct {
-		manifest *Manifest
-		want     *Pipeline
-		err      string
-	}{
-		{&Manifest{
-			Config: &Config{
-				PipelineConfig: &Pipeline{
-					Name: "cicd",
-				},
-			},
-		}, &Pipeline{
+func TestGetPipelinesConfig(t *testing.T) {
+	cfg := &Config{
+		Pipelines: &PipelinesConfig{
 			Name: "cicd",
-		}, ""},
-		{&Manifest{
-			Config: &Config{
-				ArgoCDConfig: &ArgoCD{
-					Namespace: "argocd",
-				},
-			},
-		}, nil, ""},
+		},
+	}
+
+	envTests := []struct {
+		name     string
+		manifest *Manifest
+		want     *PipelinesConfig
+	}{
+		{
+			name:     "manifest with configuration",
+			manifest: &Manifest{Config: cfg},
+			want:     cfg.Pipelines,
+		},
+		{
+			name:     "manifest with no configuration",
+			manifest: &Manifest{},
+			want:     nil,
+		},
 	}
 
 	for i, tt := range envTests {
 		t.Run(fmt.Sprintf("test %d", i), func(rt *testing.T) {
 			m := tt.manifest
-			_, err := m.GetPipelineConfig()
-			if !matchErrorString(t, tt.err, err) {
-				rt.Errorf("did not match error, got %s, want %s", err, tt.err)
-				return
+			got := m.GetPipelinesConfig()
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Errorf("%s: configuration did not match:\n%s", tt.name, diff)
+			}
+		})
+	}
+}
+func TestGetArgoCDConfig(t *testing.T) {
+	cfg := &Config{
+		ArgoCD: &ArgoCDConfig{
+			Namespace: "argocd",
+		},
+	}
+
+	envTests := []struct {
+		name     string
+		manifest *Manifest
+		want     *ArgoCDConfig
+	}{
+		{
+			name:     "manifest with configuration",
+			manifest: &Manifest{Config: cfg},
+			want:     cfg.ArgoCD,
+		},
+		{
+			name:     "manifest with no configuration",
+			manifest: &Manifest{},
+			want:     nil,
+		},
+	}
+
+	for i, tt := range envTests {
+		t.Run(fmt.Sprintf("test %d", i), func(rt *testing.T) {
+			m := tt.manifest
+			got := m.GetArgoCDConfig()
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Errorf("%s: configuration did not match:\n%s", tt.name, diff)
 			}
 		})
 	}

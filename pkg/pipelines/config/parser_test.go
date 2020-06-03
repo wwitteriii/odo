@@ -14,6 +14,14 @@ func TestParse(t *testing.T) {
 		want     *Manifest
 	}{
 		{"testdata/example1.yaml", &Manifest{
+			Config: &Config{
+				Pipelines: &PipelinesConfig{
+					Name: "test-pipelines",
+				},
+				ArgoCD: &ArgoCDConfig{
+					Namespace: "test-argocd",
+				},
+			},
 			Environments: []*Environment{
 				{
 					Name: "development",
