@@ -38,42 +38,42 @@ func Build(argoNS, repoURL string, m *config.Manifest) (res.Resources, error) {
 	if repoURL == "" {
 		return res.Resources{}, nil
 	}
-	ArgoCDConfig := m.GetArgoCDConfig()
-	if ArgoCDConfig == nil {
+	argoCDConfig := m.GetArgoCDConfig()
+	if argoCDConfig == nil {
 		return res.Resources{}, nil
 	}
 
 	files := make(res.Resources)
-	eb := &argocdBuilder{repoURL: repoURL, files: files, ArgoCDConfig: ArgoCDConfig, argoNS: argoNS}
+	eb := &argocdBuilder{repoURL: repoURL, files: files, argoCDConfig: argoCDConfig, argoNS: argoNS}
 	err := m.Walk(eb)
 	return eb.files, err
 }
 
 type argocdBuilder struct {
 	repoURL      string
-	ArgoCDConfig *config.ArgoCD
+	argoCDConfig *config.ArgoCDConfig
 	files        res.Resources
 	argoNS       string
 }
 
 func (b *argocdBuilder) Application(env *config.Environment, app *config.Application) error {
-	basePath := filepath.Join(config.PathForArgoCDConfig(), "config")
+	basePath := filepath.Join(config.PathForArgoCD(), "config")
 	argoFiles := res.Resources{}
 	filename := filepath.Join(basePath, env.Name+"-"+app.Name+"-app.yaml")
 	argoFiles[filename] = makeApplication(env.Name+"-"+app.Name, b.argoNS, defaultProject, env.Name, defaultServer, makeSource(env, app, b.repoURL))
 	b.files = res.Merge(argoFiles, b.files)
-	err := ArgoCDConfigironmentResources(b.ArgoCDConfig, b.files)
+	err := argoCDConfigironmentResources(b.argoCDConfig, b.files)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func ArgoCDConfigironmentResources(env *config.ArgoCD, files res.Resources) error {
+func argoCDConfigironmentResources(env *config.ArgoCDConfig, files res.Resources) error {
 	if env.Namespace == "" {
 		return nil
 	}
-	basePath := filepath.Join(config.PathForArgoCDConfig(), "config")
+	basePath := filepath.Join(config.PathForArgoCD(), "config")
 	filename := filepath.Join(basePath, "kustomization.yaml")
 	resourceNames := []string{}
 	for k := range files {
