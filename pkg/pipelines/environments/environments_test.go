@@ -47,10 +47,10 @@ func TestBuildEnvironmentsDoesNotOutputCIorArgo(t *testing.T) {
 	var appFs = ioutils.NewMapFilesystem()
 	m := &config.Manifest{
 		Config: &config.Config{
-			PipelineConfig: &config.Pipeline{
+			Pipelines: &config.PipelinesConfig{
 				Name: "cicd",
 			},
-			ArgoCDConfig: &config.ArgoCD{
+			ArgoCD: &config.ArgoCDConfig{
 				Namespace: "argocd",
 			},
 		},
@@ -76,7 +76,7 @@ func TestBuildEnvironmentsAddsKustomizedFiles(t *testing.T) {
 
 	m := &config.Manifest{
 		Config: &config.Config{
-			PipelineConfig: &config.Pipeline{
+			Pipelines: &config.PipelinesConfig{
 				Name: "cicd",
 			},
 		},
@@ -146,7 +146,7 @@ func buildManifest(withCICD bool) *config.Manifest {
 	if withCICD {
 		return &config.Manifest{
 			Config: &config.Config{
-				PipelineConfig: &config.Pipeline{
+				Pipelines: &config.PipelinesConfig{
 					Name: "cicd",
 				},
 			},

@@ -19,21 +19,17 @@ import (
 const kustomization = "kustomization.yaml"
 
 type envBuilder struct {
-	files          res.Resources
-	pipelineConfig *config.Pipeline
-	fs             afero.Fs
-	saName         string
+	files           res.Resources
+	pipelinesConfig *config.PipelinesConfig
+	fs              afero.Fs
+	saName          string
 }
 
 func Build(fs afero.Fs, m *config.Manifest, saName string) (res.Resources, error) {
 	files := res.Resources{}
-	pipelineConfig, err := m.GetPipelineConfig()
-	if err != nil {
-		return nil, err
-	}
-	eb := &envBuilder{fs: fs, files: files, pipelineConfig: pipelineConfig, saName: saName}
-	err = m.Walk(eb)
-	return eb.files, err
+	cfg := m.GetPipelinesConfig()
+	eb := &envBuilder{fs: fs, files: files, pipelinesConfig: cfg, saName: saName}
+	return eb.files, m.Walk(eb)
 }
 
 func (b *envBuilder) Application(env *config.Environment, app *config.Application) error {
@@ -56,13 +52,13 @@ func (b *envBuilder) Service(env *config.Environment, svc *config.Service) error
 	b.files = res.Merge(svcFiles, b.files)
 	// RoleBinding is created only when an environment has a service and the
 	// CICD environment is defined.
-	if b.pipelineConfig == nil {
+	if b.pipelinesConfig == nil {
 		return nil
 	}
 	envBasePath := filepath.Join(config.PathForEnvironment(env), "env", "base")
 	envBindingPath := filepath.Join(envBasePath, fmt.Sprintf("%s-rolebinding.yaml", env.Name))
 	if _, ok := b.files[envBindingPath]; !ok {
-		b.files[envBindingPath] = createRoleBinding(env, envBasePath, b.pipelineConfig.Name, b.saName)
+		b.files[envBindingPath] = createRoleBinding(env, envBasePath, b.pipelinesConfig.Name, b.saName)
 	}
 	return nil
 }
