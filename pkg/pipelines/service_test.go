@@ -12,15 +12,15 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/argocd"
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
+	"github.com/spf13/afero"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
+
+	"github.com/openshift/odo/pkg/pipelines/ioutils"
 	"github.com/openshift/odo/pkg/pipelines/meta"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
 	"github.com/openshift/odo/pkg/pipelines/secrets"
-	"github.com/spf13/afero"
 	triggersv1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
-	"gopkg.in/yaml.v2"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/openshift/odo/pkg/pipelines/ioutils"
 )
 
 func TestServiceResourcesWithCICD(t *testing.T) {
