@@ -13,8 +13,7 @@ import (
 )
 
 func TestCreateInternalRegistryRoleBinding(t *testing.T) {
-
-	cicd := &config.Pipeline{
+	cicd := &config.PipelinesConfig{
 		Name: "test-cicd",
 	}
 	sa := roles.CreateServiceAccount(meta.NamespacedName("test-cicd", "pipeline"))
@@ -41,7 +40,6 @@ func TestCreateInternalRegistryRoleBinding(t *testing.T) {
 }
 
 func TestValidateImageRepo(t *testing.T) {
-
 	errorMsg := "failed to parse image repo:%s, expected image repository in the form <registry>/<username>/<repository> or <project>/<app> for internal registry"
 
 	tests := []struct {
