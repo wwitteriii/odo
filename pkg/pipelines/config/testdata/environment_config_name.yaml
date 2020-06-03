@@ -1,6 +1,6 @@
 config:
   ArgoCDConfig:
-    name: argocd
+    namespace: argocd
   PipelineConfig:
     name: tst-cicd
 environments:
