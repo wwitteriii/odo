@@ -32,16 +32,11 @@ type AddServiceParameters struct {
 }
 
 func AddService(p *AddServiceParameters, fs afero.Fs) error {
-
 	m, err := config.ParseFile(fs, p.Manifest)
 	if err != nil {
 		return fmt.Errorf("failed to parse manifest: %w", err)
 	}
 
-	pipelineConfig, err := m.GetPipelineConfig()
-	if err != nil {
-		return err
-	}
 	outputPath := filepath.Dir(p.Manifest)
 
 	files, err := serviceResources(m, fs, p)
@@ -53,8 +48,9 @@ func AddService(p *AddServiceParameters, fs afero.Fs) error {
 	if err != nil {
 		return err
 	}
-	if pipelineConfig != nil {
-		base := filepath.Join(outputPath, config.PathForPipelineConfig(pipelineConfig), "base", "pipelines")
+	cfg := m.GetPipelinesConfig()
+	if cfg != nil {
+		base := filepath.Join(outputPath, config.PathForPipelines(cfg), "base", "pipelines")
 		err = updateKustomization(fs, base)
 		if err != nil {
 			return err
@@ -71,11 +67,8 @@ func serviceResources(m *config.Manifest, fs afero.Fs, p *AddServiceParameters) 
 		return nil, err
 	}
 
-	pipelineConfig, err := m.GetPipelineConfig()
-	if err != nil {
-		return nil, err
-	}
-	if pipelineConfig != nil && p.WebhookSecret == "" && p.GitRepoURL != "" {
+	cfg := m.GetPipelinesConfig()
+	if cfg != nil && p.WebhookSecret == "" && p.GitRepoURL != "" {
 		return nil, fmt.Errorf("The webhook secret is required")
 	}
 
@@ -85,9 +78,9 @@ func serviceResources(m *config.Manifest, fs afero.Fs, p *AddServiceParameters) 
 	}
 
 	// add the secret only if CI/CD env is present
-	if pipelineConfig != nil {
+	if cfg != nil {
 		secretName := secrets.MakeServiceWebhookSecretName(p.EnvName, svc.Name)
-		hookSecret, err := secrets.CreateSealedSecret(meta.NamespacedName(pipelineConfig.Name, secretName), p.WebhookSecret, eventlisteners.WebhookSecretKey)
+		hookSecret, err := secrets.CreateSealedSecret(meta.NamespacedName(cfg.Name, secretName), p.WebhookSecret, eventlisteners.WebhookSecretKey)
 		if err != nil {
 			return nil, err
 		}
@@ -95,16 +88,15 @@ func serviceResources(m *config.Manifest, fs afero.Fs, p *AddServiceParameters) 
 		svc.Webhook = &config.Webhook{
 			Secret: &config.Secret{
 				Name:      secretName,
-				Namespace: pipelineConfig.Name,
+				Namespace: cfg.Name,
 			},
 		}
-
 		secretFilename := filepath.Join("03-secrets", secretName+".yaml")
-		secretsPath := filepath.Join(config.PathForPipelineConfig(pipelineConfig), "base", "pipelines", secretFilename)
+		secretsPath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", secretFilename)
 		files[secretsPath] = hookSecret
 
 		if p.ImageRepo != "" {
-			_, resources, bindingName, err := createImageRepoResources(m, pipelineConfig, env, p)
+			_, resources, bindingName, err := createImageRepoResources(m, cfg, env, p)
 			if err != nil {
 				return nil, err
 			}
@@ -140,7 +132,7 @@ func serviceResources(m *config.Manifest, fs afero.Fs, p *AddServiceParameters) 
 	return res.Merge(built, files), nil
 }
 
-func createImageRepoResources(m *config.Manifest, pipelineConfig *config.Pipeline, env *config.Environment, p *AddServiceParameters) ([]string, res.Resources, string, error) {
+func createImageRepoResources(m *config.Manifest, cfg *config.PipelinesConfig, env *config.Environment, p *AddServiceParameters) ([]string, res.Resources, string, error) {
 	isInternalRegistry, imageRepo, err := imagerepo.ValidateImageRepo(p.ImageRepo, p.InternalRegistryHostname)
 	if err != nil {
 		return nil, nil, "", err
@@ -149,12 +141,12 @@ func createImageRepoResources(m *config.Manifest, pipelineConfig *config.Pipelin
 	resources := res.Resources{}
 	filenames := []string{}
 
-	bindingName, bindingFilename, svcImageBinding := createSvcImageBinding(pipelineConfig, env, p.ServiceName, imageRepo, !isInternalRegistry)
+	bindingName, bindingFilename, svcImageBinding := createSvcImageBinding(cfg, env, p.ServiceName, imageRepo, !isInternalRegistry)
 	resources = res.Merge(svcImageBinding, resources)
 	filenames = append(filenames, bindingFilename)
 
 	if isInternalRegistry {
-		files, regRes, err := imagerepo.CreateInternalRegistryResources(pipelineConfig, roles.CreateServiceAccount(meta.NamespacedName(pipelineConfig.Name, saName)), imageRepo)
+		files, regRes, err := imagerepo.CreateInternalRegistryResources(cfg, roles.CreateServiceAccount(meta.NamespacedName(cfg.Name, saName)), imageRepo)
 		if err != nil {
 			return nil, nil, "", fmt.Errorf("failed to get resources for internal image repository: %w", err)
 		}
@@ -196,13 +188,13 @@ func makeSvcImageBindingFilename(bindingName string) string {
 	return filepath.Join("06-bindings", bindingName+".yaml")
 }
 
-func makeImageBindingPath(env *config.Pipeline, imageRepoBindingFilename string) string {
-	return filepath.Join(config.PathForPipelineConfig(env), "base", "pipelines", imageRepoBindingFilename)
+func makeImageBindingPath(cfg *config.PipelinesConfig, imageRepoBindingFilename string) string {
+	return filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", imageRepoBindingFilename)
 }
 
-func createSvcImageBinding(pipelineConfig *config.Pipeline, env *config.Environment, svcName, imageRepo string, isTLSVerify bool) (string, string, res.Resources) {
+func createSvcImageBinding(cfg *config.PipelinesConfig, env *config.Environment, svcName, imageRepo string, isTLSVerify bool) (string, string, res.Resources) {
 	name := makeSvcImageBindingName(env.Name, svcName)
 	filename := makeSvcImageBindingFilename(name)
-	resourceFilePath := makeImageBindingPath(pipelineConfig, filename)
-	return name, filename, res.Resources{resourceFilePath: triggers.CreateImageRepoBinding(pipelineConfig.Name, name, imageRepo, strconv.FormatBool(isTLSVerify))}
+	resourceFilePath := makeImageBindingPath(cfg, filename)
+	return name, filename, res.Resources{resourceFilePath: triggers.CreateImageRepoBinding(cfg.Name, name, imageRepo, strconv.FormatBool(isTLSVerify))}
 }

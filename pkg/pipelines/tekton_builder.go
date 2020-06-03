@@ -36,16 +36,13 @@ func buildEventListenerResources(gitOpsRepo string, m *config.Manifest) (res.Res
 	if gitOpsRepo == "" {
 		return res.Resources{}, nil
 	}
-	cicd, err := m.GetPipelineConfig()
-	if err != nil {
-		return nil, err
-	}
-	if cicd == nil {
+	cfg := m.GetPipelinesConfig()
+	if cfg == nil {
 		return nil, nil
 	}
 	files := make(res.Resources)
 	tb := &tektonBuilder{files: files, gitOpsRepo: gitOpsRepo, manifest: m}
-	err = m.Walk(tb)
+	err := m.Walk(tb)
 	return tb.files, err
 }
 
@@ -64,15 +61,15 @@ func (tk *tektonBuilder) Service(env *config.Environment, svc *config.Service) e
 }
 
 func (tk *tektonBuilder) Environment(env *config.Environment) error {
-	pipelineConfig, _ := tk.manifest.GetPipelineConfig()
-	if pipelineConfig != nil {
-		triggers, err := createTriggersForCICD(tk.gitOpsRepo, pipelineConfig)
+	cfg := tk.manifest.GetPipelinesConfig()
+	if cfg != nil {
+		triggers, err := createTriggersForCICD(tk.gitOpsRepo, cfg)
 		if err != nil {
 			return err
 		}
 		tk.triggers = append(tk.triggers, triggers...)
-		cicdPath := config.PathForPipelineConfig(pipelineConfig)
-		tk.files[getEventListenerPath(cicdPath)] = eventlisteners.CreateELFromTriggers(pipelineConfig.Name, saName, tk.triggers)
+		cicdPath := config.PathForPipelines(cfg)
+		tk.files[getEventListenerPath(cicdPath)] = eventlisteners.CreateELFromTriggers(cfg.Name, saName, tk.triggers)
 	}
 	return nil
 }
@@ -81,14 +78,14 @@ func getEventListenerPath(cicdPath string) string {
 	return filepath.Join(cicdPath, "base", "pipelines", eventListenerPath)
 }
 
-func createTriggersForCICD(gitOpsRepo string, env *config.Pipeline) ([]v1alpha1.EventListenerTrigger, error) {
+func createTriggersForCICD(gitOpsRepo string, cfg *config.PipelinesConfig) ([]v1alpha1.EventListenerTrigger, error) {
 	triggers := []v1alpha1.EventListenerTrigger{}
 	repo, err := scm.NewRepository(gitOpsRepo)
 	if err != nil {
 		return []v1alpha1.EventListenerTrigger{}, err
 	}
-	ciTrigger := repo.CreateCITrigger("ci-dryrun-from-pr", eventlisteners.GitOpsWebhookSecret, env.Name, "ci-dryrun-from-pr-template", []string{repo.PRBindingName()})
-	cdTrigger := repo.CreateCDTrigger("cd-deploy-from-push", eventlisteners.GitOpsWebhookSecret, env.Name, "cd-deploy-from-push-template", []string{repo.PushBindingName()})
+	ciTrigger := repo.CreateCITrigger("ci-dryrun-from-pr", eventlisteners.GitOpsWebhookSecret, cfg.Name, "ci-dryrun-from-pr-template", []string{repo.PRBindingName()})
+	cdTrigger := repo.CreateCDTrigger("cd-deploy-from-push", eventlisteners.GitOpsWebhookSecret, cfg.Name, "cd-deploy-from-push-template", []string{repo.PushBindingName()})
 	triggers = append(triggers, ciTrigger, cdTrigger)
 
 	return triggers, nil

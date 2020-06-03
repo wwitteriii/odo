@@ -1,10 +1,10 @@
 package pipelines
 
 import (
-	"github.com/openshift/odo/pkg/pipelines/meta"
+	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
 
-	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
+	"github.com/openshift/odo/pkg/pipelines/meta"
 )
 
 var (

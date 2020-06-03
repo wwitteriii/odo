@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"testing"
 
@@ -203,27 +202,4 @@ func (v *testVisitor) Environment(env *Environment) error {
 	}
 	v.paths = append(v.paths, filepath.Join("envs", env.Name))
 	return nil
-}
-
-// MatchErrorString takes a string and matches on the error and returns true if
-// the
-// string matches the error.
-//
-// This is useful in table tests.
-//
-// If the string can't be compiled as an regexp, then this will fail with a
-// Fatal error.
-func matchErrorString(t *testing.T, s string, e error) bool {
-	t.Helper()
-	if s == "" && e == nil {
-		return true
-	}
-	if s != "" && e == nil {
-		return false
-	}
-	match, err := regexp.MatchString(s, e.Error())
-	if err != nil {
-		t.Fatal(err)
-	}
-	return match
 }

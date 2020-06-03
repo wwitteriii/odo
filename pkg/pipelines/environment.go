@@ -54,11 +54,7 @@ func AddEnv(o *EnvParameters, appFs afero.Fs) error {
 }
 
 func newEnvironment(m *config.Manifest, name string) (*config.Environment, error) {
-	cicd, err := m.GetPipelineConfig()
-	if err != nil {
-		return nil, err
-	}
-
+	cicd := m.GetPipelinesConfig()
 	if cicd != nil && m.GitOpsURL != "" {
 		r, err := scm.NewRepository(m.GitOpsURL)
 		if err != nil {

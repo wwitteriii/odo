@@ -48,7 +48,7 @@ func TestServiceResourcesWithCICD(t *testing.T) {
 		"environments/test-dev/apps/test-app/overlays/kustomization.yaml":         &res.Kustomization{Bases: []string{"../base"}},
 		"pipelines.yaml": &config.Manifest{
 			Config: &config.Config{
-				PipelineConfig: &config.Pipeline{
+				Pipelines: &config.PipelinesConfig{
 					Name: "cicd",
 				},
 			},
@@ -119,7 +119,7 @@ func TestServiceResourcesWithoutCICD(t *testing.T) {
 		"environments/test-dev/env/base/kustomization.yaml":               &res.Kustomization{Resources: []string{"test-dev-environment.yaml"}},
 		"pipelines.yaml": &config.Manifest{
 			Config: &config.Config{
-				ArgoCDConfig: &config.ArgoCD{
+				ArgoCD: &config.ArgoCDConfig{
 					Namespace: "argocd",
 				},
 			},
@@ -290,10 +290,10 @@ func TestServiceWithArgoCD(t *testing.T) {
 	want := res.Resources{
 		"pipelines.yaml": &config.Manifest{
 			Config: &config.Config{
-				PipelineConfig: &config.Pipeline{
+				Pipelines: &config.PipelinesConfig{
 					Name: "cicd",
 				},
-				ArgoCDConfig: &config.ArgoCD{
+				ArgoCD: &config.ArgoCDConfig{
 					Namespace: "argocd",
 				},
 			},
@@ -357,50 +357,50 @@ func buildManifest(withCICD, withArgoCD bool) *config.Manifest {
 	if !withCICD && withArgoCD {
 		return &config.Manifest{
 			Config: &config.Config{
-				ArgoCDConfig: &config.ArgoCD{
+				ArgoCD: &config.ArgoCDConfig{
 					Namespace: "argocd",
 				},
 			},
 			GitOpsURL:    "http://github.com/org/test",
-			Environments: EnvWithoutPipelineConfig(),
+			Environments: envWithoutPipelineConfig(),
 		}
 
 	}
 	if withCICD && withArgoCD {
 		return &config.Manifest{
 			Config: &config.Config{
-				PipelineConfig: &config.Pipeline{
+				Pipelines: &config.PipelinesConfig{
 					Name: "cicd",
 				},
-				ArgoCDConfig: &config.ArgoCD{
+				ArgoCD: &config.ArgoCDConfig{
 					Namespace: "argocd",
 				},
 			},
 			GitOpsURL:    "http://github.com/org/test",
-			Environments: EnvWithPipelineConfig(),
+			Environments: envWithPipelineConfig(),
 		}
 	}
 	if withCICD && !withArgoCD {
 		return &config.Manifest{
 			Config: &config.Config{
-				PipelineConfig: &config.Pipeline{
+				Pipelines: &config.PipelinesConfig{
 					Name: "cicd",
 				},
 			},
 			GitOpsURL:    "http://github.com/org/test",
-			Environments: EnvWithPipelineConfig(),
+			Environments: envWithPipelineConfig(),
 		}
 	}
 	if !withCICD && !withArgoCD {
 		return &config.Manifest{
 			GitOpsURL:    "http://github.com/org/test",
-			Environments: EnvWithoutPipelineConfig(),
+			Environments: envWithoutPipelineConfig(),
 		}
 	}
 	return nil
 }
 
-func EnvWithPipelineConfig() []*config.Environment {
+func envWithPipelineConfig() []*config.Environment {
 	return []*config.Environment{
 		{
 			Name: "test-dev",
@@ -428,7 +428,7 @@ func EnvWithPipelineConfig() []*config.Environment {
 	}
 }
 
-func EnvWithoutPipelineConfig() []*config.Environment {
+func envWithoutPipelineConfig() []*config.Environment {
 	return []*config.Environment{
 		{
 			Name: "test-dev",
@@ -451,18 +451,16 @@ func EnvWithoutPipelineConfig() []*config.Environment {
 }
 
 func TestCreateSvcImageBinding(t *testing.T) {
-	PipelineConfig := &config.Pipeline{
+	cfg := &config.PipelinesConfig{
 		Name: "cicd",
 	}
 	env := &config.Environment{
 		Name: "new-env",
 	}
-	bindingName, bindingFilename, resources := createSvcImageBinding(PipelineConfig, env, "new-svc", "quay.io/user/app", false)
-
+	bindingName, bindingFilename, resources := createSvcImageBinding(cfg, env, "new-svc", "quay.io/user/app", false)
 	if diff := cmp.Diff(bindingName, "new-env-new-svc-binding"); diff != "" {
 		t.Errorf("bindingName failed: %v", diff)
 	}
-
 	if diff := cmp.Diff(bindingFilename, "06-bindings/new-env-new-svc-binding.yaml"); diff != "" {
 		t.Errorf("bindingFilename failed: %v", diff)
 	}

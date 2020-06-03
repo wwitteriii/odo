@@ -113,24 +113,24 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate GitHub Webhook Secret: %w", err)
 	}
-	pipelineconfig, err := m.GetPipelineConfig()
-	if err != nil {
-		return nil, fmt.Errorf("bootstrap environments: %w", err)
+	cfg := m.GetPipelinesConfig()
+	if cfg == nil {
+		return nil, errors.New("failed to find a pipeline configuration - unable to continue bootstrap")
 	}
 	secretFilename := filepath.Join("03-secrets", secretName+".yaml")
-	secretsPath := filepath.Join(config.PathForPipelineConfig(pipelineconfig), "base", "pipelines", secretFilename)
+	secretsPath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", secretFilename)
 	bootstrapped[secretsPath] = hookSecret
 
-	bindingName, imageRepoBindingFilename, svcImageBinding := createSvcImageBinding(pipelineconfig, devEnv, serviceName, imageRepo, !isInternalRegistry)
+	bindingName, imageRepoBindingFilename, svcImageBinding := createSvcImageBinding(cfg, devEnv, serviceName, imageRepo, !isInternalRegistry)
 	bootstrapped = res.Merge(svcImageBinding, bootstrapped)
 
-	kustomizePath := filepath.Join(config.PathForPipelineConfig(pipelineconfig), "base", "pipelines", "kustomization.yaml")
+	kustomizePath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", "kustomization.yaml")
 	k, ok := bootstrapped[kustomizePath].(res.Kustomization)
 	if !ok {
 		return nil, fmt.Errorf("no kustomization for the %s environment found", kustomizePath)
 	}
 	if isInternalRegistry {
-		filenames, resources, err := imagerepo.CreateInternalRegistryResources(pipelineconfig, roles.CreateServiceAccount(meta.NamespacedName(pipelineconfig.Name, saName)), imageRepo)
+		filenames, resources, err := imagerepo.CreateInternalRegistryResources(cfg, roles.CreateServiceAccount(meta.NamespacedName(cfg.Name, saName)), imageRepo)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get resources for internal image repository: %w", err)
 		}
@@ -168,13 +168,11 @@ func bootstrapServiceDeployment(dev *config.Environment) (res.Resources, error) 
 
 func bootstrapEnvironments(repo scm.Repository, prefix, secretName string, ns map[string]string) ([]*config.Environment, *config.Config, error) {
 	envs := []*config.Environment{}
-	pipelineconfig := &config.Config{}
-	cicd := &config.Pipeline{}
-	argo := &config.ArgoCD{}
+	var cicd *config.PipelinesConfig
+	var argo *config.ArgoCDConfig
 	for k, v := range ns {
 		if k == "cicd" {
-			cicd = &config.Pipeline{Name: prefix + "cicd"}
-
+			cicd = &config.PipelinesConfig{Name: prefix + "cicd"}
 		}
 		if k == "dev" {
 			env := &config.Environment{Name: v}
@@ -197,9 +195,9 @@ func bootstrapEnvironments(repo scm.Repository, prefix, secretName string, ns ma
 
 		}
 	}
-	argo = &config.ArgoCD{Namespace: prefix + "argocd"}
-	pipelineconfig = &config.Config{PipelineConfig: cicd, ArgoCDConfig: argo}
-	return envs, pipelineconfig, nil
+	argo = &config.ArgoCDConfig{Namespace: "argocd"}
+	cfg := &config.Config{Pipelines: cicd, ArgoCD: argo}
+	return envs, cfg, nil
 }
 
 func serviceFromRepo(repoURL, secretName, secretNS string) (*config.Service, error) {

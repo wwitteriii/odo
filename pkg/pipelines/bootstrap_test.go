@@ -93,8 +93,8 @@ func TestBootstrapManifest(t *testing.T) {
 				{Name: "tst-stage"},
 			},
 			Config: &config.Config{
-				PipelineConfig: &config.Pipeline{Name: "tst-cicd"},
-				ArgoCDConfig:   &config.ArgoCD{Namespace: "tst-argocd"},
+				Pipelines: &config.PipelinesConfig{Name: "tst-cicd"},
+				ArgoCD:    &config.ArgoCDConfig{Namespace: "argocd"},
 			},
 		},
 	}

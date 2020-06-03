@@ -17,7 +17,7 @@ import (
 func TestBuildEventListener(t *testing.T) {
 	m := &config.Manifest{
 		Config: &config.Config{
-			PipelineConfig: &config.Pipeline{
+			Pipelines: &config.PipelinesConfig{
 				Name: "test-cicd",
 			},
 		},
@@ -41,7 +41,7 @@ func TestBuildEventListenerWithServiceWithNoURL(t *testing.T) {
 	m := &config.Manifest{
 
 		Config: &config.Config{
-			PipelineConfig: &config.Pipeline{
+			Pipelines: &config.PipelinesConfig{
 				Name: "test-cicd",
 			},
 		},
@@ -189,15 +189,14 @@ func TestGetPipelines(t *testing.T) {
 func fakeTiggers(t *testing.T, m *config.Manifest, gitOpsRepo string) []v1alpha1.EventListenerTrigger {
 	triggers := []v1alpha1.EventListenerTrigger{}
 	devEnv := m.GetEnvironment("test-dev")
-	PipelineConfig, err := m.GetPipelineConfig()
-	assertNoError(t, err)
+	cfg := m.GetPipelinesConfig()
 	svc := testService()
 	repo, err := scm.NewRepository(svc.SourceURL)
 	assertNoError(t, err)
 	pipelines := getPipelines(devEnv, svc, repo)
 	devCITrigger := repo.CreateCITrigger(fmt.Sprintf("app-ci-build-from-pr-%s", svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, pipelines.Integration.Template, pipelines.Integration.Bindings)
 	triggers = append(triggers, devCITrigger)
-	cicdTriggers, err := createTriggersForCICD(gitOpsRepo, PipelineConfig)
+	cicdTriggers, err := createTriggersForCICD(gitOpsRepo, cfg)
 	assertNoError(t, err)
 	triggers = append(triggers, cicdTriggers...)
 	return triggers

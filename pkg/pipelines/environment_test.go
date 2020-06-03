@@ -6,9 +6,11 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/spf13/afero"
+
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/ioutils"
-	"github.com/spf13/afero"
+	"github.com/openshift/odo/tests/helper"
 )
 
 func TestAddEnv(t *testing.T) {
@@ -54,6 +56,112 @@ func TestAddEnvWithExistingName(t *testing.T) {
 	}
 }
 
+func TestNewEnvironment(t *testing.T) {
+	tests := []struct {
+		m      *config.Manifest
+		name   string
+		errMsg string
+		want   *config.Environment
+	}{
+		{
+			m: &config.Manifest{
+				GitOpsURL: "https://github.com/foo/bar",
+				Config: &config.Config{
+					Pipelines: &config.PipelinesConfig{
+						Name: "my-cicd",
+					},
+				},
+				Environments: []*config.Environment{
+					{
+						Name: "myenv1",
+					},
+				},
+			},
+			name: "test-env",
+			want: &config.Environment{
+				Name: "test-env",
+				Pipelines: &config.Pipelines{
+					Integration: &config.TemplateBinding{
+						Template: appCITemplateName,
+						Bindings: []string{"github-pr-binding"},
+					},
+				},
+			},
+		},
+		{
+			m: &config.Manifest{
+				GitOpsURL: "https://gitlab.com/foo/bar",
+				Config: &config.Config{
+					Pipelines: &config.PipelinesConfig{
+						Name: "my-cicd",
+					},
+				},
+				Environments: []*config.Environment{
+					{
+						Name: "my-cicd",
+					},
+				},
+			},
+			name: "test-env",
+			want: &config.Environment{
+				Name: "test-env",
+				Pipelines: &config.Pipelines{
+					Integration: &config.TemplateBinding{
+						Template: appCITemplateName,
+						Bindings: []string{"gitlab-pr-binding"},
+					},
+				},
+			},
+		},
+		{
+			m: &config.Manifest{
+				// no GitOpsURL -> no Pipelines
+				Config: &config.Config{
+					Pipelines: &config.PipelinesConfig{
+						Name: "my-cicd",
+					},
+				},
+				Environments: []*config.Environment{
+					{
+						Name: "my-env2",
+					},
+				},
+			},
+			name: "test-env",
+			want: &config.Environment{
+				Name: "test-env",
+			},
+		},
+		{
+			m: &config.Manifest{
+				GitOpsURL: "https://gitlab.com/foo/bar",
+				Environments: []*config.Environment{
+					{
+						// no CICD -> no Pipelines
+						Name: "my-env4",
+					},
+				},
+			},
+			name: "test-env",
+			want: &config.Environment{
+				Name: "test-env",
+			},
+		},
+	}
+
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("Test_%d", i), func(rt *testing.T) {
+			got, err := newEnvironment(tt.m, tt.name)
+			if !helper.ErrorMatch(rt, tt.errMsg, err) {
+
+			}
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				rt.Errorf("env mismatch: \n%s", diff)
+			}
+		})
+	}
+}
+
 func assertNoError(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
@@ -72,120 +180,5 @@ func assertFileExists(t *testing.T, testFs afero.Fs, path string) {
 	assertNoError(t, err)
 	if isDir {
 		t.Fatalf("%q is a directory", path)
-	}
-}
-
-func TestNewEnvironment(t *testing.T) {
-
-	tests := []struct {
-		m      *config.Manifest
-		name   string
-		errMsg string
-		want   *config.Environment
-	}{
-		{
-			m: &config.Manifest{
-				GitOpsURL: "https://github.com/foo/bar",
-				Config: &config.Config{
-					PipelineConfig: &config.Pipeline{
-						Name: "my-cicd",
-					},
-				},
-				Environments: []*config.Environment{
-					{
-						Name: "myenv1",
-					},
-				},
-			},
-			name:   "test-env",
-			errMsg: "",
-			want: &config.Environment{
-				Name: "test-env",
-				Pipelines: &config.Pipelines{
-					Integration: &config.TemplateBinding{
-						Template: appCITemplateName,
-						Bindings: []string{"github-pr-binding"},
-					},
-				},
-			},
-		},
-		{
-			m: &config.Manifest{
-				GitOpsURL: "https://gitlab.com/foo/bar",
-				Config: &config.Config{
-					PipelineConfig: &config.Pipeline{
-						Name: "my-cicd",
-					},
-				},
-				Environments: []*config.Environment{
-					{
-						Name: "my-cicd",
-					},
-				},
-			},
-			name:   "test-env",
-			errMsg: "",
-			want: &config.Environment{
-				Name: "test-env",
-				Pipelines: &config.Pipelines{
-					Integration: &config.TemplateBinding{
-						Template: appCITemplateName,
-						Bindings: []string{"gitlab-pr-binding"},
-					},
-				},
-			},
-		},
-		{
-			m: &config.Manifest{
-				// no GitOpsURL -> no Pipelines
-				Config: &config.Config{
-					PipelineConfig: &config.Pipeline{
-						Name: "my-cicd",
-					},
-				},
-				Environments: []*config.Environment{
-					{
-						Name: "my-env2",
-					},
-				},
-			},
-			name:   "test-env",
-			errMsg: "",
-			want: &config.Environment{
-				Name: "test-env",
-			},
-		},
-		{
-			m: &config.Manifest{
-				GitOpsURL: "https://gitlab.com/foo/bar",
-				Environments: []*config.Environment{
-					{
-						// no CICD -> no Pipelines
-						Name: "my-env4",
-					},
-				},
-			},
-			name:   "test-env",
-			errMsg: "",
-			want: &config.Environment{
-				Name: "test-env",
-			},
-		},
-	}
-
-	for i, test := range tests {
-		t.Run(fmt.Sprintf("Test_%d", i), func(tt *testing.T) {
-			got, err := newEnvironment(test.m, test.name)
-			gotError := ""
-			if err != nil {
-				gotError = err.Error()
-			}
-			if diff := cmp.Diff(test.errMsg, gotError); diff != "" {
-				tt.Errorf("errMsg mismatch: \n%s", diff)
-			}
-			if diff := cmp.Diff(test.want, got); diff != "" {
-				tt.Errorf("env mismatch: \n%s", diff)
-			}
-		})
 	}
 }
