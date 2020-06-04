@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/roles"
 	"github.com/openshift/odo/pkg/pipelines/scm"
 	"github.com/openshift/odo/pkg/pipelines/secrets"
+	"github.com/openshift/odo/pkg/pipelines/statustracker"
 	"github.com/openshift/odo/pkg/pipelines/yaml"
 )
 
@@ -42,6 +43,7 @@ type BootstrapOptions struct {
 	Prefix                   string // Used to prefix generated environment names in a shared cluster.
 	OutputPath               string // Where to write the bootstrapped files to?
 	DockerConfigJSONFilename string
+	StatusTrackerAccessToken string
 }
 
 // Bootstrap bootstraps a GitOps pipelines and repository structure.
@@ -117,6 +119,15 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	if cfg == nil {
 		return nil, errors.New("failed to find a pipeline configuration - unable to continue bootstrap")
 	}
+
+	if o.StatusTrackerAccessToken != "" {
+		res, err := statustracker.Resources(namespaces["cicd"], o.StatusTrackerAccessToken)
+		if err != nil {
+			return err
+		}
+		outputs = append(outputs, res...)
+	}
+
 	secretFilename := filepath.Join("03-secrets", secretName+".yaml")
 	secretsPath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", secretFilename)
 	bootstrapped[secretsPath] = hookSecret
