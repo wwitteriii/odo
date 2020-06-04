@@ -62,15 +62,15 @@ func (b *argocdBuilder) Application(env *config.Environment, app *config.Applica
 	filename := filepath.Join(basePath, env.Name+"-"+app.Name+"-app.yaml")
 	argoFiles[filename] = makeApplication(env.Name+"-"+app.Name, b.argoNS, defaultProject, env.Name, defaultServer, makeSource(env, app, b.repoURL))
 	b.files = res.Merge(argoFiles, b.files)
-	err := argoCDConfigironmentResources(b.argoCDConfig, b.files)
+	err := argoCDConfigResources(b.argoCDConfig, b.files)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func argoCDConfigironmentResources(env *config.ArgoCDConfig, files res.Resources) error {
-	if env.Namespace == "" {
+func argoCDConfigResources(argoCDConfig *config.ArgoCDConfig, files res.Resources) error {
+	if argoCDConfig.Namespace == "" {
 		return nil
 	}
 	basePath := filepath.Join(config.PathForArgoCD(), "config")
