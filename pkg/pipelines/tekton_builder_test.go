@@ -2,7 +2,6 @@ package pipelines
 
 import (
 	"fmt"
-	"log"
 	"path/filepath"
 	"testing"
 
@@ -11,7 +10,7 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
 	"github.com/openshift/odo/pkg/pipelines/scm"
-	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
+	triggersv1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 )
 
 func TestBuildEventListener(t *testing.T) {
@@ -22,7 +21,8 @@ func TestBuildEventListener(t *testing.T) {
 			},
 		},
 		Environments: []*config.Environment{
-			testEnv(testService()),
+			testEnv(testService(), "dev"),
+			testEnv(testService(), "staging"),
 		},
 	}
 	cicdPath := filepath.Join("config", "test-cicd")
@@ -30,9 +30,9 @@ func TestBuildEventListener(t *testing.T) {
 	got, err := buildEventListenerResources(gitOpsRepo, m)
 	assertNoError(t, err)
 	want := res.Resources{
-		getEventListenerPath(cicdPath): eventlisteners.CreateELFromTriggers("test-cicd", saName, fakeTiggers(t, m, gitOpsRepo)),
+		getEventListenerPath(cicdPath): eventlisteners.CreateELFromTriggers("test-cicd", saName, fakeTriggers(t, m, gitOpsRepo)),
 	}
-	if diff := cmp.Diff(got, want); diff != "" {
+	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatalf("resources didn't match:%s\n", diff)
 	}
 }
@@ -46,19 +46,17 @@ func TestBuildEventListenerWithServiceWithNoURL(t *testing.T) {
 			},
 		},
 		Environments: []*config.Environment{
-			testEnv(testService()),
+			testEnv(testService(), "dev"),
 		},
 	}
 	cicdPath := filepath.Join("config", "test-cicd")
 	gitOpsRepo := "http://github.com/org/gitops.git"
 	got, err := buildEventListenerResources(gitOpsRepo, m)
-	log.Println("This is the got files", got)
-	log.Println("")
 	assertNoError(t, err)
 	want := res.Resources{
-		getEventListenerPath(cicdPath): eventlisteners.CreateELFromTriggers("test-cicd", saName, fakeTiggers(t, m, gitOpsRepo)),
+		getEventListenerPath(cicdPath): eventlisteners.CreateELFromTriggers("test-cicd", saName, fakeTriggers(t, m, gitOpsRepo)),
 	}
-	if diff := cmp.Diff(got, want); diff != "" {
+	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatalf("resources didn't match:%s\n", diff)
 	}
 }
@@ -69,14 +67,14 @@ func TestBuildEventListenerWithNoGitOpsURL(t *testing.T) {
 			{
 				Name: "test-cicd",
 			},
-			testEnv(testService()),
+			testEnv(testService(), "dev"),
 		},
 	}
 	got, err := buildEventListenerResources("", m)
 	assertNoError(t, err)
 
 	want := res.Resources{}
-	if diff := cmp.Diff(got, want); diff != "" {
+	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatalf("resources didn't match:%s\n", diff)
 	}
 }
@@ -186,19 +184,21 @@ func TestGetPipelines(t *testing.T) {
 	}
 }
 
-func fakeTiggers(t *testing.T, m *config.Manifest, gitOpsRepo string) []v1alpha1.EventListenerTrigger {
-	triggers := []v1alpha1.EventListenerTrigger{}
-	devEnv := m.GetEnvironment("test-dev")
-	cfg := m.GetPipelinesConfig()
-	svc := testService()
-	repo, err := scm.NewRepository(svc.SourceURL)
-	assertNoError(t, err)
-	pipelines := getPipelines(devEnv, svc, repo)
-	devCITrigger := repo.CreateCITrigger(fmt.Sprintf("app-ci-build-from-pr-%s", svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, pipelines.Integration.Template, pipelines.Integration.Bindings)
-	triggers = append(triggers, devCITrigger)
-	cicdTriggers, err := createTriggersForCICD(gitOpsRepo, cfg)
-	assertNoError(t, err)
-	triggers = append(triggers, cicdTriggers...)
+func fakeTriggers(t *testing.T, m *config.Manifest, gitOpsRepo string) []triggersv1.EventListenerTrigger {
+	triggers := []triggersv1.EventListenerTrigger{}
+	for _, env := range m.Environments {
+		cfg := m.GetPipelinesConfig()
+		svc := testService()
+		repo, err := scm.NewRepository(svc.SourceURL)
+		assertNoError(t, err)
+		pipelines := getPipelines(env, svc, repo)
+		devCITrigger := repo.CreateCITrigger(fmt.Sprintf("app-ci-build-from-pr-%s", svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, pipelines.Integration.Template, pipelines.Integration.Bindings)
+		triggers = append(triggers, devCITrigger)
+		cicdTriggers, err := createTriggersForCICD(gitOpsRepo, cfg)
+		assertNoError(t, err)
+		triggers = append(triggers, cicdTriggers...)
+	}
+
 	return triggers
 }
 
@@ -215,16 +215,16 @@ func testService() *config.Service {
 	}
 }
 
-func testEnv(svc *config.Service) *config.Environment {
+func testEnv(svc *config.Service, name string) *config.Environment {
 	return &config.Environment{
-		Name:      "test-dev",
+		Name:      "test-" + name,
 		Pipelines: testPipelines("test"),
 		Services: []*config.Service{
 			svc,
 		},
 		Apps: []*config.Application{
 			{
-				Name: "test-app",
+				Name: "test-" + name + "-app",
 			},
 		},
 	}

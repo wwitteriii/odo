@@ -43,10 +43,13 @@ func buildEventListenerResources(gitOpsRepo string, m *config.Manifest) (res.Res
 	files := make(res.Resources)
 	tb := &tektonBuilder{files: files, gitOpsRepo: gitOpsRepo, manifest: m}
 	err := m.Walk(tb)
-	return tb.files, err
+
+	cicdPath := config.PathForPipelines(cfg)
+	files[getEventListenerPath(cicdPath)] = eventlisteners.CreateELFromTriggers(cfg.Name, saName, tb.triggers)
+	return files, err
 }
 
-func (tk *tektonBuilder) Service(env *config.Environment, svc *config.Service) error {
+func (tb *tektonBuilder) Service(env *config.Environment, svc *config.Service) error {
 	if svc.SourceURL == "" {
 		return nil
 	}
@@ -56,20 +59,18 @@ func (tk *tektonBuilder) Service(env *config.Environment, svc *config.Service) e
 	}
 	pipelines := getPipelines(env, svc, repo)
 	ciTrigger := repo.CreateCITrigger(triggerName(svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, pipelines.Integration.Template, pipelines.Integration.Bindings)
-	tk.triggers = append(tk.triggers, ciTrigger)
+	tb.triggers = append(tb.triggers, ciTrigger)
 	return nil
 }
 
-func (tk *tektonBuilder) Environment(env *config.Environment) error {
-	cfg := tk.manifest.GetPipelinesConfig()
+func (tb *tektonBuilder) Environment(env *config.Environment) error {
+	cfg := tb.manifest.GetPipelinesConfig()
 	if cfg != nil {
-		triggers, err := createTriggersForCICD(tk.gitOpsRepo, cfg)
+		triggers, err := createTriggersForCICD(tb.gitOpsRepo, cfg)
 		if err != nil {
 			return err
 		}
-		tk.triggers = append(tk.triggers, triggers...)
-		cicdPath := config.PathForPipelines(cfg)
-		tk.files[getEventListenerPath(cicdPath)] = eventlisteners.CreateELFromTriggers(cfg.Name, saName, tk.triggers)
+		tb.triggers = append(tb.triggers, triggers...)
 	}
 	return nil
 }
