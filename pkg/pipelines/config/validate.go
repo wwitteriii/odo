@@ -78,7 +78,7 @@ func (vv *validateVisitor) validateServiceURLs(gitOpsURL string) []error {
 func (vv *validateVisitor) Environment(env *Environment) error {
 	envPath := yamlPath(PathForEnvironment(env))
 	if _, ok := vv.configNames[env.Name]; ok {
-		vv.errs = append(vv.errs, environmentNameCollidesWithConfig(env.Name, []string{envPath}))
+		vv.errs = append(vv.errs, invalidEnvironment(env.Name, "The environment name cannot be the same as a config name.", []string{envPath}))
 	}
 	if err := checkDuplicate(env.Name, envPath, vv.envNames); err != nil {
 		vv.errs = append(vv.errs, err)
@@ -237,6 +237,14 @@ func list(errs ...error) []error {
 	return errs
 }
 
+func invalidEnvironment(name, details string, paths []string) *apis.FieldError {
+	return &apis.FieldError{
+		Message: fmt.Sprintf("invalid environment %q", name),
+		Details: details,
+		Paths:   paths,
+	}
+}
+
 func invalidNameError(name, details string, paths []string) *apis.FieldError {
 	return &apis.FieldError{
 		Message: fmt.Sprintf("invalid name %q", name),
@@ -276,13 +284,6 @@ func duplicateSourceError(url string, paths []string) *apis.FieldError {
 func inconsistentGitTypeError(gitType, serviceURL string, paths []string) *apis.FieldError {
 	return &apis.FieldError{
 		Message: fmt.Sprintf("service URL must be a %s repository: %v", gitType, serviceURL),
-		Paths:   paths,
-	}
-}
-
-func environmentNameCollidesWithConfig(envName string, paths []string) *apis.FieldError {
-	return &apis.FieldError{
-		Message: fmt.Sprintf("The environment %s cannot have the same name as the config names", envName),
 		Paths:   paths,
 	}
 }
