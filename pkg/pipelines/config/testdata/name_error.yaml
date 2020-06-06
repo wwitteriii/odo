@@ -1,8 +1,8 @@
 config:
   argocd:
-    namespace: argo.cd
+    namespace: argo.cd  # invalid name
   pipelines:
-    name: tst-cicd
+    name: tst!cicd  # invalid name
 environments:
   - name: develo.pment      # invalid name
     pipelines:

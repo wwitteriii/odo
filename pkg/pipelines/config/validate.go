@@ -78,7 +78,7 @@ func (vv *validateVisitor) validateServiceURLs(gitOpsURL string) []error {
 func (vv *validateVisitor) Environment(env *Environment) error {
 	envPath := yamlPath(PathForEnvironment(env))
 	if _, ok := vv.configNames[env.Name]; ok {
-		vv.errs = append(vv.errs, fmt.Errorf("The environment %s cannot have the same name as the config names", env.Name))
+		vv.errs = append(vv.errs, environmentNameCollidesWithConfig(env.Name, []string{envPath}))
 	}
 	if err := checkDuplicate(env.Name, envPath, vv.envNames); err != nil {
 		vv.errs = append(vv.errs, err)
@@ -199,15 +199,13 @@ func (vv *validateVisitor) validateConfig(manifest *Manifest) []error {
 	errs := []error{}
 	if manifest.Config != nil {
 		if manifest.Config.ArgoCD != nil {
-			err := validateName(manifest.Config.ArgoCD.Namespace, fmt.Sprintf("config.%s", manifest.Config.ArgoCD.Namespace))
-			if err != nil {
+			if err := validateName(manifest.Config.ArgoCD.Namespace, yamlPath(PathForArgoCD())); err != nil {
 				errs = append(errs, err)
 			}
 			vv.configNames[manifest.Config.ArgoCD.Namespace] = true
 		}
 		if manifest.Config.Pipelines != nil {
-			err := validateName(manifest.Config.Pipelines.Name, fmt.Sprintf("config.%s", manifest.Config.Pipelines.Name))
-			if err != nil {
+			if err := validateName(manifest.Config.Pipelines.Name, yamlPath(PathForPipelines(manifest.Config.Pipelines))); err != nil {
 				errs = append(errs, err)
 			}
 			vv.configNames[manifest.Config.Pipelines.Name] = true
@@ -237,14 +235,6 @@ func yamlJoin(a string, b ...string) string {
 
 func list(errs ...error) []error {
 	return errs
-}
-
-func invalidEnvironment(name, details string, paths []string) *apis.FieldError {
-	return &apis.FieldError{
-		Message: fmt.Sprintf("invalid environment %q", name),
-		Details: details,
-		Paths:   paths,
-	}
 }
 
 func invalidNameError(name, details string, paths []string) *apis.FieldError {
@@ -286,6 +276,13 @@ func duplicateSourceError(url string, paths []string) *apis.FieldError {
 func inconsistentGitTypeError(gitType, serviceURL string, paths []string) *apis.FieldError {
 	return &apis.FieldError{
 		Message: fmt.Sprintf("service URL must be a %s repository: %v", gitType, serviceURL),
+		Paths:   paths,
+	}
+}
+
+func environmentNameCollidesWithConfig(envName string, paths []string) *apis.FieldError {
+	return &apis.FieldError{
+		Message: fmt.Sprintf("The environment %s cannot have the same name as the config names", envName),
 		Paths:   paths,
 	}
 }

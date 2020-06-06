@@ -35,7 +35,8 @@ func TestValidate(t *testing.T) {
 			"testdata/environment_config_name.yaml",
 			multierror.Join(
 				[]error{
-					fmt.Errorf("The environment tst-cicd cannot have the same name as the config names"),
+					environmentNameCollidesWithConfig("argocd", []string{"environments.argocd"}),
+					environmentNameCollidesWithConfig("tst-cicd", []string{"environments.tst-cicd"}),
 				},
 			),
 		},
@@ -44,7 +45,8 @@ func TestValidate(t *testing.T) {
 			"testdata/name_error.yaml",
 			multierror.Join(
 				[]error{
-					invalidNameError("argo.cd", DNS1035Error, []string{"config.argo.cd"}),
+					invalidNameError("argo.cd", DNS1035Error, []string{"config.argocd"}),
+					invalidNameError("tst!cicd", DNS1035Error, []string{"config.tst!cicd"}),
 					invalidNameError("", DNS1035Error, []string{"environments.develo.pment.services"}),
 					invalidNameError("", DNS1035Error, []string{"environments.develo.pment.services.pipelines.integration.binding"}),
 					invalidNameError("app-1$.", DNS1035Error, []string{"environments.develo.pment.apps.app-1$."}),
