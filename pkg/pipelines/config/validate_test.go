@@ -35,8 +35,8 @@ func TestValidate(t *testing.T) {
 			"testdata/environment_config_name.yaml",
 			multierror.Join(
 				[]error{
-					invalidEnvironment("argocd", "The environment name cannot be the same as a config name.", []string{"environments.argocd"}),
-					invalidEnvironment("tst-cicd", "The environment name cannot be the same as a config name.", []string{"environments.tst-cicd"}),
+					invalidEnvironment("argocd", "Environment name cannot be the same as a config name.", []string{"environments.argocd"}),
+					invalidEnvironment("tst-cicd", "Environment name cannot be the same as a config name.", []string{"environments.tst-cicd"}),
 				},
 			),
 		},

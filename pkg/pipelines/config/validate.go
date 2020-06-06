@@ -78,7 +78,7 @@ func (vv *validateVisitor) validateServiceURLs(gitOpsURL string) []error {
 func (vv *validateVisitor) Environment(env *Environment) error {
 	envPath := yamlPath(PathForEnvironment(env))
 	if _, ok := vv.configNames[env.Name]; ok {
-		vv.errs = append(vv.errs, invalidEnvironment(env.Name, "The environment name cannot be the same as a config name.", []string{envPath}))
+		vv.errs = append(vv.errs, invalidEnvironment(env.Name, "Environment name cannot be the same as a config name.", []string{envPath}))
 	}
 	if err := checkDuplicate(env.Name, envPath, vv.envNames); err != nil {
 		vv.errs = append(vv.errs, err)
