@@ -22,7 +22,7 @@ func TestAddEnv(t *testing.T) {
 		ManifestFilename: manifestFile,
 		EnvName:          "dev",
 	}
-	afero.WriteFile(fakeFs, manifestFile, []byte("environments:"), 0644)
+	_ = afero.WriteFile(fakeFs, manifestFile, []byte("environments:"), 0644)
 
 	if err := AddEnv(&envParameters, fakeFs); err != nil {
 		t.Fatalf("AddEnv() failed :%s", err)
@@ -49,7 +49,7 @@ func TestAddEnvWithExistingName(t *testing.T) {
 		ManifestFilename: manifestFile,
 		EnvName:          "dev",
 	}
-	afero.WriteFile(fakeFs, manifestFile, []byte("environments:\n - name: dev\n"), 0644)
+	_ = afero.WriteFile(fakeFs, manifestFile, []byte("environments:\n - name: dev\n"), 0644)
 
 	if err := AddEnv(&envParameters, fakeFs); err == nil {
 		t.Fatal("AddEnv() did not fail with duplicate environment")
@@ -152,8 +152,9 @@ func TestNewEnvironment(t *testing.T) {
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("Test_%d", i), func(rt *testing.T) {
 			got, err := newEnvironment(tt.m, tt.name)
-			if !helper.ErrorMatch(rt, tt.errMsg, err) {
 
+			if !helper.ErrorMatch(rt, tt.errMsg, err) {
+				rt.Errorf("err mismatch want: %s got: %s: \n", tt.errMsg, err)
 			}
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				rt.Errorf("env mismatch: \n%s", diff)

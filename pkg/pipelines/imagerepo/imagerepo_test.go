@@ -13,11 +13,11 @@ import (
 )
 
 func TestCreateInternalRegistryRoleBinding(t *testing.T) {
-	cicd := &config.PipelinesConfig{
+	pipelinesConfig := &config.PipelinesConfig{
 		Name: "test-cicd",
 	}
 	sa := roles.CreateServiceAccount(meta.NamespacedName("test-cicd", "pipeline"))
-	gotFilename, got := createInternalRegistryRoleBinding(cicd, "new-proj", sa)
+	gotFilename, got := createInternalRegistryRoleBinding(pipelinesConfig, "new-proj", sa)
 
 	want := res.Resources{"config/test-cicd/base/pipelines/02-rolebindings/internal-registry-new-proj-binding.yaml": &v1rbac.RoleBinding{
 		TypeMeta:   meta.TypeMeta("RoleBinding", "rbac.authorization.k8s.io/v1"),

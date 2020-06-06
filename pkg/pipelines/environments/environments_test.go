@@ -69,10 +69,10 @@ func TestBuildEnvironmentsDoesNotOutputCIorArgo(t *testing.T) {
 
 func TestBuildEnvironmentsAddsKustomizedFiles(t *testing.T) {
 	var appFs = ioutils.NewMapFilesystem()
-	appFs.MkdirAll("environments/test-dev/base", 0755)
-	afero.WriteFile(appFs, "environments/test-dev/base/volume.yaml", []byte(`this is a file`), 0644)
-	afero.WriteFile(appFs, "environments/test-dev/base/test-dev-environment.yaml", []byte(`this is a file`), 0644)
-	afero.WriteFile(appFs, "environments/test-dev/base/routes/01-route.yaml", []byte(`this is a file`), 0644)
+	_ = appFs.MkdirAll("environments/test-dev/base", 0755)
+	_ = afero.WriteFile(appFs, "environments/test-dev/base/volume.yaml", []byte(`this is a file`), 0644)
+	_ = afero.WriteFile(appFs, "environments/test-dev/base/test-dev-environment.yaml", []byte(`this is a file`), 0644)
+	_ = afero.WriteFile(appFs, "environments/test-dev/base/routes/01-route.yaml", []byte(`this is a file`), 0644)
 
 	m := &config.Manifest{
 		Config: &config.Config{

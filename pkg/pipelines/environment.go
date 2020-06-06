@@ -11,11 +11,6 @@ import (
 	"github.com/spf13/afero"
 )
 
-const (
-	envNamespace   = "namespace.yaml"
-	envRoleBinding = "rolebinding.yaml"
-)
-
 // EnvParameters encapsulates parameters for add env command
 type EnvParameters struct {
 	ManifestFilename string
@@ -54,8 +49,8 @@ func AddEnv(o *EnvParameters, appFs afero.Fs) error {
 }
 
 func newEnvironment(m *config.Manifest, name string) (*config.Environment, error) {
-	cicd := m.GetPipelinesConfig()
-	if cicd != nil && m.GitOpsURL != "" {
+	pipelinesConfig := m.GetPipelinesConfig()
+	if pipelinesConfig != nil && m.GitOpsURL != "" {
 		r, err := scm.NewRepository(m.GitOpsURL)
 		if err != nil {
 			return nil, err

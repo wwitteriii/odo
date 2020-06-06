@@ -168,11 +168,10 @@ func bootstrapServiceDeployment(dev *config.Environment) (res.Resources, error) 
 
 func bootstrapEnvironments(repo scm.Repository, prefix, secretName string, ns map[string]string) ([]*config.Environment, *config.Config, error) {
 	envs := []*config.Environment{}
-	var cicd *config.PipelinesConfig
-	var argo *config.ArgoCDConfig
+	var pipelinesConfig *config.PipelinesConfig
 	for k, v := range ns {
 		if k == "cicd" {
-			cicd = &config.PipelinesConfig{Name: prefix + "cicd"}
+			pipelinesConfig = &config.PipelinesConfig{Name: prefix + "cicd"}
 		}
 		if k == "dev" {
 			env := &config.Environment{Name: v}
@@ -192,11 +191,9 @@ func bootstrapEnvironments(repo scm.Repository, prefix, secretName string, ns ma
 		if k == "stage" {
 			env := &config.Environment{Name: v}
 			envs = append(envs, env)
-
 		}
 	}
-	argo = &config.ArgoCDConfig{Namespace: "argocd"}
-	cfg := &config.Config{Pipelines: cicd, ArgoCD: argo}
+	cfg := &config.Config{Pipelines: pipelinesConfig, ArgoCD: &config.ArgoCDConfig{Namespace: "argocd"}}
 	return envs, cfg, nil
 }
 

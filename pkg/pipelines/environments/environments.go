@@ -75,7 +75,8 @@ func (b *envBuilder) Environment(env *config.Environment) error {
 	if _, ok := b.files[envBindingPath]; ok {
 		envFiles[envBindingPath] = b.files[envBindingPath]
 	}
-	for k, _ := range envFiles {
+
+	for k := range envFiles {
 		kustomizedFilenames[filepath.Base(k)] = true
 	}
 	envFiles[filepath.Join(basePath, kustomization)] = &res.Kustomization{Resources: ExtractFilenames(kustomizedFilenames)}
@@ -146,7 +147,7 @@ func filesForService(svcPath string, app *config.Service) (res.Resources, error)
 
 func ExtractFilenames(f map[string]bool) []string {
 	names := []string{}
-	for k, _ := range f {
+	for k := range f {
 		names = append(names, k)
 	}
 	sort.Strings(names)
