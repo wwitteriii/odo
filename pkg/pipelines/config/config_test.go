@@ -83,6 +83,70 @@ func TestManifestWalk(t *testing.T) {
 	}
 }
 
+func TestManifestWalkCalls(t *testing.T) {
+	m := &Manifest{
+		Environments: []*Environment{
+			{
+				Name: "development",
+
+				Services: []*Service{
+					{Name: "app-1-service-http"},
+					{Name: "app-1-service-test"},
+					{Name: "app-2-service"},
+				},
+				Apps: []*Application{
+					{
+						Name: "my-app-1",
+						ServiceRefs: []string{
+							"app-1-service-http",
+							"app-1-service-test",
+						},
+					},
+					{
+						Name:        "my-app-2",
+						ServiceRefs: []string{"app-2-service"},
+					},
+				},
+			},
+			{
+				Name: "staging",
+				Services: []*Service{
+					{Name: "app-1-service-user"},
+				},
+				Apps: []*Application{
+					{Name: "my-app-1",
+						ServiceRefs: []string{
+							"app-1-service-user",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	v := &testVisitor{paths: []string{}}
+	err := m.Walk(v)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := []string{
+		"development/app-1-service-http",
+		"development/app-1-service-test",
+		"development/app-2-service",
+		"development/my-app-1",
+		"development/my-app-2",
+		"envs/development",
+		"staging/app-1-service-user",
+		"staging/my-app-1",
+		"envs/staging",
+	}
+
+	if diff := cmp.Diff(want, v.paths); diff != "" {
+		t.Fatalf("tree files: %s", diff)
+	}
+}
+
 func TestGetPipelinesConfig(t *testing.T) {
 	cfg := &Config{
 		Pipelines: &PipelinesConfig{
@@ -175,9 +239,7 @@ func makeEnvs(ns []testEnv) []*Environment {
 }
 
 type testEnv struct {
-	name   string
-	cicd   bool
-	argocd bool
+	name string
 }
 
 type testVisitor struct {
