@@ -67,10 +67,6 @@ var (
 )
 
 const (
-	pipelineDir = "pipelines"
-
-	baseDir = "base"
-
 	// Kustomize constants for kustomization.yaml
 	Kustomize = "kustomization.yaml"
 
@@ -84,19 +80,16 @@ const (
 	appTaskPath              = "04-tasks/deploy-using-kubectl-task.yaml"
 	ciPipelinesPath          = "05-pipelines/ci-dryrun-from-pr-pipeline.yaml"
 	appCiPipelinesPath       = "05-pipelines/app-ci-pipeline.yaml"
-	appCdPipelinesPath       = "05-pipelines/app-cd-pipeline.yaml"
 	cdPipelinesPath          = "05-pipelines/cd-deploy-from-push-pipeline.yaml"
 	prTemplatePath           = "07-templates/ci-dryrun-from-pr-template.yaml"
 	pushTemplatePath         = "07-templates/cd-deploy-from-push-template.yaml"
 	appCIBuildPRTemplatePath = "07-templates/app-ci-build-pr-template.yaml"
-	appCDBuildPRTemplatePath = "07-templates/app-cd-build-pr-template.yaml"
 	eventListenerPath        = "08-eventlisteners/cicd-event-listener.yaml"
 	routePath                = "09-routes/gitops-webhook-event-listener.yaml"
 
 	dockerSecretName = "regcred"
 
 	saName          = "pipeline"
-	roleName        = "pipelines-service-role"
 	roleBindingName = "pipelines-service-role-binding"
 )
 
@@ -161,8 +154,8 @@ func createInitialFiles(fs afero.Fs, repo scm.Repository, prefix, gitOpsWebhookS
 	prefixedResources := addPrefixToResources(pipelinesPath(pipelines.Config), resources)
 	initialFiles = res.Merge(prefixedResources, initialFiles)
 
-	cicdKustomizations := addPrefixToResources(cicdEnvironmentPath(pipelines.Config), getCICDKustomization(files))
-	initialFiles = res.Merge(cicdKustomizations, initialFiles)
+	pipelinesConfigKustomizations := addPrefixToResources(config.PathForPipelines(pipelines.Config.Pipelines), getCICDKustomization(files))
+	initialFiles = res.Merge(pipelinesConfigKustomizations, initialFiles)
 
 	return initialFiles, nil
 }
@@ -241,12 +234,8 @@ func getCICDKustomization(files []string) res.Resources {
 	}
 }
 
-func pathForEnvironment(env *config.Environment) string {
-	return filepath.Join("environments", env.Name)
-}
-
 func pipelinesPath(m *config.Config) string {
-	return filepath.Join(cicdEnvironmentPath(m), "base/pipelines")
+	return filepath.Join(config.PathForPipelines(m.Pipelines), "base/pipelines")
 }
 
 func addPrefixToResources(prefix string, files res.Resources) map[string]interface{} {
@@ -255,11 +244,6 @@ func addPrefixToResources(prefix string, files res.Resources) map[string]interfa
 		updated[filepath.Join(prefix, k)] = v
 	}
 	return updated
-}
-
-// TODO: this should probably use the .FindCICDEnvironment on the pipelines.
-func cicdEnvironmentPath(m *config.Config) string {
-	return config.PathForPipelines(m.Pipelines)
 }
 
 func getResourceFiles(res res.Resources) []string {

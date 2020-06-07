@@ -353,83 +353,36 @@ func TestServiceWithArgoCD(t *testing.T) {
 	}
 }
 
-func buildManifest(withCICD, withArgoCD bool) *config.Manifest {
-	if !withCICD && withArgoCD {
-		return &config.Manifest{
-			Config: &config.Config{
-				ArgoCD: &config.ArgoCDConfig{
-					Namespace: "argocd",
-				},
-			},
-			GitOpsURL:    "http://github.com/org/test",
-			Environments: envWithoutPipelineConfig(),
-		}
+func buildManifest(withPipelines, withArgoCD bool) *config.Manifest {
 
+	m := config.Manifest{
+		GitOpsURL: "http://github.com/org/test",
 	}
-	if withCICD && withArgoCD {
-		return &config.Manifest{
-			Config: &config.Config{
-				Pipelines: &config.PipelinesConfig{
-					Name: "cicd",
-				},
-				ArgoCD: &config.ArgoCDConfig{
-					Namespace: "argocd",
-				},
+
+	m.Environments = environment(withPipelines)
+
+	if withArgoCD {
+		m.Config = &config.Config{
+			ArgoCD: &config.ArgoCDConfig{
+				Namespace: "argocd",
 			},
-			GitOpsURL:    "http://github.com/org/test",
-			Environments: envWithPipelineConfig(),
 		}
 	}
-	if withCICD && !withArgoCD {
-		return &config.Manifest{
-			Config: &config.Config{
-				Pipelines: &config.PipelinesConfig{
-					Name: "cicd",
-				},
-			},
-			GitOpsURL:    "http://github.com/org/test",
-			Environments: envWithPipelineConfig(),
+
+	if withPipelines {
+		if m.Config == nil {
+			m.Config = &config.Config{}
+		}
+		m.Config.Pipelines = &config.PipelinesConfig{
+			Name: "cicd",
 		}
 	}
-	if !withCICD && !withArgoCD {
-		return &config.Manifest{
-			GitOpsURL:    "http://github.com/org/test",
-			Environments: envWithoutPipelineConfig(),
-		}
-	}
-	return nil
+
+	return &m
 }
 
-func envWithPipelineConfig() []*config.Environment {
-	return []*config.Environment{
-		{
-			Name: "test-dev",
-			Apps: []*config.Application{
-				{
-					Name: "test-app",
-					ServiceRefs: []string{
-						"test-svc",
-					},
-				},
-			},
-			Services: []*config.Service{
-				{
-					Name:      "test-svc",
-					SourceURL: "https://github.com/myproject/test-svc",
-					Webhook: &config.Webhook{
-						Secret: &config.Secret{
-							Name:      "webhook-secret-test-dev-test-svc",
-							Namespace: "cicd",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func envWithoutPipelineConfig() []*config.Environment {
-	return []*config.Environment{
+func environment(withPipelinesConfig bool) []*config.Environment {
+	env := []*config.Environment{
 		{
 			Name: "test-dev",
 			Apps: []*config.Application{
@@ -448,6 +401,17 @@ func envWithoutPipelineConfig() []*config.Environment {
 			},
 		},
 	}
+
+	if withPipelinesConfig {
+		env[0].Services[0].Webhook = &config.Webhook{
+			Secret: &config.Secret{
+				Name:      "webhook-secret-test-dev-test-svc",
+				Namespace: "cicd",
+			},
+		}
+	}
+
+	return env
 }
 
 func TestCreateSvcImageBinding(t *testing.T) {

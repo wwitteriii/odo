@@ -72,10 +72,7 @@ func TestInitialFiles(t *testing.T) {
 }
 
 func ignoreSecrets(k string, v interface{}) bool {
-	if k == "config/tst-cicd/base/pipelines/03-secrets/gitops-webhook-secret.yaml" {
-		return true
-	}
-	return false
+	return k == "config/tst-cicd/base/pipelines/03-secrets/gitops-webhook-secret.yaml"
 }
 
 func TestGetCICDKustomization(t *testing.T) {

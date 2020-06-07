@@ -2,9 +2,7 @@ package pipelines
 
 import (
 	"fmt"
-	"net/url"
 	"path/filepath"
-	"strings"
 
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
@@ -13,23 +11,11 @@ import (
 	"github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 )
 
-const (
-	elPatchFile     = "eventlistener_patch.yaml"
-	elPatchDir      = "eventlistener_patches"
-	rolebindingFile = "edit-rolebinding.yaml"
-)
-
-type patchStringValue struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value"`
-}
-
 type tektonBuilder struct {
-	files      res.Resources
-	gitOpsRepo string
-	triggers   []v1alpha1.EventListenerTrigger
-	manifest   *config.Manifest
+	files           res.Resources
+	gitOpsRepo      string
+	triggers        []v1alpha1.EventListenerTrigger
+	pipelinesConfig *config.PipelinesConfig
 }
 
 func buildEventListenerResources(gitOpsRepo string, m *config.Manifest) (res.Resources, error) {
@@ -41,7 +27,7 @@ func buildEventListenerResources(gitOpsRepo string, m *config.Manifest) (res.Res
 		return nil, nil
 	}
 	files := make(res.Resources)
-	tb := &tektonBuilder{files: files, gitOpsRepo: gitOpsRepo, manifest: m}
+	tb := &tektonBuilder{files: files, gitOpsRepo: gitOpsRepo, pipelinesConfig: m.GetPipelinesConfig()}
 	err := m.Walk(tb)
 
 	cicdPath := config.PathForPipelines(cfg)
@@ -64,9 +50,8 @@ func (tb *tektonBuilder) Service(env *config.Environment, svc *config.Service) e
 }
 
 func (tb *tektonBuilder) Environment(env *config.Environment) error {
-	cfg := tb.manifest.GetPipelinesConfig()
-	if cfg != nil {
-		triggers, err := createTriggersForCICD(tb.gitOpsRepo, cfg)
+	if tb.pipelinesConfig != nil {
+		triggers, err := createTriggersForCICD(tb.gitOpsRepo, tb.pipelinesConfig)
 		if err != nil {
 			return err
 		}
@@ -88,7 +73,6 @@ func createTriggersForCICD(gitOpsRepo string, cfg *config.PipelinesConfig) ([]v1
 	ciTrigger := repo.CreateCITrigger("ci-dryrun-from-pr", eventlisteners.GitOpsWebhookSecret, cfg.Name, "ci-dryrun-from-pr-template", []string{repo.PRBindingName()})
 	cdTrigger := repo.CreateCDTrigger("cd-deploy-from-push", eventlisteners.GitOpsWebhookSecret, cfg.Name, "cd-deploy-from-push-template", []string{repo.PushBindingName()})
 	triggers = append(triggers, ciTrigger, cdTrigger)
-
 	return triggers, nil
 }
 
@@ -115,15 +99,6 @@ func clonePipelines(p *config.Pipelines) *config.Pipelines {
 			Template: p.Integration.Template,
 		},
 	}
-}
-
-func extractRepo(u string) (string, error) {
-	parsed, err := url.Parse(u)
-	if err != nil {
-		return "", err
-	}
-	parts := strings.Split(parsed.Path, "/")
-	return fmt.Sprintf("%s/%s", parts[1], strings.TrimSuffix(parts[2], ".git")), nil
 }
 
 func triggerName(svc string) string {
