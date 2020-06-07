@@ -172,24 +172,21 @@ func bootstrapEnvironments(repo scm.Repository, prefix, secretName string, ns ma
 	for k, v := range ns {
 		if k == "cicd" {
 			pipelinesConfig = &config.PipelinesConfig{Name: prefix + "cicd"}
-		}
-		if k == "dev" {
+		} else {
 			env := &config.Environment{Name: v}
-			svc, err := serviceFromRepo(repo.URL(), secretName, ns["cicd"])
-			if err != nil {
-				return nil, nil, err
+			if k == "dev" {
+				svc, err := serviceFromRepo(repo.URL(), secretName, ns["cicd"])
+				if err != nil {
+					return nil, nil, err
+				}
+				app, err := applicationFromRepo(repo.URL(), svc.Name)
+				if err != nil {
+					return nil, nil, err
+				}
+				env.Apps = []*config.Application{app}
+				env.Services = []*config.Service{svc}
+				env.Pipelines = defaultPipelines(repo)
 			}
-			app, err := applicationFromRepo(repo.URL(), svc.Name)
-			if err != nil {
-				return nil, nil, err
-			}
-			env.Apps = []*config.Application{app}
-			env.Services = []*config.Service{svc}
-			env.Pipelines = defaultPipelines(repo)
-			envs = append(envs, env)
-		}
-		if k == "stage" {
-			env := &config.Environment{Name: v}
 			envs = append(envs, env)
 		}
 	}
