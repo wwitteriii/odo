@@ -1,9 +1,7 @@
 package config
 
 import (
-	"fmt"
 	"path/filepath"
-	"sort"
 )
 
 // PathForService gives a repo-rooted path within a repository.
@@ -36,6 +34,7 @@ type Manifest struct {
 	GitOpsURL    string         `json:"gitops_url,omitempty"`
 	Environments []*Environment `json:"environments,omitempty"`
 	Config       *Config        `json:"config,omitempty"`
+	Apps         []*Application `json:"apps,omitempty"`
 }
 
 // GetEnvironment returns a named environment if it exists in the configuration.
@@ -53,7 +52,7 @@ func (m *Manifest) GetEnvironment(n string) *Environment {
 func (m *Manifest) GetApplication(environment, application string) *Application {
 	for _, env := range m.Environments {
 		if env.Name == environment {
-			for _, app := range env.Apps {
+			for _, app := range m.Apps {
 				if app.Name == application {
 					return app
 				}
@@ -65,25 +64,25 @@ func (m *Manifest) GetApplication(environment, application string) *Application 
 
 // AddService adds a new service to a specific environment and creates a
 // reference to it within an Application.
-func (m *Manifest) AddService(envName, appName string, svc *Service) error {
-	env := m.GetEnvironment(envName)
-	if env == nil {
-		return fmt.Errorf("environment %s does not exist", envName)
-	}
-	for _, service := range env.Services {
-		if service.Name == svc.Name {
-			return fmt.Errorf("service %s already exists at %s", svc.Name, env.Name)
-		}
-	}
-	app := m.GetApplication(envName, appName)
-	if app == nil {
-		app = &Application{Name: appName}
-		env.Apps = append(env.Apps, app)
-	}
-	env.Services = append(env.Services, svc)
-	app.ServiceRefs = append(app.ServiceRefs, svc.Name)
-	return nil
-}
+// func (m *Manifest) AddService(envName, appName string, svc *Service) error {
+// 	env := m.GetEnvironment(envName)
+// 	if env == nil {
+// 		return fmt.Errorf("environment %s does not exist", envName)
+// 	}
+// 	for _, service := range env.Services {
+// 		if service.Name == svc.Name {
+// 			return fmt.Errorf("service %s already exists at %s", svc.Name, env.Name)
+// 		}
+// 	}
+// 	app := m.GetApplication(envName, appName)
+// 	if app == nil {
+// 		app = &Application{Name: appName}
+// 		env.Apps = append(env.Apps, app)
+// 	}
+// 	env.Services = append(env.Services, svc)
+// 	app.ServiceRefs = append(app.ServiceRefs, svc.Name)
+// 	return nil
+// }
 
 // GetPipelinesConfig returns the global Pipelines configuration, if one exists.
 func (m *Manifest) GetPipelinesConfig() *PipelinesConfig {
@@ -105,10 +104,9 @@ func (m *Manifest) GetArgoCDConfig() *ArgoCDConfig {
 // Environment is a slice of Apps, these are the named apps in the namespace.
 //
 type Environment struct {
-	Name      string         `json:"name,omitempty"`
-	Pipelines *Pipelines     `json:"pipelines,omitempty"`
-	Services  []*Service     `json:"services,omitempty"`
-	Apps      []*Application `json:"apps,omitempty"`
+	Name      string     `json:"name,omitempty"`
+	Pipelines *Pipelines `json:"pipelines,omitempty"`
+	Services  []*Service `json:"services,omitempty"`
 }
 
 // Config represents the configuration for non-application environments.
@@ -137,9 +135,15 @@ func (e Environment) GoString() string {
 // The ConfigRepo indicates that the configuration for this application lives in
 // another repository.
 type Application struct {
-	Name        string      `json:"name,omitempty"`
-	ServiceRefs []string    `json:"services,omitempty"`
-	ConfigRepo  *Repository `json:"config_repo,omitempty"`
+	Name         string             `json:"name,omitempty"`
+	Environments []*EnvironmentRefs `json:"environments,omitempty"`
+	ConfigRepo   *Repository        `json:"config_repo,omitempty"`
+}
+
+//EnvironmentRefs are environment references
+type EnvironmentRefs struct {
+	Refs        string   `json:"ref,omitempty"`
+	ServiceRefs []string `json:"serviceRefs,omitempty"`
 }
 
 // Service has an upstream source.
@@ -192,36 +196,36 @@ type TemplateBinding struct {
 //
 // The environments are sorted using a custom sorting mechanism, that orders by
 // name, but, moves CICD environments to the bottom of the list.
-func (m Manifest) Walk(visitor interface{}) error {
-	sort.Sort(ByName(m.Environments))
-	for _, env := range m.Environments {
-		for _, svc := range env.Services {
-			if v, ok := visitor.(ServiceVisitor); ok {
-				err := v.Service(env, svc)
-				if err != nil {
-					return err
-				}
-			}
-		}
+// func (m Manifest) Walk(visitor interface{}) error {
+// 	sort.Sort(ByName(m.Environments))
+// 	for _, env := range m.Environments {
+// 		for _, svc := range env.Services {
+// 			if v, ok := visitor.(ServiceVisitor); ok {
+// 				err := v.Service(env, svc)
+// 				if err != nil {
+// 					return err
+// 				}
+// 			}
+// 		}
 
-		for _, app := range env.Apps {
-			if v, ok := visitor.(ApplicationVisitor); ok {
-				err := v.Application(env, app)
-				if err != nil {
-					return err
-				}
-			}
-		}
-		if v, ok := visitor.(EnvironmentVisitor); ok {
-			err := v.Environment(env)
-			if err != nil {
-				return err
-			}
-		}
-	}
+// 		for _, app := range env.Apps {
+// 			if v, ok := visitor.(ApplicationVisitor); ok {
+// 				err := v.Application(env, app)
+// 				if err != nil {
+// 					return err
+// 				}
+// 			}
+// 		}
+// 		if v, ok := visitor.(EnvironmentVisitor); ok {
+// 			err := v.Environment(env)
+// 			if err != nil {
+// 				return err
+// 			}
+// 		}
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 type ByName []*Environment
 

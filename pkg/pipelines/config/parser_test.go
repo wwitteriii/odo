@@ -14,6 +14,7 @@ func TestParse(t *testing.T) {
 		want     *Manifest
 	}{
 		{"testdata/example1.yaml", &Manifest{
+			GitOpsURL: "https://github.com/...",
 			Config: &Config{
 				Pipelines: &PipelinesConfig{
 					Name: "test-pipelines",
@@ -38,32 +39,9 @@ func TestParse(t *testing.T) {
 						},
 						{Name: "service-redis"},
 					},
-					Apps: []*Application{
-						{
-							Name: "my-app-1",
-							ServiceRefs: []string{
-								"service-http",
-							},
-						},
-						{
-							Name: "my-app-2",
-							ServiceRefs: []string{
-								"service-redis",
-							},
-						},
-					},
 				},
 				{
 					Name: "staging",
-					Apps: []*Application{
-						{Name: "my-app-1",
-							ConfigRepo: &Repository{
-								URL:            "https://github.com/testing/testing",
-								TargetRevision: "master",
-								Path:           "config",
-							},
-						},
-					},
 				},
 				{
 					Name: "production",
@@ -71,9 +49,21 @@ func TestParse(t *testing.T) {
 						{Name: "service-http"},
 						{Name: "service-metrics"},
 					},
-					Apps: []*Application{
+				},
+			},
+			Apps: []*Application{
+				{
+					Name: "my-app-1",
+					Environments: []*EnvironmentRefs{
 						{
-							Name: "my-app-1",
+							Refs: "development",
+							ServiceRefs: []string{
+								"service-http",
+								"service-redis",
+							},
+						},
+						{
+							Refs: "production",
 							ServiceRefs: []string{
 								"service-http",
 								"service-metrics",
@@ -83,34 +73,33 @@ func TestParse(t *testing.T) {
 				},
 			},
 		},
-		},
 
-		{"testdata/example2.yaml", &Manifest{
-			Environments: []*Environment{
-				{
-					Name: "development",
-					Services: []*Service{
-						{
-							Name:      "app-1-service-http",
-							SourceURL: "https://github.com/myproject/myservice.git",
-						},
-						{Name: "app-1-service-metrics"},
-					},
-					Apps: []*Application{
-						{
-							Name: "my-app-1",
-							ServiceRefs: []string{
-								"app-1-service-http",
-								"app-1-service-metrics",
-							},
-						},
-					},
-				},
-				{
-					Name: "tst-cicd",
-				},
-			},
-		},
+		// {"testdata/example2.yaml", &Manifest{
+		// 	Environments: []*Environment{
+		// 		{
+		// 			Name: "development",
+		// 			Services: []*Service{
+		// 				{
+		// 					Name:      "app-1-service-http",
+		// 					SourceURL: "https://github.com/myproject/myservice.git",
+		// 				},
+		// 				{Name: "app-1-service-metrics"},
+		// 			},
+		// 			Apps: []*Application{
+		// 				{
+		// 					Name: "my-app-1",
+		// 					ServiceRefs: []string{
+		// 						"app-1-service-http",
+		// 						"app-1-service-metrics",
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 		{
+		// 			Name: "tst-cicd",
+		// 		},
+		// 	},
+		// },
 		},
 	}
 

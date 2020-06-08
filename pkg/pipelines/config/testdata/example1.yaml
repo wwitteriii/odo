@@ -3,37 +3,31 @@ config:
     namespace: test-argocd
   pipelines:
     name: test-pipelines
+gitops_url: https://github.com/...
 environments:
   - name: development
     services:
-      - name: service-http
-        source_url: https://github.com/myproject/myservice.git
-      - name: service-redis
+    - name: service-http
+      source_url: https://github.com/myproject/myservice.git
+    - name: service-redis
     pipelines:
       integration:
         template: dev-ci-template
         bindings:
           - dev-ci-binding
-    apps:
-      - name: my-app-1
-        services:
-          - service-http
-      - name: my-app-2
-        services:
-          - service-redis
   - name: staging
-    apps:
-      - name: my-app-1
-        config_repo:
-          url: https://github.com/testing/testing
-          target_revision: master
-          path: config
   - name: production
     services:
       - name: service-http
       - name: service-metrics
-    apps:
-      - name: my-app-1
-        services:
+apps:
+  - name: my-app-1
+    environments:
+      - ref: development
+        serviceRefs:
+          - service-http
+          - service-redis
+      - ref: production
+        serviceRefs:
           - service-http
           - service-metrics
