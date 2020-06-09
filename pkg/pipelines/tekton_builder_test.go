@@ -186,17 +186,17 @@ func TestGetPipelines(t *testing.T) {
 
 func fakeTriggers(t *testing.T, m *config.Manifest, gitOpsRepo string) []triggersv1.EventListenerTrigger {
 	triggers := []triggersv1.EventListenerTrigger{}
+	cfg := m.GetPipelinesConfig()
+	cicdTriggers, err := createTriggersForCICD(gitOpsRepo, cfg)
+	assertNoError(t, err)
+	triggers = append(triggers, cicdTriggers...)
 	for _, env := range m.Environments {
-		cfg := m.GetPipelinesConfig()
 		svc := testService()
 		repo, err := scm.NewRepository(svc.SourceURL)
 		assertNoError(t, err)
 		pipelines := getPipelines(env, svc, repo)
 		devCITrigger := repo.CreateCITrigger(fmt.Sprintf("app-ci-build-from-pr-%s", svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, pipelines.Integration.Template, pipelines.Integration.Bindings)
 		triggers = append(triggers, devCITrigger)
-		cicdTriggers, err := createTriggersForCICD(gitOpsRepo, cfg)
-		assertNoError(t, err)
-		triggers = append(triggers, cicdTriggers...)
 	}
 
 	return triggers
