@@ -12,10 +12,9 @@ import (
 )
 
 type tektonBuilder struct {
-	files           res.Resources
-	gitOpsRepo      string
-	triggers        []v1alpha1.EventListenerTrigger
-	pipelinesConfig *config.PipelinesConfig
+	files      res.Resources
+	gitOpsRepo string
+	triggers   []v1alpha1.EventListenerTrigger
 }
 
 func buildEventListenerResources(gitOpsRepo string, m *config.Manifest) (res.Resources, error) {
@@ -27,12 +26,19 @@ func buildEventListenerResources(gitOpsRepo string, m *config.Manifest) (res.Res
 		return nil, nil
 	}
 	files := make(res.Resources)
-	tb := &tektonBuilder{files: files, gitOpsRepo: gitOpsRepo, pipelinesConfig: m.GetPipelinesConfig()}
-	err := m.Walk(tb)
-
+	tb := &tektonBuilder{files: files, gitOpsRepo: gitOpsRepo}
+	triggers, err := createTriggersForCICD(tb.gitOpsRepo, cfg)
+	if err != nil {
+		return nil, err
+	}
+	tb.triggers = append(tb.triggers, triggers...)
+	err = m.Walk(tb)
+	if err != nil {
+		return nil, err
+	}
 	cicdPath := config.PathForPipelines(cfg)
 	files[getEventListenerPath(cicdPath)] = eventlisteners.CreateELFromTriggers(cfg.Name, saName, tb.triggers)
-	return files, err
+	return files, nil
 }
 
 func (tb *tektonBuilder) Service(env *config.Environment, svc *config.Service) error {
@@ -46,17 +52,6 @@ func (tb *tektonBuilder) Service(env *config.Environment, svc *config.Service) e
 	pipelines := getPipelines(env, svc, repo)
 	ciTrigger := repo.CreateCITrigger(triggerName(svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, pipelines.Integration.Template, pipelines.Integration.Bindings)
 	tb.triggers = append(tb.triggers, ciTrigger)
-	return nil
-}
-
-func (tb *tektonBuilder) Environment(env *config.Environment) error {
-	if tb.pipelinesConfig != nil {
-		triggers, err := createTriggersForCICD(tb.gitOpsRepo, tb.pipelinesConfig)
-		if err != nil {
-			return err
-		}
-		tb.triggers = append(tb.triggers, triggers...)
-	}
 	return nil
 }
 
