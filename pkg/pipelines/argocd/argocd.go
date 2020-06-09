@@ -56,7 +56,7 @@ type argocdBuilder struct {
 	argoNS       string
 }
 
-func (b *argocdBuilder) Application(env *config.Environment, app *config.Application) error {
+func (b *argocdBuilder) Application(app *config.Application, env *config.Environment) error {
 	basePath := filepath.Join(config.PathForArgoCD(), "config")
 	argoFiles := res.Resources{}
 	filename := filepath.Join(basePath, env.Name+"-"+app.Name+"-app.yaml")

@@ -232,10 +232,13 @@ func (m Manifest) Walk(visitor interface{}) error {
 
 	for _, app := range m.Apps {
 		if v, ok := visitor.(ApplicationVisitor); ok {
-			err := v.Application(app)
-			if err != nil {
-				return err
+			for _, env := range app.Environments {
+				err := v.Application(app, m.GetEnvironment(env.Ref))
+				if err != nil {
+					return err
+				}
 			}
+
 		}
 	}
 

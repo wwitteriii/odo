@@ -202,10 +202,8 @@ func (v *testVisitor) Service(env *Environment, svc *Service) error {
 	return nil
 }
 
-func (v *testVisitor) Application(app *Application) error {
-	for _, env := range app.Environments {
-		v.paths = append(v.paths, filepath.Join("envs", env.Ref, "apps", app.Name))
-	}
+func (v *testVisitor) Application(app *Application, env *Environment) error {
+	v.paths = append(v.paths, filepath.Join("envs", env.Name, "apps", app.Name))
 	return nil
 }
 

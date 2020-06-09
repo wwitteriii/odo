@@ -18,6 +18,15 @@ const testRepoURL = "https://github.com/rhd-example-gitops/example"
 var (
 	testApp = &config.Application{
 		Name: "http-api",
+		Environments: []*config.EnvironmentRefs{
+			{
+				Ref: "test-dev",
+				ServiceRefs: []string{
+					"service-http",
+					"service-redis",
+				},
+			},
+		},
 	}
 	configRepoApp = &config.Application{
 		Name: "prod-api",
@@ -30,8 +39,18 @@ var (
 
 	testEnv = &config.Environment{
 		Name: "test-dev",
-		Apps: []*config.Application{
-			testApp,
+		Pipelines: &config.Pipelines{
+			Integration: &config.TemplateBinding{
+				Template: "dev-ci-template",
+				Bindings: []string{"dev-ci-binding"},
+			},
+		},
+		Services: []*config.Service{
+			{
+				Name:      "service-http",
+				SourceURL: "https://github.com/myproject/myservice.git",
+			},
+			{Name: "service-redis"},
 		},
 	}
 )
@@ -43,6 +62,9 @@ func TestBuildCreatesArgoCD(t *testing.T) {
 		},
 		Config: &config.Config{
 			ArgoCD: &config.ArgoCDConfig{Namespace: "argocd"},
+		},
+		Apps: []*config.Application{
+			testApp,
 		},
 	}
 
@@ -56,7 +78,7 @@ func TestBuildCreatesArgoCD(t *testing.T) {
 			TypeMeta:   applicationTypeMeta,
 			ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ArgoCDNamespace, "test-dev-http-api")),
 			Spec: argoappv1.ApplicationSpec{
-				Source: makeSource(testEnv, testEnv.Apps[0], testRepoURL),
+				Source: makeSource(testEnv, testApp, testRepoURL),
 				Destination: argoappv1.ApplicationDestination{
 					Server:    defaultServer,
 					Namespace: "test-dev",
@@ -76,10 +98,21 @@ func TestBuildCreatesArgoCD(t *testing.T) {
 func TestBuildCreatesArgoCDWithMultipleApps(t *testing.T) {
 	prodEnv := &config.Environment{
 		Name: "test-production",
-		Apps: []*config.Application{
-			testApp,
+		Pipelines: &config.Pipelines{
+			Integration: &config.TemplateBinding{
+				Template: "dev-ci-template",
+				Bindings: []string{"dev-ci-binding"},
+			},
+		},
+		Services: []*config.Service{
+			{
+				Name:      "service-http",
+				SourceURL: "https://github.com/myproject/myservice.git",
+			},
+			{Name: "service-redis"},
 		},
 	}
+
 	m := &config.Manifest{
 		Environments: []*config.Environment{
 			prodEnv,
@@ -87,6 +120,9 @@ func TestBuildCreatesArgoCDWithMultipleApps(t *testing.T) {
 		},
 		Config: &config.Config{
 			ArgoCD: &config.ArgoCDConfig{Namespace: "argocd"},
+		},
+		Apps: []*config.Application{
+			testApp,
 		},
 	}
 
