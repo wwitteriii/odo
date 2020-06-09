@@ -76,9 +76,6 @@ func createCDPipelineTask(taskName, stageNamespace string) pipelinev1.PipelineTa
 		Resources: &pipelinev1.PipelineTaskResources{
 			Inputs: []pipelinev1.PipelineTaskInputResource{createInputTaskResource("source", "source-repo")},
 		},
-		Params: []pipelinev1.Param{
-			createTaskParam("NAMESPACE", stageNamespace),
-		},
 	}
 }
 
@@ -126,7 +123,6 @@ func createCIPipelineTask(taskName, stageNamespace string) pipelinev1.PipelineTa
 			Inputs: []pipelinev1.PipelineTaskInputResource{createInputTaskResource("source", "source-repo")},
 		},
 		Params: []pipelinev1.Param{
-			createTaskParam("NAMESPACE", stageNamespace),
 			createTaskParam("DRYRUN", "true"),
 		},
 	}
