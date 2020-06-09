@@ -15,7 +15,6 @@ package config
 // )
 
 // func TestValidate(t *testing.T) {
-
 // 	tests := []struct {
 // 		desc     string
 // 		filename string

@@ -231,33 +231,10 @@ func (m Manifest) Walk(visitor interface{}) error {
 	}
 
 	for _, app := range m.Apps {
-		for _, env := range app.Environments {
-			if m.GetEnvironment(env.Ref) != nil {
-				if v, ok := visitor.(EnvironmentVisitor); ok {
-					env := m.GetEnvironment(env.Ref)
-					err := v.Environment(env)
-					if err != nil {
-						return err
-					}
-				}
-			}
-			for _, svcRef := range env.ServiceRefs {
-				if m.GetService(env.Ref, svcRef) != nil {
-					if v, ok := visitor.(ServiceVisitor); ok {
-						envName := m.GetEnvironment(env.Ref)
-						svc := m.GetService(env.Ref, svcRef)
-						err := v.Service(envName, svc)
-						if err != nil {
-							return err
-						}
-					}
-				}
-			}
-			if v, ok := visitor.(ApplicationVisitor); ok {
-				err := v.Application(env, app)
-				if err != nil {
-					return err
-				}
+		if v, ok := visitor.(ApplicationVisitor); ok {
+			err := v.Application(app)
+			if err != nil {
+				return err
 			}
 		}
 	}

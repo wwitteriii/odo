@@ -9,9 +9,6 @@ apps:
   - name : my-app-1
     environments:
       - ref: development
-        serviceRefs: 
+        serviceRefs:
           - app-1-service-http
           - app-1-service-metrics
-
-
-

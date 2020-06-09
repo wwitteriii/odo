@@ -7,7 +7,7 @@ type EnvironmentVisitor interface {
 
 // ApplicationVisitor is an interface for accessing applications from the manifest.
 type ApplicationVisitor interface {
-	Application(*Environment, *Application) error
+	Application(*Application) error
 }
 
 // ServiceVisitor is an interface for accessing services from the manifest.
