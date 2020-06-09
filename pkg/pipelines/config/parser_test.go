@@ -73,33 +73,39 @@ func TestParse(t *testing.T) {
 				},
 			},
 		},
+		},
 
-		// {"testdata/example2.yaml", &Manifest{
-		// 	Environments: []*Environment{
-		// 		{
-		// 			Name: "development",
-		// 			Services: []*Service{
-		// 				{
-		// 					Name:      "app-1-service-http",
-		// 					SourceURL: "https://github.com/myproject/myservice.git",
-		// 				},
-		// 				{Name: "app-1-service-metrics"},
-		// 			},
-		// 			Apps: []*Application{
-		// 				{
-		// 					Name: "my-app-1",
-		// 					ServiceRefs: []string{
-		// 						"app-1-service-http",
-		// 						"app-1-service-metrics",
-		// 					},
-		// 				},
-		// 			},
-		// 		},
-		// 		{
-		// 			Name: "tst-cicd",
-		// 		},
-		// 	},
-		// },
+		{"testdata/example2.yaml", &Manifest{
+			Environments: []*Environment{
+				{
+					Name: "development",
+					Services: []*Service{
+						{
+							Name:      "app-1-service-http",
+							SourceURL: "https://github.com/myproject/myservice.git",
+						},
+						{Name: "app-1-service-metrics"},
+					},
+				},
+				{
+					Name: "tst-cicd",
+				},
+			},
+			Apps: []*Application{
+				{
+					Name: "my-app-1",
+					Environments: []*EnvironmentRefs{
+						{
+							Refs: "development",
+							ServiceRefs: []string{
+								"app-1-service-http",
+								"app-1-service-metrics",
+							},
+						},
+					},
+				},
+			},
+		},
 		},
 	}
 

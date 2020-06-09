@@ -4,10 +4,14 @@ environments:
       - name: app-1-service-http
         source_url: https://github.com/myproject/myservice.git
       - name: app-1-service-metrics
-    apps:
-      - name: my-app-1
-        services:
+  - name: tst-cicd
+apps:
+  - name : my-app-1
+    environments:
+      - ref: development
+        serviceRefs: 
           - app-1-service-http
           - app-1-service-metrics
-  - name: tst-cicd
-    cicd: true
+
+
+
