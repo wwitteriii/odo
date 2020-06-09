@@ -2,82 +2,85 @@ package config
 
 import (
 	"path/filepath"
+	"sort"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
-// func TestManifestWalk(t *testing.T) {
-// 	m := &Manifest{
-// 		Config: &Config{
-// 			Pipelines: &PipelinesConfig{
-// 				Name: "cicd",
-// 			},
-// 			ArgoCD: &ArgoCDConfig{
-// 				Namespace: "argocd",
-// 			},
-// 		},
-// 		Environments: []*Environment{
-// 			{
-// 				Name: "development",
-// 				Services: []*Service{
-// 					{Name: "app-1-service-http"},
-// 					{Name: "app-1-service-test"},
-// 					{Name: "app-2-service"},
-// 				},
-// 				Apps: []*Application{
-// 					{
-// 						Name: "my-app-1",
-// 						ServiceRefs: []string{
-// 							"app-1-service-http",
-// 							"app-1-service-test",
-// 						},
-// 					},
-// 					{
-// 						Name: "my-app-2",
-// 						ServiceRefs: []string{
-// 							"app-2-service",
-// 						},
-// 					},
-// 				},
-// 			},
-// 			{
-// 				Name: "staging",
-// 				Services: []*Service{
-// 					{Name: "app-1-service-user"},
-// 				},
-// 				Apps: []*Application{
-// 					{Name: "my-app-1",
-// 						ServiceRefs: []string{
-// 							"app-1-service-user",
-// 						},
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}
+func TestManifestWalk(t *testing.T) {
+	m := &Manifest{
+		Config: &Config{
+			Pipelines: &PipelinesConfig{
+				Name: "cicd",
+			},
+			ArgoCD: &ArgoCDConfig{
+				Namespace: "argocd",
+			},
+		},
+		Environments: []*Environment{
+			{
+				Name: "development",
+				Services: []*Service{
+					{Name: "app-1-service-http"},
+					{Name: "app-1-service-test"},
+					{Name: "app-2-service"},
+				},
+				Apps: []*Application{
+					{
+						Name: "my-app-1",
+						ServiceRefs: []string{
+							"app-1-service-http",
+							"app-1-service-test",
+						},
+					},
+					{
+						Name: "my-app-2",
+						ServiceRefs: []string{
+							"app-2-service",
+						},
+					},
+				},
+			},
+			{
+				Name: "staging",
+				Services: []*Service{
+					{Name: "app-1-service-user"},
+				},
+				Apps: []*Application{
+					{Name: "my-app-1",
+						ServiceRefs: []string{
+							"app-1-service-user",
+						},
+					},
+				},
+			},
+		},
+	}
 
-// 	v := &testVisitor{paths: []string{}}
-// 	err := m.Walk(v)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	sort.Strings(v.paths)
+	v := &testVisitor{paths: []string{}}
+	err := m.Walk(v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sort.Strings(v.paths)
 
-// 	want := []string{
-// 		"development/app-1-service-http",
-// 		"development/app-1-service-test",
-// 		"development/app-2-service",
-// 		"development/my-app-1",
-// 		"development/my-app-2",
-// 		"envs/development",
-// 		"envs/staging",
-// 		"staging/app-1-service-user",
-// 		"staging/my-app-1",
-// 	}
+	want := []string{
+		"development/app-1-service-http",
+		"development/app-1-service-test",
+		"development/app-2-service",
+		"development/my-app-1",
+		"development/my-app-2",
+		"envs/development",
+		"envs/staging",
+		"staging/app-1-service-user",
+		"staging/my-app-1",
+	}
 
-// 	if diff := cmp.Diff(want, v.paths); diff != "" {
-// 		t.Fatalf("tree files: %s", diff)
-// 	}
-// }
+	if diff := cmp.Diff(want, v.paths); diff != "" {
+		t.Fatalf("tree files: %s", diff)
+	}
+}
 
 // func TestManifestWalkCalls(t *testing.T) {
 // 	m := &Manifest{
@@ -212,27 +215,27 @@ import (
 // 	}
 // }
 
-func TestGetEnvironment(t *testing.T) {
-	m := &Manifest{Environments: makeEnvs([]testEnv{{name: "prod"}, {name: "testing"}})}
-	env := m.GetEnvironment("prod")
-	if env.Name != "prod" {
-		t.Fatalf("got the wrong environment back: %#v", env)
-	}
+// func TestGetEnvironment(t *testing.T) {
+// 	m := &Manifest{Environments: makeEnvs([]testEnv{{name: "prod"}, {name: "testing"}})}
+// 	env := m.GetEnvironment("prod")
+// 	if env.Name != "prod" {
+// 		t.Fatalf("got the wrong environment back: %#v", env)
+// 	}
 
-	unknown := m.GetEnvironment("unknown")
-	if unknown != nil {
-		t.Fatalf("found an unknown env: %#v", unknown)
-	}
-}
+// 	unknown := m.GetEnvironment("unknown")
+// 	if unknown != nil {
+// 		t.Fatalf("found an unknown env: %#v", unknown)
+// 	}
+// }
 
-func makeEnvs(ns []testEnv) []*Environment {
-	n := make([]*Environment, len(ns))
-	for i, v := range ns {
-		n[i] = &Environment{Name: v.name}
-	}
-	return n
+// func makeEnvs(ns []testEnv) []*Environment {
+// 	n := make([]*Environment, len(ns))
+// 	for i, v := range ns {
+// 		n[i] = &Environment{Name: v.name}
+// 	}
+// 	return n
 
-}
+// }
 
 type testEnv struct {
 	name string

@@ -2,6 +2,7 @@ package config
 
 import (
 	"path/filepath"
+	"sort"
 )
 
 // PathForService gives a repo-rooted path within a repository.
@@ -101,6 +102,18 @@ func (m *Manifest) GetArgoCDConfig() *ArgoCDConfig {
 
 }
 
+func (m *Manifest) GetService(envName, svcName string) *Service {
+	env := m.GetEnvironment(envName)
+	if env != nil {
+		for _, svc := range env.Services {
+			if svc.Name == svcName {
+				return svc
+			}
+		}
+	}
+	return nil
+}
+
 // Environment is a slice of Apps, these are the named apps in the namespace.
 //
 type Environment struct {
@@ -126,9 +139,9 @@ type ArgoCDConfig struct {
 }
 
 // GoString return environment name
-func (e Environment) GoString() string {
-	return e.Name
-}
+// func (e Environment) GoString() string {
+// 	return e.Name
+// }
 
 // Application has many services.
 //
@@ -142,7 +155,7 @@ type Application struct {
 
 //EnvironmentRefs are environment references
 type EnvironmentRefs struct {
-	Refs        string   `json:"ref,omitempty"`
+	Ref         string   `json:"ref,omitempty"`
 	ServiceRefs []string `json:"serviceRefs,omitempty"`
 }
 
@@ -196,36 +209,61 @@ type TemplateBinding struct {
 //
 // The environments are sorted using a custom sorting mechanism, that orders by
 // name, but, moves CICD environments to the bottom of the list.
-// func (m Manifest) Walk(visitor interface{}) error {
-// 	sort.Sort(ByName(m.Environments))
-// 	for _, env := range m.Environments {
-// 		for _, svc := range env.Services {
-// 			if v, ok := visitor.(ServiceVisitor); ok {
-// 				err := v.Service(env, svc)
-// 				if err != nil {
-// 					return err
-// 				}
-// 			}
-// 		}
+func (m Manifest) Walk(visitor interface{}) error {
+	sort.Sort(ByName(m.Environments))
+	for _, env := range m.Environments {
+		for _, svc := range env.Services {
+			if v, ok := visitor.(ServiceVisitor); ok {
+				err := v.Service(env, svc)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		if m.GetEnvironment(env.Name) != nil {
+			if v, ok := visitor.(EnvironmentVisitor); ok {
+				err := v.Environment(env)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
 
-// 		for _, app := range env.Apps {
-// 			if v, ok := visitor.(ApplicationVisitor); ok {
-// 				err := v.Application(env, app)
-// 				if err != nil {
-// 					return err
-// 				}
-// 			}
-// 		}
-// 		if v, ok := visitor.(EnvironmentVisitor); ok {
-// 			err := v.Environment(env)
-// 			if err != nil {
-// 				return err
-// 			}
-// 		}
-// 	}
+	for _, app := range m.Apps {
+		for _, env := range app.Environments {
+			if m.GetEnvironment(env.Ref) != nil {
+				if v, ok := visitor.(EnvironmentVisitor); ok {
+					env := m.GetEnvironment(env.Ref)
+					err := v.Environment(env)
+					if err != nil {
+						return err
+					}
+				}
+			}
+			for _, svcRef := range env.ServiceRefs {
+				if m.GetService(env.Ref, svcRef) != nil {
+					if v, ok := visitor.(ServiceVisitor); ok {
+						envName := m.GetEnvironment(env.Ref)
+						svc := m.GetService(env.Ref, svcRef)
+						err := v.Service(envName, svc)
+						if err != nil {
+							return err
+						}
+					}
+				}
+			}
+			if v, ok := visitor.(ApplicationVisitor); ok {
+				err := v.Application(env, app)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
 
-// 	return nil
-// }
+	return nil
+}
 
 type ByName []*Environment
 

@@ -56,14 +56,14 @@ func TestParse(t *testing.T) {
 					Name: "my-app-1",
 					Environments: []*EnvironmentRefs{
 						{
-							Refs: "development",
+							Ref: "development",
 							ServiceRefs: []string{
 								"service-http",
 								"service-redis",
 							},
 						},
 						{
-							Refs: "production",
+							Ref: "production",
 							ServiceRefs: []string{
 								"service-http",
 								"service-metrics",
@@ -96,7 +96,7 @@ func TestParse(t *testing.T) {
 					Name: "my-app-1",
 					Environments: []*EnvironmentRefs{
 						{
-							Refs: "development",
+							Ref: "development",
 							ServiceRefs: []string{
 								"app-1-service-http",
 								"app-1-service-metrics",
