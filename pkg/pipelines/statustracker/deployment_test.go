@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/openshift/odo/pkg/pipelines/deployment"
 	"github.com/openshift/odo/pkg/pipelines/meta"
+	res "github.com/openshift/odo/pkg/pipelines/resources"
 	"github.com/openshift/odo/pkg/pipelines/roles"
 )
 
@@ -83,21 +84,21 @@ func TestResource(t *testing.T) {
 	}
 
 	ns := "my-test-ns"
-	res, err := Resources(ns, "test-token")
+	result, err := Resources(ns, "test-token")
 	if err != nil {
 		t.Fatal(err)
 	}
 	name := meta.NamespacedName(ns, operatorName)
 	sa := roles.CreateServiceAccount(name)
-	want := []interface{}{
-		sa,
-		testSecret,
-		roles.CreateRole(name, roleRules),
-		roles.CreateRoleBinding(name, sa, "Role", operatorName),
-		createStatusTrackerDeployment(ns),
+	want := res.Resources{
+		serviceAccountPath: sa,
+		secretPath:         testSecret,
+		rolePath:           roles.CreateRole(name, roleRules),
+		roleBindingPath:    roles.CreateRoleBinding(name, sa, "Role", operatorName),
+		deploymentPath:     createStatusTrackerDeployment(ns),
 	}
 
-	if diff := cmp.Diff(want, res); diff != "" {
+	if diff := cmp.Diff(want, result); diff != "" {
 		t.Fatalf("deployment diff: %s", diff)
 	}
 }
