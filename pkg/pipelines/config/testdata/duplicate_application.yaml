@@ -8,11 +8,16 @@ environments:
       - name: app-1-service-http
       - name: app-1-service-metrics
       - name: app-2-service
-    apps:
-      - name: my-app-1 # Application my-app-1
-        services:
+apps:
+  - name : my-app-1
+    environments:
+      - ref: app-environment
+        serviceRefs:
           - app-1-service-http
           - app-1-service-metrics
-      - name: my-app-1 # Duplicate application my-app-1 (invalid)
-        services:
-          - app-2-service
+  - name : my-app-1 #Duplicate Application
+    environments:
+      - ref: app-environment
+        serviceRefs:
+          - app-1-service-http
+          - app-1-service-metrics

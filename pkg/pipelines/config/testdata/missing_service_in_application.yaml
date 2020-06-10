@@ -6,7 +6,10 @@ environments:
         binding: dev-ci-binding
     services:
       - name: app-1-service-http # Service Name
-    apps:
-      - name: my-app-1
-        services:
-          - app-1-svc-http
+apps:
+  - name : app-1
+    environments:
+      - ref: duplicate-service
+        serviceRefs:
+          - app-1-service-http
+          - app-1-service-metrics #unknown reference for service

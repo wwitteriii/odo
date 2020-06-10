@@ -11,7 +11,4 @@ environments:
           secret:
             name: app-1-secret
             namespace: app-1-secret-ns
-    apps:
-      - name: my-app-1
-        services:
-          - app-1-service-http
+

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"path/filepath"
 	"sort"
 )
@@ -65,25 +66,25 @@ func (m *Manifest) GetApplication(environment, application string) *Application 
 
 // AddService adds a new service to a specific environment and creates a
 // reference to it within an Application.
-// func (m *Manifest) AddService(envName, appName string, svc *Service) error {
-// 	env := m.GetEnvironment(envName)
-// 	if env == nil {
-// 		return fmt.Errorf("environment %s does not exist", envName)
-// 	}
-// 	for _, service := range env.Services {
-// 		if service.Name == svc.Name {
-// 			return fmt.Errorf("service %s already exists at %s", svc.Name, env.Name)
-// 		}
-// 	}
-// 	app := m.GetApplication(envName, appName)
-// 	if app == nil {
-// 		app = &Application{Name: appName}
-// 		env.Apps = append(env.Apps, app)
-// 	}
-// 	env.Services = append(env.Services, svc)
-// 	app.ServiceRefs = append(app.ServiceRefs, svc.Name)
-// 	return nil
-// }
+func (m *Manifest) AddService(envName, appName string, svc *Service) error {
+	env := m.GetEnvironment(envName)
+	if env == nil {
+		return fmt.Errorf("environment %s does not exist", envName)
+	}
+	for _, service := range env.Services {
+		if service.Name == svc.Name {
+			return fmt.Errorf("service %s already exists at %s", svc.Name, env.Name)
+		}
+	}
+	app := m.GetApplication(envName, appName)
+	if app == nil {
+		app = &Application{Name: appName}
+		// env.Apps = append(env.Apps, app)
+	}
+	env.Services = append(env.Services, svc)
+	// app.ServiceRefs = append(app.ServiceRefs, svc.Name)
+	return nil
+}
 
 // GetPipelinesConfig returns the global Pipelines configuration, if one exists.
 func (m *Manifest) GetPipelinesConfig() *PipelinesConfig {
@@ -220,6 +221,7 @@ func (m Manifest) Walk(visitor interface{}) error {
 				}
 			}
 		}
+
 		if m.GetEnvironment(env.Name) != nil {
 			if v, ok := visitor.(EnvironmentVisitor); ok {
 				err := v.Environment(env)
@@ -240,6 +242,7 @@ func (m Manifest) Walk(visitor interface{}) error {
 			}
 
 		}
+
 	}
 
 	return nil

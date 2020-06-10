@@ -23,8 +23,10 @@ environments:
                 template: dev-ci-template
                 bindings:  
                 -  # invalid name
-    apps:
-      - name: app-1$.       # invalid name
-        services:
-          - testing
+apps:
+  - name : app-1$.
+    environments:
+      - ref: develo.pment
+
+
  
