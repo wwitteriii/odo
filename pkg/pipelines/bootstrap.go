@@ -120,12 +120,20 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		return nil, errors.New("failed to find a pipeline configuration - unable to continue bootstrap")
 	}
 
+	kustomizePath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", "kustomization.yaml")
+	k, ok := bootstrapped[kustomizePath].(res.Kustomization)
+	if !ok {
+		return nil, fmt.Errorf("no kustomization for the %s environment found", kustomizePath)
+	}
+
 	if o.StatusTrackerAccessToken != "" {
 		trackerResources, err := statustracker.Resources(ns["cicd"], o.StatusTrackerAccessToken)
 		if err != nil {
 			return nil, err
 		}
-		bootstrapped = res.Merge(trackerResources, bootstrapped)
+		prefixedResources := addPrefixToResources(pipelinesPath(cfg), trackerResources)
+		bootstrapped = res.Merge(prefixedResources, bootstrapped)
+		k.Resources = append(k.Resources, getResourceFiles(trackerResources)...)
 	}
 
 	secretFilename := filepath.Join("03-secrets", secretName+".yaml")
@@ -135,11 +143,6 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	bindingName, imageRepoBindingFilename, svcImageBinding := createSvcImageBinding(cfg, devEnv, serviceName, imageRepo, !isInternalRegistry)
 	bootstrapped = res.Merge(svcImageBinding, bootstrapped)
 
-	kustomizePath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", "kustomization.yaml")
-	k, ok := bootstrapped[kustomizePath].(res.Kustomization)
-	if !ok {
-		return nil, fmt.Errorf("no kustomization for the %s environment found", kustomizePath)
-	}
 	if isInternalRegistry {
 		filenames, resources, err := imagerepo.CreateInternalRegistryResources(cfg, roles.CreateServiceAccount(meta.NamespacedName(cfg.Name, saName)), imageRepo)
 		if err != nil {

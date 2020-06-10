@@ -110,12 +110,15 @@ func TestBootstrapManifest(t *testing.T) {
 	wantResources := []string{
 		"01-namespaces/cicd-environment.yaml",
 		"01-namespaces/image.yaml",
+		"02-rolebindings/commit-status-tracker-role.yaml",
+		"02-rolebindings/commit-status-tracker-rolebinding.yaml",
+		"02-rolebindings/commit-status-tracker-service-role.yaml",
 		"02-rolebindings/internal-registry-image-binding.yaml",
 		"02-rolebindings/pipeline-service-role.yaml",
 		"02-rolebindings/pipeline-service-rolebinding.yaml",
+		"03-secrets/commit-status-tracker.yaml",
 		"03-secrets/gitops-webhook-secret.yaml",
 		"03-secrets/webhook-secret-tst-dev-http-api-svc.yaml",
-		"03-secrets/commit-status-tracker.yaml",
 		"04-tasks/deploy-from-source-task.yaml",
 		"04-tasks/deploy-using-kubectl-task.yaml",
 		"05-pipelines/app-ci-pipeline.yaml",
@@ -129,6 +132,7 @@ func TestBootstrapManifest(t *testing.T) {
 		"07-templates/ci-dryrun-from-pr-template.yaml",
 		"08-eventlisteners/cicd-event-listener.yaml",
 		"09-routes/gitops-webhook-event-listener.yaml",
+		"10-commit-status-tracker/operator.yaml",
 	}
 	k := r["config/tst-cicd/base/pipelines/kustomization.yaml"].(res.Kustomization)
 	if diff := cmp.Diff(wantResources, k.Resources); diff != "" {
