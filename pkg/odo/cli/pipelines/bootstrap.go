@@ -102,6 +102,8 @@ func NewCmdBootstrap(name, fullName string) *cobra.Command {
 	initCmd.Flags().StringVarP(&o.Prefix, "prefix", "p", "", "add a prefix to the environment names")
 	initCmd.Flags().StringVarP(&o.ImageRepo, "image-repo", "", "", "used to push built images")
 
+	initCmd.Flags().StringVarP(&o.StatusTrackerAccessToken, "status-tracker-access-token", "", "", "used to authenticate requests to push commit-statuses to your Git hosting service")
+
 	initCmd.MarkFlagRequired("gitops-repo-url")
 	initCmd.MarkFlagRequired("gitops-webhook-secret")
 	initCmd.MarkFlagRequired("app-repo-url")

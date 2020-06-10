@@ -35,12 +35,13 @@ func TestBootstrapManifest(t *testing.T) {
 	}
 
 	params := &BootstrapOptions{
-		Prefix:              "tst-",
-		GitOpsRepoURL:       testGitOpsRepo,
-		GitOpsWebhookSecret: "123",
-		AppRepoURL:          testSvcRepo,
-		ImageRepo:           "image/repo",
-		AppWebhookSecret:    "456",
+		Prefix:                   "tst-",
+		GitOpsRepoURL:            testGitOpsRepo,
+		GitOpsWebhookSecret:      "123",
+		AppRepoURL:               testSvcRepo,
+		ImageRepo:                "image/repo",
+		AppWebhookSecret:         "456",
+		StatusTrackerAccessToken: "this-is-a-test",
 	}
 
 	r, err := bootstrapResources(params, ioutils.NewMapFilesystem())
@@ -106,13 +107,15 @@ func TestBootstrapManifest(t *testing.T) {
 		t.Fatalf("bootstrapped resources:\n%s", diff)
 	}
 
-	wantResources := []string{"01-namespaces/cicd-environment.yaml",
+	wantResources := []string{
+		"01-namespaces/cicd-environment.yaml",
 		"01-namespaces/image.yaml",
 		"02-rolebindings/internal-registry-image-binding.yaml",
 		"02-rolebindings/pipeline-service-role.yaml",
 		"02-rolebindings/pipeline-service-rolebinding.yaml",
 		"03-secrets/gitops-webhook-secret.yaml",
 		"03-secrets/webhook-secret-tst-dev-http-api-svc.yaml",
+		"03-secrets/commit-status-tracker.yaml",
 		"04-tasks/deploy-from-source-task.yaml",
 		"04-tasks/deploy-using-kubectl-task.yaml",
 		"05-pipelines/app-ci-pipeline.yaml",

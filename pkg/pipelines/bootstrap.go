@@ -121,11 +121,11 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	}
 
 	if o.StatusTrackerAccessToken != "" {
-		res, err := statustracker.Resources(namespaces["cicd"], o.StatusTrackerAccessToken)
+		trackerResources, err := statustracker.Resources(ns["cicd"], o.StatusTrackerAccessToken)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		outputs = append(outputs, res...)
+		bootstrapped = res.Merge(trackerResources, bootstrapped)
 	}
 
 	secretFilename := filepath.Join("03-secrets", secretName+".yaml")

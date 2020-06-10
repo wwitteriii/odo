@@ -160,7 +160,6 @@ func createInitialFiles(fs afero.Fs, repo scm.Repository, prefix, gitOpsWebhookS
 	if err != nil {
 		return nil, err
 	}
-
 	files := getResourceFiles(resources)
 	prefixedResources := addPrefixToResources(pipelinesPath(pipelines.Config), resources)
 	initialFiles = res.Merge(prefixedResources, initialFiles)
