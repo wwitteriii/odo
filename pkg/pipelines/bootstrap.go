@@ -131,9 +131,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		if err != nil {
 			return nil, err
 		}
-		prefixedResources := addPrefixToResources(pipelinesPath(cfg), trackerResources)
-		bootstrapped = res.Merge(prefixedResources, bootstrapped)
-		k.Resources = append(k.Resources, getResourceFiles(trackerResources)...)
+		addResources(pipelinesPath(cfg), trackerResources, bootstrapped, &k)
 	}
 
 	secretFilename := filepath.Join("03-secrets", secretName+".yaml")
@@ -144,12 +142,11 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	bootstrapped = res.Merge(svcImageBinding, bootstrapped)
 
 	if isInternalRegistry {
-		filenames, resources, err := imagerepo.CreateInternalRegistryResources(cfg, roles.CreateServiceAccount(meta.NamespacedName(cfg.Name, saName)), imageRepo)
+		registryResources, err := imagerepo.CreateInternalRegistryResources(cfg, roles.CreateServiceAccount(meta.NamespacedName(cfg.Name, saName)), imageRepo)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get resources for internal image repository: %w", err)
 		}
-		bootstrapped = res.Merge(resources, bootstrapped)
-		k.Resources = append(k.Resources, filenames...)
+		addResources(pipelinesPath(cfg), registryResources, bootstrapped, &k)
 	}
 
 	// This is specific to bootstrap, because there's only one service.
@@ -288,4 +285,11 @@ func defaultPipelines(r scm.Repository) *config.Pipelines {
 			Bindings: []string{r.PRBindingName()},
 		},
 	}
+}
+
+func addResources(prefixPath string, newResources res.Resources, bootstrappedResources res.Resources, kResources *res.Kustomization) {
+	prefixedResources := addPrefixToResources(prefixPath, newResources)
+	bootstrappedResources = res.Merge(prefixedResources, bootstrappedResources)
+	kResources.Resources = append(kResources.Resources, getResourceFiles(newResources)...)
+
 }
