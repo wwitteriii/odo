@@ -148,6 +148,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		if err != nil {
 			return nil, fmt.Errorf("failed to get resources for internal image repository: %w", err)
 		}
+
 		bootstrapped = res.Merge(resources, bootstrapped)
 		k.Resources = append(k.Resources, filenames...)
 	}
