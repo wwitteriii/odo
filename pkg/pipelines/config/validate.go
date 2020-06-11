@@ -114,6 +114,15 @@ func (vv *validateVisitor) Application(app *Application, env *Environment) error
 	// 	vv.errs = append(vv.errs, validateConfigRepo(app.ConfigRepo, yamlJoin(appPath, "config_repo"))...)
 	// }
 	for _, env := range app.Environments {
+		if len(env.ServiceRefs) == 0 && app.ConfigRepo == nil {
+			vv.errs = append(vv.errs, missingFieldsError([]string{"services", "config_repo"}, []string{appPath}))
+		}
+		if len(env.ServiceRefs) > 0 && app.ConfigRepo != nil {
+			vv.errs = append(vv.errs, apis.ErrMultipleOneOf(yamlJoin(appPath, "services"), yamlJoin(appPath, "config_repo")))
+		}
+		if app.ConfigRepo != nil {
+			vv.errs = append(vv.errs, validateConfigRepo(app.ConfigRepo, yamlJoin(appPath, "config_repo"))...)
+		}
 		if len(env.ServiceRefs) > 0 {
 			for _, r := range env.ServiceRefs {
 				_, ok := vv.serviceNames[r]

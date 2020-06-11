@@ -27,6 +27,8 @@ apps:
   - name : app-1$.
     environments:
       - ref: develo.pment
+        serviceRefs:
+          - testing
 
 
  
