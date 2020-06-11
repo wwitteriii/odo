@@ -59,25 +59,32 @@ func imageRepoValidationErrors(imageRepo string) error {
 	return fmt.Errorf("failed to parse image repo:%s, expected image repository in the form <registry>/<username>/<repository> or <project>/<app> for internal registry", imageRepo)
 }
 
+<<<<<<< HEAD
+=======
+// CreateInternalRegistryResources creates the resources for accessing the
+// internal registry.
+>>>>>>> 2de59d82a9c6d8dd41231e5bc4b88d18c9e7dd10
 func CreateInternalRegistryResources(cfg *config.PipelinesConfig, sa *corev1.ServiceAccount, imageRepo string) (res.Resources, error) {
 	// Provide access to service account for using internal registry
 	namespace := strings.Split(imageRepo, "/")[1]
 
 	resources := res.Resources{}
-	filenames := []string{}
-
 	filename := filepath.Join("01-namespaces", fmt.Sprintf("%s.yaml", namespace))
+<<<<<<< HEAD
 	namespacePath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", filename)
 	resources[namespacePath] = namespaces.Create(namespace)
 	filenames = append(filenames, filename)
 
 	filename, roleBinding := createInternalRegistryRoleBinding(cfg, namespace, sa)
+=======
+	resources[filename] = namespaces.Create(namespace)
+	roleBinding := createInternalRegistryRoleBinding(cfg, namespace, sa)
+>>>>>>> 2de59d82a9c6d8dd41231e5bc4b88d18c9e7dd10
 	return res.Merge(roleBinding, resources), nil
 }
 
-func createInternalRegistryRoleBinding(cfg *config.PipelinesConfig, ns string, sa *corev1.ServiceAccount) (string, res.Resources) {
+func createInternalRegistryRoleBinding(cfg *config.PipelinesConfig, ns string, sa *corev1.ServiceAccount) res.Resources {
 	roleBindingName := fmt.Sprintf("internal-registry-%s-binding", ns)
-	roleBindingFilname := filepath.Join("02-rolebindings", fmt.Sprintf("%s.yaml", roleBindingName))
-	roleBindingPath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", roleBindingFilname)
-	return roleBindingFilname, res.Resources{roleBindingPath: roles.CreateRoleBinding(meta.NamespacedName(ns, roleBindingName), sa, "ClusterRole", "edit")}
+	roleBindingFilename := filepath.Join("02-rolebindings", fmt.Sprintf("%s.yaml", roleBindingName))
+	return res.Resources{roleBindingFilename: roles.CreateRoleBinding(meta.NamespacedName(ns, roleBindingName), sa, "ClusterRole", "edit")}
 }

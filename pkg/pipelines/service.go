@@ -146,12 +146,13 @@ func createImageRepoResources(m *config.Manifest, cfg *config.PipelinesConfig, e
 	filenames = append(filenames, bindingFilename)
 
 	if isInternalRegistry {
-		files, regRes, err := imagerepo.CreateInternalRegistryResources(cfg, roles.CreateServiceAccount(meta.NamespacedName(cfg.Name, saName)), imageRepo)
+		regRes, err := imagerepo.CreateInternalRegistryResources(cfg, roles.CreateServiceAccount(meta.NamespacedName(cfg.Name, saName)), imageRepo)
 		if err != nil {
 			return nil, nil, "", fmt.Errorf("failed to get resources for internal image repository: %w", err)
 		}
-		resources = res.Merge(regRes, resources)
-		filenames = append(filenames, files...)
+		prefixedResources := addPrefixToResources(pipelinesPath(cfg), regRes)
+		resources = res.Merge(prefixedResources, resources)
+		filenames = append(filenames, getResourceFiles(regRes)...)
 	}
 
 	return filenames, resources, bindingName, nil

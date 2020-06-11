@@ -131,9 +131,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		if err != nil {
 			return nil, err
 		}
-		prefixedResources := addPrefixToResources(pipelinesPath(cfg), trackerResources)
-		bootstrapped = res.Merge(prefixedResources, bootstrapped)
-		k.Resources = append(k.Resources, getResourceFiles(trackerResources)...)
+		addResources(pipelinesPath(cfg), trackerResources, bootstrapped, &k)
 	}
 
 	secretFilename := filepath.Join("03-secrets", secretName+".yaml")
@@ -148,12 +146,16 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		if err != nil {
 			return nil, fmt.Errorf("failed to get resources for internal image repository: %w", err)
 		}
+<<<<<<< HEAD
 		// prefixedResources := addPrefixToResources(pipelinesPath(cfg), resources)
 		// bootstrapped = res.Merge(prefixedResources, bootstrapped)
 		// k.Resources = append(k.Resources, filename...)
 
 		createAddResources(pipelinesPath(cfg),registryResources,&bootstrapped, &k)
 		
+=======
+		addResources(pipelinesPath(cfg), registryResources, bootstrapped, &k)
+>>>>>>> 2de59d82a9c6d8dd41231e5bc4b88d18c9e7dd10
 	}
 
 	// This is specific to bootstrap, because there's only one service.
@@ -294,6 +296,7 @@ func defaultPipelines(r scm.Repository) *config.Pipelines {
 	}
 }
 
+<<<<<<< HEAD
 func createAddResources(prefixPath string, newResources res.Resources, bootstrappedResources *res.Resources, kResources *res.Kustomization ) {
 	
 	 prefixedResources := addPrefixToResources(prefixPath, newResources)
@@ -301,3 +304,11 @@ func createAddResources(prefixPath string, newResources res.Resources, bootstrap
 	 kResources.Resources = append(kResources.Resources, getResourceFiles(newResources)...)
 
 }
+=======
+func addResources(prefixPath string, newResources res.Resources, bootstrappedResources res.Resources, kResources *res.Kustomization) {
+	prefixedResources := addPrefixToResources(prefixPath, newResources)
+	bootstrappedResources = res.Merge(prefixedResources, bootstrappedResources)
+	kResources.Resources = append(kResources.Resources, getResourceFiles(newResources)...)
+
+}
+>>>>>>> 2de59d82a9c6d8dd41231e5bc4b88d18c9e7dd10
