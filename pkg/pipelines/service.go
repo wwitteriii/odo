@@ -96,7 +96,7 @@ func serviceResources(m *config.Manifest, fs afero.Fs, p *AddServiceParameters) 
 		files[secretsPath] = hookSecret
 
 		if p.ImageRepo != "" {
-			_, resources, bindingName, err := createImageRepoResources(m, cfg, env, p)
+			resources, bindingName, err := createImageRepoResources(m, cfg, env, p)
 			if err != nil {
 				return nil, err
 			}
@@ -132,30 +132,27 @@ func serviceResources(m *config.Manifest, fs afero.Fs, p *AddServiceParameters) 
 	return res.Merge(built, files), nil
 }
 
-func createImageRepoResources(m *config.Manifest, cfg *config.PipelinesConfig, env *config.Environment, p *AddServiceParameters) ([]string, res.Resources, string, error) {
+func createImageRepoResources(m *config.Manifest, cfg *config.PipelinesConfig, env *config.Environment, p *AddServiceParameters) (res.Resources, string, error) {
 	isInternalRegistry, imageRepo, err := imagerepo.ValidateImageRepo(p.ImageRepo, p.InternalRegistryHostname)
 	if err != nil {
-		return nil, nil, "", err
+		return nil, "", err
 	}
 
 	resources := res.Resources{}
-	filenames := []string{}
 
-	bindingName, bindingFilename, svcImageBinding := createSvcImageBinding(cfg, env, p.ServiceName, imageRepo, !isInternalRegistry)
+	bindingName, _, svcImageBinding := createSvcImageBinding(cfg, env, p.ServiceName, imageRepo, !isInternalRegistry)
 	resources = res.Merge(svcImageBinding, resources)
-	filenames = append(filenames, bindingFilename)
 
 	if isInternalRegistry {
 		regRes, err := imagerepo.CreateInternalRegistryResources(cfg, roles.CreateServiceAccount(meta.NamespacedName(cfg.Name, saName)), imageRepo)
 		if err != nil {
-			return nil, nil, "", fmt.Errorf("failed to get resources for internal image repository: %w", err)
+			return nil, "", fmt.Errorf("failed to get resources for internal image repository: %w", err)
 		}
 		prefixedResources := addPrefixToResources(pipelinesPath(cfg), regRes)
 		resources = res.Merge(prefixedResources, resources)
-		filenames = append(filenames, getResourceFiles(regRes)...)
 	}
 
-	return filenames, resources, bindingName, nil
+	return resources, bindingName, nil
 }
 
 func createService(serviceName, url string) (*config.Service, error) {
