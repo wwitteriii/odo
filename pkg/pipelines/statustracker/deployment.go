@@ -19,7 +19,7 @@ import (
 
 const (
 	operatorName       = "commit-status-tracker"
-	containerImage     = "quay.io/redhat-developer/commit-status-tracker:v0.0.1"
+	containerImage     = "quay.io/redhat-developer/commit-status-tracker:v0.0.2"
 	rolePath           = "02-rolebindings/commit-status-tracker-role.yaml"
 	roleBindingPath    = "02-rolebindings/commit-status-tracker-rolebinding.yaml"
 	serviceAccountPath = "02-rolebindings/commit-status-tracker-service-role.yaml"
