@@ -56,6 +56,47 @@ func TestGetGitRepoURL(t *testing.T) {
 		{
 			manifest: &config.Manifest{
 				GitOpsURL: "https://github.com/foo/bar.git",
+				Apps: []*config.Application{
+					{
+						Name: "notmyapp",
+						Environments: []*config.EnvironmentRefs{
+							{
+								Ref:         "notmyenv",
+								ServiceRefs: []string{"notmyservice"},
+							},
+						},
+					},
+					{
+						Name: "notmyapp",
+						Environments: []*config.EnvironmentRefs{
+							{
+								Ref:         "myenv",
+								ServiceRefs: []string{"notmyservice"},
+							},
+						},
+					},
+					{
+						Name: "myapp",
+						Environments: []*config.EnvironmentRefs{
+							{
+								Ref: "myenv",
+								ServiceRefs: []string{
+									"notmyservice",
+									"notmyserviceagain",
+								},
+							},
+						},
+					},
+					{
+						Name: "notmyapp2",
+						Environments: []*config.EnvironmentRefs{
+							{
+								Ref:         "myenv",
+								ServiceRefs: []string{"notmyservice"},
+							},
+						},
+					},
+				},
 				Environments: []*config.Environment{
 					{
 						Services: []*config.Service{
@@ -65,12 +106,6 @@ func TestGetGitRepoURL(t *testing.T) {
 							},
 						},
 						Name: "notmyenv",
-						Apps: []*config.Application{
-							{
-								Name:        "notmyapp",
-								ServiceRefs: []string{"notmyservice"},
-							},
-						},
 					},
 					{
 						Name: "myenv",
@@ -87,24 +122,6 @@ func TestGetGitRepoURL(t *testing.T) {
 							{
 								Name:      "notmyserviceagain",
 								SourceURL: "https://not/mine",
-							},
-						},
-
-						Apps: []*config.Application{
-							{
-								Name:        "notmyapp",
-								ServiceRefs: []string{"notmyservice"},
-							},
-							{
-								Name: "myapp",
-								ServiceRefs: []string{
-									"notmyservice",
-									"notmyserviceagain",
-								},
-							},
-							{
-								Name:        "notmyapp2",
-								ServiceRefs: []string{"notmyservice"},
 							},
 						},
 					},
