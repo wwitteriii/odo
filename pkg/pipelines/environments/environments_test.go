@@ -151,10 +151,12 @@ func buildManifest(withCICD bool) *config.Manifest {
 				},
 			},
 			Environments: createEnvironment(),
+			Apps:         createApplication(),
 		}
 	}
 	return &config.Manifest{
 		Environments: createEnvironment(),
+		Apps:         createApplication(),
 	}
 
 }
@@ -163,15 +165,6 @@ func createEnvironment() []*config.Environment {
 	return []*config.Environment{
 		{
 			Name: "test-dev",
-			Apps: []*config.Application{
-				{
-					Name: "my-app-1",
-					ServiceRefs: []string{
-						"service-http",
-						"service-metrics",
-					},
-				},
-			},
 			Services: []*config.Service{
 				{
 					Name:      "service-http",
@@ -179,6 +172,23 @@ func createEnvironment() []*config.Environment {
 				},
 				{
 					Name: "service-metrics",
+				},
+			},
+		},
+	}
+}
+
+func createApplication() []*config.Application {
+	return []*config.Application{
+		{
+			Name: "my-app-1",
+			Environments: []*config.EnvironmentRefs{
+				{
+					Ref: "test-dev",
+					ServiceRefs: []string{
+						"service-http",
+						"service-metrics",
+					},
 				},
 			},
 		},

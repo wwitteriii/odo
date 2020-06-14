@@ -23,18 +23,19 @@ type envBuilder struct {
 	pipelinesConfig *config.PipelinesConfig
 	fs              afero.Fs
 	saName          string
+	manifest        *config.Manifest
 }
 
 func Build(fs afero.Fs, m *config.Manifest, saName string) (res.Resources, error) {
 	files := res.Resources{}
 	cfg := m.GetPipelinesConfig()
-	eb := &envBuilder{fs: fs, files: files, pipelinesConfig: cfg, saName: saName}
+	eb := &envBuilder{fs: fs, files: files, pipelinesConfig: cfg, saName: saName, manifest: m}
 	return eb.files, m.Walk(eb)
 }
 
-func (b *envBuilder) Application(env *config.Environment, app *config.Application) error {
+func (b *envBuilder) Application(app *config.Application, env *config.Environment) error {
 	appPath := filepath.Join(config.PathForApplication(env, app))
-	appFiles, err := filesForApplication(env, appPath, app)
+	appFiles, err := filesForApplication(env, appPath, app, b.manifest)
 	if err != nil {
 		return err
 	}
@@ -43,7 +44,6 @@ func (b *envBuilder) Application(env *config.Environment, app *config.Applicatio
 }
 
 func (b *envBuilder) Service(env *config.Environment, svc *config.Service) error {
-
 	svcPath := config.PathForService(env, svc.Name)
 	svcFiles, err := filesForService(svcPath, svc)
 	if err != nil {
@@ -97,7 +97,7 @@ func filesForEnvironment(basePath string, env *config.Environment) res.Resources
 	return envFiles
 }
 
-func filesForApplication(env *config.Environment, appPath string, app *config.Application) (res.Resources, error) {
+func filesForApplication(env *config.Environment, appPath string, app *config.Application, manifest *config.Manifest) (res.Resources, error) {
 	envFiles := res.Resources{}
 	basePath := filepath.Join(appPath, "base")
 	overlaysPath := filepath.Join(appPath, "overlays")
@@ -108,15 +108,19 @@ func filesForApplication(env *config.Environment, appPath string, app *config.Ap
 	}
 	baseKustomization := filepath.Join(appPath, "base", kustomization)
 	relServices := []string{}
-	for _, v := range app.ServiceRefs {
-		svcPath := config.PathForService(env, v)
-		relService, err := filepath.Rel(filepath.Dir(baseKustomization), svcPath)
-		if err != nil {
-			return nil, err
-		}
-		relServices = append(relServices, relService)
-	}
 
+	for _, environment := range app.Environments {
+		currentEnv := manifest.GetEnvironment(environment.Ref)
+		for _, serRef := range environment.ServiceRefs {
+			svcPath := config.PathForService(currentEnv, serRef)
+			relService, err := filepath.Rel(filepath.Dir(baseKustomization), svcPath)
+			if err != nil {
+				return nil, err
+			}
+			relServices = append(relServices, relService)
+		}
+	}
+	fmt.Println("This is the app path", appPath)
 	envFiles[filepath.Join(appPath, kustomization)] = &res.Kustomization{Bases: []string{"overlays"}}
 	envFiles[filepath.Join(appPath, "base", kustomization)] = &res.Kustomization{Bases: relServices}
 	envFiles[overlaysFile] = &res.Kustomization{Bases: []string{overlayRel}}
