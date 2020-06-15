@@ -131,7 +131,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		if err != nil {
 			return nil, err
 		}
-		addResources(pipelinesPath(cfg), trackerResources, bootstrapped, &k)
+		bootstrapped = addResources(pipelinesPath(cfg), trackerResources, bootstrapped, &k)
 	}
 
 	secretFilename := filepath.Join("03-secrets", secretName+".yaml")
@@ -146,7 +146,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		if err != nil {
 			return nil, fmt.Errorf("failed to get resources for internal image repository: %w", err)
 		}
-		addResources(pipelinesPath(cfg), registryResources, bootstrapped, &k)
+		bootstrapped = addResources(pipelinesPath(cfg), registryResources, bootstrapped, &k)
 	}
 
 	// This is specific to bootstrap, because there's only one service.
@@ -287,9 +287,9 @@ func defaultPipelines(r scm.Repository) *config.Pipelines {
 	}
 }
 
-func addResources(prefixPath string, newResources res.Resources, bootstrappedResources res.Resources, kResources *res.Kustomization) {
+func addResources(prefixPath string, newResources res.Resources, bootstrappedResources res.Resources, kResources *res.Kustomization) res.Resources {
 	prefixedResources := addPrefixToResources(prefixPath, newResources)
-	bootstrappedResources = res.Merge(prefixedResources, bootstrappedResources)
 	kResources.Resources = append(kResources.Resources, getResourceFiles(newResources)...)
+	return res.Merge(prefixedResources, bootstrappedResources)
 
 }
