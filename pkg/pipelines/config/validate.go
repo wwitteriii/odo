@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/mkmik/multierror"
@@ -100,7 +99,6 @@ func (vv *validateVisitor) Application(app *Application, env *Environment) error
 		vv.errs = append(vv.errs, err)
 	}
 	if err := validateName(app.Name, appPath); err != nil {
-		log.Println("The error message reached here", err)
 		vv.errs = append(vv.errs, err)
 	}
 

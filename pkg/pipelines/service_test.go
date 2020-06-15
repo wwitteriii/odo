@@ -1,106 +1,111 @@
 package pipelines
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/openshift/odo/pkg/pipelines/config"
+	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
+	"github.com/openshift/odo/pkg/pipelines/meta"
+	"github.com/openshift/odo/pkg/pipelines/secrets"
 
 	"github.com/openshift/odo/pkg/pipelines/ioutils"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
 )
 
-// func TestServiceResourcesWithCICD(t *testing.T) {
-// 	defer func(f secrets.PublicKeyFunc) {
-// 		secrets.DefaultPublicKeyFunc = f
-// 	}(secrets.DefaultPublicKeyFunc)
+func TestServiceResourcesWithCICD(t *testing.T) {
+	defer func(f secrets.PublicKeyFunc) {
+		secrets.DefaultPublicKeyFunc = f
+	}(secrets.DefaultPublicKeyFunc)
 
-// 	secrets.DefaultPublicKeyFunc = func() (*rsa.PublicKey, error) {
-// 		key, err := rsa.GenerateKey(rand.Reader, 1024)
-// 		if err != nil {
-// 			t.Fatalf("failed to generate a private RSA key: %s", err)
-// 		}
-// 		return &key.PublicKey, nil
-// 	}
+	secrets.DefaultPublicKeyFunc = func() (*rsa.PublicKey, error) {
+		key, err := rsa.GenerateKey(rand.Reader, 1024)
+		if err != nil {
+			t.Fatalf("failed to generate a private RSA key: %s", err)
+		}
+		return &key.PublicKey, nil
+	}
 
-// 	fakeFs := ioutils.NewMapFilesystem()
-// 	m := buildManifest(true, false)
-// 	hookSecret, err := secrets.CreateSealedSecret(meta.NamespacedName("cicd", "webhook-secret-test-dev-test"), "123", eventlisteners.WebhookSecretKey)
-// 	assertNoError(t, err)
+	fakeFs := ioutils.NewMapFilesystem()
+	m := buildManifest(true, false)
+	hookSecret, err := secrets.CreateSealedSecret(meta.NamespacedName("cicd", "webhook-secret-test-dev-test"), "123", eventlisteners.WebhookSecretKey)
+	assertNoError(t, err)
 
-// 	want := res.Resources{
-// 		"config/cicd/base/pipelines/03-secrets/webhook-secret-test-dev-test.yaml": hookSecret,
-// 		"environments/test-dev/apps/test-app/base/kustomization.yaml":             &res.Kustomization{Bases: []string{"../../../services/test-svc", "../../../services/test"}},
-// 		"environments/test-dev/apps/test-app/kustomization.yaml":                  &res.Kustomization{Bases: []string{"overlays"}},
-// 		"environments/test-dev/apps/test-app/overlays/kustomization.yaml":         &res.Kustomization{Bases: []string{"../base"}},
-// 		"pipelines.yaml": &config.Manifest{
-// 			Config: &config.Config{
-// 				Pipelines: &config.PipelinesConfig{
-// 					Name: "cicd",
-// 				},
-// 			},
-// 			Apps: []*config.Application{
-// 				{
-// 					Name: "test-app",
-// 					Environments: []*config.EnvironmentRefs{
-// 						{
-// 							Ref: "test-dev",
-// 							ServiceRefs: []string{
-// 								"test-svc",
-// 								"test",
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
-// 			GitOpsURL: "http://github.com/org/test",
-// 			Environments: []*config.Environment{
-// 				{
-// 					Name: "test-dev",
-// 					Services: []*config.Service{
-// 						{
-// 							Name:      "test-svc",
-// 							SourceURL: "https://github.com/myproject/test-svc",
-// 							Webhook: &config.Webhook{
-// 								Secret: &config.Secret{
-// 									Name:      "webhook-secret-test-dev-test-svc",
-// 									Namespace: "cicd",
-// 								},
-// 							},
-// 						},
-// 						{
-// 							Name:      "test",
-// 							SourceURL: "http://github.com/org/test",
-// 							Webhook: &config.Webhook{
-// 								Secret: &config.Secret{
-// 									Name:      "webhook-secret-test-dev-test",
-// 									Namespace: "cicd",
-// 								},
-// 							},
-// 						},
-// 					},
-// 				},
-// 			},
-// 		},
-// 	}
+	want := res.Resources{
+		"config/cicd/base/pipelines/03-secrets/webhook-secret-test-dev-test.yaml": hookSecret,
+		"environments/test-dev/apps/test-app/base/kustomization.yaml":             &res.Kustomization{Bases: []string{"../../../services/test-svc", "../../../services/test"}},
+		"environments/test-dev/apps/test-app/kustomization.yaml":                  &res.Kustomization{Bases: []string{"overlays"}},
+		"environments/test-dev/apps/test-app/overlays/kustomization.yaml":         &res.Kustomization{Bases: []string{"../base"}},
+		"pipelines.yaml": &config.Manifest{
+			Config: &config.Config{
+				Pipelines: &config.PipelinesConfig{
+					Name: "cicd",
+				},
+			},
+			Apps: []*config.Application{
+				{
+					Name: "test-app",
+					Environments: []*config.EnvironmentRefs{
+						{
+							Ref: "test-dev",
+							ServiceRefs: []string{
+								"test-svc",
+								"test",
+							},
+						},
+					},
+				},
+			},
+			GitOpsURL: "http://github.com/org/test",
+			Environments: []*config.Environment{
+				{
+					Name: "test-dev",
+					Services: []*config.Service{
+						{
+							Name:      "test-svc",
+							SourceURL: "https://github.com/myproject/test-svc",
+							Webhook: &config.Webhook{
+								Secret: &config.Secret{
+									Name:      "webhook-secret-test-dev-test-svc",
+									Namespace: "cicd",
+								},
+							},
+						},
+						{
+							Name:      "test",
+							SourceURL: "http://github.com/org/test",
+							Webhook: &config.Webhook{
+								Secret: &config.Secret{
+									Name:      "webhook-secret-test-dev-test",
+									Namespace: "cicd",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 
-// 	got, err := serviceResources(m, fakeFs, &AddServiceParameters{
-// 		AppName:       "test-app",
-// 		EnvName:       "test-dev",
-// 		GitRepoURL:    "http://github.com/org/test",
-// 		Manifest:      pipelinesFile,
-// 		WebhookSecret: "123",
-// 		ServiceName:   "test",
-// 	})
-// 	assertNoError(t, err)
-// 	if diff := cmp.Diff(got, want, cmpopts.IgnoreMapEntries(func(k string, v interface{}) bool {
-// 		_, ok := want[k]
-// 		return !ok
-// 	})); diff != "" {
-// 		t.Fatalf("serviceResources() failed: %v", diff)
-// 	}
-// }
+	got, err := serviceResources(m, fakeFs, &AddServiceParameters{
+		AppName:       "test-app",
+		EnvName:       "test-dev",
+		GitRepoURL:    "http://github.com/org/test",
+		Manifest:      pipelinesFile,
+		WebhookSecret: "123",
+		ServiceName:   "test",
+	})
+	assertNoError(t, err)
+	if diff := cmp.Diff(got, want, cmpopts.IgnoreMapEntries(func(k string, v interface{}) bool {
+		_, ok := want[k]
+		return !ok
+	})); diff != "" {
+		t.Fatalf("serviceResources() failed: %v", diff)
+	}
+}
 
 func TestServiceResourcesWithoutCICD(t *testing.T) {
 	fakeFs := ioutils.NewMapFilesystem()
@@ -354,11 +359,10 @@ func TestServiceResourcesWithoutCICD(t *testing.T) {
 func buildManifest(withPipelines, withArgoCD bool) *config.Manifest {
 
 	m := config.Manifest{
-		GitOpsURL: "http://github.com/org/test",
+		GitOpsURL:    "http://github.com/org/test",
+		Environments: environment(withPipelines),
+		Apps:         getApps(),
 	}
-
-	m.Environments = environment(withPipelines)
-	m.Apps = getApps()
 
 	if withArgoCD {
 		m.Config = &config.Config{
