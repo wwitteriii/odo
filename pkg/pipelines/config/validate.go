@@ -94,6 +94,7 @@ func (vv *validateVisitor) Environment(env *Environment) error {
 }
 
 func (vv *validateVisitor) Application(app *Application, env *Environment) error {
+
 	appPath := yamlPath(PathForApplication(env, app))
 	if err := checkDuplicate(app.Name, appPath, vv.appNames); err != nil {
 		vv.errs = append(vv.errs, err)
@@ -103,16 +104,6 @@ func (vv *validateVisitor) Application(app *Application, env *Environment) error
 		vv.errs = append(vv.errs, err)
 	}
 
-	// if len(app.Environments.ServiceRefs) == 0 && app.ConfigRepo == nil {
-	// 	vv.errs = append(vv.errs, missingFieldsError([]string{"services", "config_repo"}, []string{appPath}))
-	// }
-	// if len(app.ServiceRefs) > 0 && app.ConfigRepo != nil {
-	// 	vv.errs = append(vv.errs, apis.ErrMultipleOneOf(yamlJoin(appPath, "services"), yamlJoin(appPath, "config_repo")))
-	// }
-
-	// if app.ConfigRepo != nil {
-	// 	vv.errs = append(vv.errs, validateConfigRepo(app.ConfigRepo, yamlJoin(appPath, "config_repo"))...)
-	// }
 	for _, env := range app.Environments {
 		if len(env.ServiceRefs) == 0 && app.ConfigRepo == nil {
 			vv.errs = append(vv.errs, missingFieldsError([]string{"services", "config_repo"}, []string{appPath}))
@@ -310,6 +301,7 @@ func addQuotes(items ...string) []string {
 }
 
 func checkDuplicate(field, path string, checkMap map[string]bool) error {
+	fmt.Println("This is the checkmap", checkMap)
 	_, ok := checkMap[path]
 	if ok {
 		return duplicateFieldsError([]string{field}, []string{path})

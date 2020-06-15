@@ -51,14 +51,23 @@ func (m *Manifest) GetEnvironment(n string) *Environment {
 
 // GetApplication returns a named application, within an environment, if it
 // exists.
-func (m *Manifest) GetApplication(environment, application string) *Application {
-	for _, env := range m.Environments {
-		if env.Name == environment {
-			for _, app := range m.Apps {
-				if app.Name == application {
-					return app
-				}
-			}
+// func (m *Manifest) GetApplication(environment, application string) *Application {
+// 	for _, env := range m.Environments {
+// 		if env.Name == environment {
+// 			for _, app := range m.Apps {
+// 				if app.Name == application {
+// 					return app
+// 				}
+// 			}
+// 		}
+// 	}
+// 	return nil
+// }
+
+func (m *Manifest) GetApplication(reqAppName string) *Application {
+	for _, App := range m.Apps {
+		if App.Name == reqAppName {
+			return App
 		}
 	}
 	return nil
@@ -67,6 +76,7 @@ func (m *Manifest) GetApplication(environment, application string) *Application 
 // AddService adds a new service to a specific environment and creates a
 // reference to it within an Application.
 func (m *Manifest) AddService(envName, appName string, svc *Service) error {
+	fmt.Println("The Addservice field was enetered twice")
 	env := m.GetEnvironment(envName)
 	if env == nil {
 		return fmt.Errorf("environment %s does not exist", envName)
@@ -76,13 +86,32 @@ func (m *Manifest) AddService(envName, appName string, svc *Service) error {
 			return fmt.Errorf("service %s already exists at %s", svc.Name, env.Name)
 		}
 	}
-	app := m.GetApplication(envName, appName)
+	app := m.GetApplication(appName)
 	if app == nil {
-		app = &Application{Name: appName}
-		// env.Apps = append(env.Apps, app)
+		app = &Application{
+			Name: appName,
+			Environments: []*EnvironmentRefs{
+				{
+					Ref: envName,
+				},
+			},
+		}
 	}
 	env.Services = append(env.Services, svc)
+	app = appendServiceRef(app, envName, svc.Name)
+	m.Apps = append(m.Apps, app)
+
 	// app.ServiceRefs = append(app.ServiceRefs, svc.Name)
+	return nil
+}
+
+func appendServiceRef(app *Application, envName, svcName string) *Application {
+	for _, env := range app.Environments {
+		if env.Ref == envName {
+			env.ServiceRefs = append(env.ServiceRefs, svcName)
+		}
+		return app
+	}
 	return nil
 }
 
