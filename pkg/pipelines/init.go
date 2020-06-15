@@ -141,7 +141,7 @@ func CreateDockerSecret(fs afero.Fs, dockerConfigJSONFilename, ns string) (*ssv1
 func createInitialFiles(fs afero.Fs, repo scm.Repository, prefix, gitOpsWebhookSecret, dockerConfigPath string) (res.Resources, error) {
 	cicd := &config.PipelinesConfig{Name: prefix + "cicd"}
 	pipelineConfig := &config.Config{Pipelines: cicd}
-	pipelines := createManifest(repo.URL(), pipelineConfig)
+	pipelines := createManifest(repo.URL(), pipelineConfig, nil)
 	initialFiles := res.Resources{
 		pipelinesFile: pipelines,
 	}
@@ -212,11 +212,12 @@ func createTriggerBindings(r scm.Repository, outputs res.Resources, ns string) {
 	outputs[filepath.Join("06-bindings", pushBindingName+".yaml")] = pushBinding
 }
 
-func createManifest(gitOpsRepoURL string, configEnv *config.Config, envs ...*config.Environment) *config.Manifest {
+func createManifest(gitOpsRepoURL string, configEnv *config.Config, app []*config.Application, envs ...*config.Environment) *config.Manifest {
 	return &config.Manifest{
 		GitOpsURL:    gitOpsRepoURL,
 		Environments: envs,
 		Config:       configEnv,
+		Apps:         app,
 	}
 }
 

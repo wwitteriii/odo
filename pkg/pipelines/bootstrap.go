@@ -92,11 +92,11 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	ns := namespaces.NamesWithPrefix(o.Prefix)
 	serviceName := repoToServiceName(repoName)
 	secretName := secrets.MakeServiceWebhookSecretName(ns["dev"], serviceName)
-	envs, configEnv, err := bootstrapEnvironments(appRepo, o.Prefix, secretName, ns)
+	envs, configEnv, Apps, err := bootstrapEnvironments(appRepo, o.Prefix, secretName, ns)
 	if err != nil {
 		return nil, err
 	}
-	m := createManifest(gitOpsRepo.URL(), configEnv, envs...)
+	m := createManifest(gitOpsRepo.URL(), configEnv, Apps, envs...)
 
 	devEnv := m.GetEnvironment(ns["dev"])
 	if devEnv == nil {
@@ -166,8 +166,9 @@ func bootstrapServiceDeployment(dev *config.Environment) (res.Resources, error) 
 	return resources, nil
 }
 
-func bootstrapEnvironments(repo scm.Repository, prefix, secretName string, ns map[string]string) ([]*config.Environment, *config.Config, error) {
+func bootstrapEnvironments(repo scm.Repository, prefix, secretName string, ns map[string]string) ([]*config.Environment, *config.Config, []*config.Application, error) {
 	envs := []*config.Environment{}
+	Apps := []*config.Application{}
 	var pipelinesConfig *config.PipelinesConfig
 	for k, v := range ns {
 		if k == "cicd" {
@@ -177,13 +178,13 @@ func bootstrapEnvironments(repo scm.Repository, prefix, secretName string, ns ma
 			if k == "dev" {
 				svc, err := serviceFromRepo(repo.URL(), secretName, ns["cicd"])
 				if err != nil {
-					return nil, nil, err
+					return nil, nil, nil, err
 				}
-				app, err := applicationFromRepo(repo.URL(), svc.Name)
+				app, err := applicationFromRepo(repo.URL(), svc.Name, prefix+"dev")
 				if err != nil {
-					return nil, nil, err
+					return nil, nil, nil, err
 				}
-				env.Apps = []*config.Application{app}
+				Apps = append(Apps, app)
 				env.Services = []*config.Service{svc}
 				env.Pipelines = defaultPipelines(repo)
 			}
@@ -191,7 +192,7 @@ func bootstrapEnvironments(repo scm.Repository, prefix, secretName string, ns ma
 		}
 	}
 	cfg := &config.Config{Pipelines: pipelinesConfig, ArgoCD: &config.ArgoCDConfig{Namespace: "argocd"}}
-	return envs, cfg, nil
+	return envs, cfg, Apps, nil
 }
 
 func serviceFromRepo(repoURL, secretName, secretNS string) (*config.Service, error) {
@@ -211,14 +212,19 @@ func serviceFromRepo(repoURL, secretName, secretNS string) (*config.Service, err
 	}, nil
 }
 
-func applicationFromRepo(repoURL, serviceName string) (*config.Application, error) {
+func applicationFromRepo(repoURL, serviceName, envName string) (*config.Application, error) {
 	repo, err := repoFromURL(repoURL)
 	if err != nil {
 		return nil, err
 	}
 	return &config.Application{
-		Name:        repo,
-		ServiceRefs: []string{serviceName},
+		Name: repo,
+		Environments: []*config.EnvironmentRefs{
+			{
+				Ref:         envName,
+				ServiceRefs: []string{serviceName},
+			},
+		},
 	}, nil
 }
 

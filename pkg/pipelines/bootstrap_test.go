@@ -82,15 +82,19 @@ func TestBootstrapManifest(t *testing.T) {
 							},
 						},
 					},
-
-					Apps: []*config.Application{
+				},
+				{Name: "tst-stage"},
+			},
+			Apps: []*config.Application{
+				{
+					Name: "http-api",
+					Environments: []*config.EnvironmentRefs{
 						{
-							Name:        "http-api",
+							Ref:         "tst-dev",
 							ServiceRefs: []string{"http-api-svc"},
 						},
 					},
 				},
-				{Name: "tst-stage"},
 			},
 			Config: &config.Config{
 				Pipelines: &config.PipelinesConfig{Name: "tst-cicd"},
@@ -146,11 +150,16 @@ func TestOrgRepoFromURL(t *testing.T) {
 
 func TestApplicationFromRepo(t *testing.T) {
 	want := &config.Application{
-		Name:        "http-api",
-		ServiceRefs: []string{"http-api-svc"},
+		Name: "http-api",
+		Environments: []*config.EnvironmentRefs{
+			{
+				Ref:         "tst-dev",
+				ServiceRefs: []string{"http-api-svc"},
+			},
+		},
 	}
 
-	got, err := applicationFromRepo(testSvcRepo, "http-api-svc")
+	got, err := applicationFromRepo(testSvcRepo, "http-api-svc", "tst-dev")
 	if err != nil {
 		t.Fatal(err)
 	}
