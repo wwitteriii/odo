@@ -52,8 +52,8 @@ func Bootstrap(o *BootstrapOptions, appFs afero.Fs) error {
 	}
 
 	buildParams := &BuildParameters{
-		ManifestFilename: pipelinesFile,
-		OutputPath:       o.OutputPath,
+		PipelinesFilename: pipelinesFile,
+		OutputPath:        o.OutputPath,
 	}
 
 	m := bootstrapped[pipelinesFile].(*config.Manifest)
