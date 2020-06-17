@@ -59,7 +59,7 @@ func (eo *AddEnvParameters) Validate() error {
 func (eo *AddEnvParameters) Run() error {
 	options := pipelines.EnvParameters{
 		EnvName:           eo.envName,
-		PipelinesFilename: eo.pipelinesFile,
+		PipelinesFilePath: eo.pipelinesFile,
 		Cluster:           eo.cluster,
 	}
 	err := pipelines.AddEnv(&options, ioutils.NewFilesystem())

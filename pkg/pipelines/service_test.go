@@ -96,7 +96,7 @@ func TestServiceResourcesWithCICD(t *testing.T) {
 		AppName:           "test-app",
 		EnvName:           "test-dev",
 		GitRepoURL:        "http://github.com/org/test",
-		PipelinesFilename: pipelinesFile,
+		PipelinesFilePath: pipelinesFile,
 		WebhookSecret:     "123",
 		ServiceName:       "test",
 	})
@@ -167,7 +167,7 @@ func TestServiceResourcesWithArgoCD(t *testing.T) {
 		AppName:           "test-app",
 		EnvName:           "test-dev",
 		GitRepoURL:        "http://github.com/org/test",
-		PipelinesFilename: pipelinesFile,
+		PipelinesFilePath: pipelinesFile,
 		WebhookSecret:     "123",
 		ServiceName:       "test",
 	})
@@ -221,7 +221,7 @@ func TestServiceResourcesWithoutArgoCD(t *testing.T) {
 		AppName:           "test-app",
 		EnvName:           "test-dev",
 		GitRepoURL:        "http://github.com/org/test",
-		PipelinesFilename: pipelinesFile,
+		PipelinesFilePath: pipelinesFile,
 		WebhookSecret:     "123",
 		ServiceName:       "test",
 	})
@@ -276,7 +276,7 @@ func TestAddServiceWithoutApp(t *testing.T) {
 		AppName:           "new-app",
 		EnvName:           "test-dev",
 		GitRepoURL:        "http://github.com/org/test",
-		PipelinesFilename: pipelinesFile,
+		PipelinesFilePath: pipelinesFile,
 		WebhookSecret:     "123",
 		ServiceName:       "test",
 	})
@@ -326,7 +326,7 @@ func TestAddService(t *testing.T) {
 		AppName:           "new-app",
 		EnvName:           "test-dev",
 		GitRepoURL:        "http://github.com/org/test",
-		PipelinesFilename: pipelinesPath,
+		PipelinesFilePath: pipelinesPath,
 		WebhookSecret:     "123",
 		ServiceName:       "test",
 	}, fakeFs)
@@ -406,7 +406,7 @@ func TestServiceWithArgoCD(t *testing.T) {
 		AppName:           "test-app",
 		EnvName:           "test-dev",
 		GitRepoURL:        "http://github.com/org/test",
-		PipelinesFilename: pipelinesFile,
+		PipelinesFilePath: pipelinesFile,
 		WebhookSecret:     "123",
 		ServiceName:       "test",
 	})

@@ -19,7 +19,7 @@ func TestAddEnv(t *testing.T) {
 	gitopsPath := afero.GetTempDir(fakeFs, "test")
 	pipelinesFile := filepath.Join(gitopsPath, pipelinesFile)
 	envParameters := EnvParameters{
-		PipelinesFilename: pipelinesFile,
+		PipelinesFilePath: pipelinesFile,
 		EnvName:           "dev",
 	}
 	_ = afero.WriteFile(fakeFs, pipelinesFile, []byte("environments:"), 0644)
@@ -58,7 +58,7 @@ func TestAddEnvWithClusterProvided(t *testing.T) {
 	gitopsPath := afero.GetTempDir(fakeFs, "test")
 	pipelinesFile := filepath.Join(gitopsPath, pipelinesFile)
 	envParameters := EnvParameters{
-		PipelinesFilename: pipelinesFile,
+		PipelinesFilePath: pipelinesFile,
 		EnvName:           "dev",
 		Cluster:           "testing.cluster",
 	}
@@ -100,7 +100,7 @@ func TestAddEnvWithExistingName(t *testing.T) {
 
 	pipelinesFile := filepath.Join(gitopsPath, pipelinesFile)
 	envParameters := EnvParameters{
-		PipelinesFilename: pipelinesFile,
+		PipelinesFilePath: pipelinesFile,
 		EnvName:           "dev",
 	}
 	_ = afero.WriteFile(fakeFs, pipelinesFile, []byte("environments:\n - name: dev\n"), 0644)

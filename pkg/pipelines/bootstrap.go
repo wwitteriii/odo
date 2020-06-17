@@ -52,7 +52,7 @@ func Bootstrap(o *BootstrapOptions, appFs afero.Fs) error {
 	}
 
 	buildParams := &BuildParameters{
-		PipelinesFilename: pipelinesFile,
+		PipelinesFilePath: pipelinesFile,
 		OutputPath:        o.OutputPath,
 	}
 

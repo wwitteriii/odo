@@ -26,18 +26,18 @@ type AddServiceParameters struct {
 	GitRepoURL               string
 	ImageRepo                string
 	InternalRegistryHostname string
-	PipelinesFilename        string
+	PipelinesFilePath        string
 	ServiceName              string
 	WebhookSecret            string
 }
 
 func AddService(p *AddServiceParameters, fs afero.Fs) error {
-	m, err := config.ParseFile(fs, p.PipelinesFilename)
+	m, err := config.ParseFile(fs, p.PipelinesFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to parse pipelines-file: %w", err)
 	}
 
-	outputPath := filepath.Dir(p.PipelinesFilename)
+	outputPath := filepath.Dir(p.PipelinesFilePath)
 
 	files, err := serviceResources(m, fs, p)
 	if err != nil {
@@ -119,10 +119,10 @@ func serviceResources(m *config.Manifest, fs afero.Fs, p *AddServiceParameters) 
 		return nil, err
 	}
 
-	files[filepath.Base(p.PipelinesFilename)] = m
-	outputPath := filepath.Dir(p.PipelinesFilename)
+	files[filepath.Base(p.PipelinesFilePath)] = m
+	outputPath := filepath.Dir(p.PipelinesFilePath)
 	buildParams := &BuildParameters{
-		PipelinesFilename: p.PipelinesFilename,
+		PipelinesFilePath: p.PipelinesFilePath,
 		OutputPath:        outputPath,
 	}
 	built, err := buildResources(fs, buildParams, m)

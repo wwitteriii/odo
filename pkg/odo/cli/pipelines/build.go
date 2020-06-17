@@ -29,7 +29,7 @@ var (
 
 // BuildParameters encapsulates the parameters for the odo pipelines build command.
 type BuildParameters struct {
-	pipelinesFilename string
+	PipelinesFilePath string
 	output            string // path to add Gitops resources
 	// generic context options common to all commands
 	*genericclioptions.Context
@@ -53,7 +53,7 @@ func (io *BuildParameters) Validate() error {
 // Run runs the project bootstrap command.
 func (io *BuildParameters) Run() error {
 	options := pipelines.BuildParameters{
-		PipelinesFilename: io.pipelinesFilename,
+		PipelinesFilePath: io.PipelinesFilePath,
 		OutputPath:        io.output,
 	}
 	err := pipelines.BuildResources(&options, ioutils.NewFilesystem())
@@ -78,6 +78,6 @@ func NewCmdBuild(name, fullName string) *cobra.Command {
 	}
 
 	buildCmd.Flags().StringVar(&o.output, "output", ".", "folder path to add Gitops resources")
-	buildCmd.Flags().StringVar(&o.pipelinesFilename, "pipelines-file", "pipelines.yaml", "path to pipelines file")
+	buildCmd.Flags().StringVar(&o.PipelinesFilePath, "pipelines-file", "pipelines.yaml", "path to pipelines file")
 	return buildCmd
 }
