@@ -14,6 +14,8 @@ const KubernetesAppNameLabel = "app.kubernetes.io/name"
 // KubernetesAppVersionLabel string constant for Kubernetes App Version label
 const KubernetesAppVersionLabel = "app.kubernetes.io/version"
 
+const KubernetesPartOfLabel = "app.kubernetes.io/part-of"
+
 // ServiceAccount is an option that configures the deployment's pods to execute
 // with the provided service account name.
 func ServiceAccount(sa string) podSpecFunc {
@@ -47,21 +49,21 @@ func ContainerPort(p int32) podSpecFunc {
 }
 
 // Create creates and returns a Deployment with the specified configuration.
-func Create(ns, name, image string, opts ...podSpecFunc) *appsv1.Deployment {
+func Create(appName, ns, name, image string, opts ...podSpecFunc) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		TypeMeta:   meta.TypeMeta("Deployment", "apps/v1"),
 		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, name)),
 		Spec: appsv1.DeploymentSpec{
 			Replicas: ptr32(1),
 			Selector: labelSelector(KubernetesAppNameLabel, name),
-			Template: podTemplate(name, image, opts...),
+			Template: podTemplate(appName, name, image, opts...),
 		},
 	}
 }
 
 type podSpecFunc func(t *corev1.PodSpec)
 
-func podTemplate(name, image string, opts ...podSpecFunc) corev1.PodTemplateSpec {
+func podTemplate(appName, name, image string, opts ...podSpecFunc) corev1.PodTemplateSpec {
 	podSpec := &corev1.PodSpec{
 		ServiceAccountName: "default",
 		Containers: []corev1.Container{
@@ -81,6 +83,7 @@ func podTemplate(name, image string, opts ...podSpecFunc) corev1.PodTemplateSpec
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: map[string]string{
 				KubernetesAppNameLabel: name,
+				KubernetesPartOfLabel:  appName,
 			},
 		},
 		Spec: *podSpec,
