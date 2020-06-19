@@ -132,7 +132,6 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 			return nil, err
 		}
 		bootstrapped = addResources(pipelinesPath(cfg), trackerResources, bootstrapped, &k)
-
 	}
 
 	secretFilename := filepath.Join("03-secrets", secretName+".yaml")

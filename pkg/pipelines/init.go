@@ -51,7 +51,7 @@ var (
 		},
 		{
 			APIGroups: []string{"rbac.authorization.k8s.io"},
-			Resources: []string{"clusterroles", "role"},
+			Resources: []string{"clusterroles", "roles"},
 			Verbs:     []string{"get", "bind", "patch", "create"},
 		},
 		{
