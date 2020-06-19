@@ -110,9 +110,9 @@ func TestBootstrapManifest(t *testing.T) {
 	wantResources := []string{
 		"01-namespaces/cicd-environment.yaml",
 		"01-namespaces/image.yaml",
-		"02-rolebindings/commit-status-tracker-role.yaml",
-		"02-rolebindings/commit-status-tracker-rolebinding.yaml",
-		"02-rolebindings/commit-status-tracker-service-role.yaml",
+		// "02-rolebindings/commit-status-tracker-role.yaml",
+		// "02-rolebindings/commit-status-tracker-rolebinding.yaml",
+		// "02-rolebindings/commit-status-tracker-service-role.yaml",
 		"02-rolebindings/internal-registry-image-binding.yaml",
 		"02-rolebindings/pipeline-service-role.yaml",
 		"02-rolebindings/pipeline-service-rolebinding.yaml",
