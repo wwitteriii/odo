@@ -49,9 +49,8 @@ func TestCreateDevCDDeployTemplate(t *testing.T) {
 
 func TestCreateDevCIBuildPRTemplate(t *testing.T) {
 	validdevCIPRTemplate := triggersv1.TriggerTemplate{
-		TypeMeta: triggerTemplateTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("testns", "app-ci-template"),
-			statusTrackerAnnotations("dev-ci-build-from-pr", "Dev CI Build")),
+		TypeMeta:   triggerTemplateTypeMeta,
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("testns", "app-ci-template")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				{
@@ -100,15 +99,8 @@ func TestCreateCDPushTemplate(t *testing.T) {
 		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("testns", "cd-deploy-from-push-template")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
-				{
-					Name:        "gitref",
-					Description: "The git revision",
-					Default:     strPtr("master"),
-				},
-				{
-					Name:        "gitrepositoryurl",
-					Description: "The git repository url",
-				},
+				{Name: "gitrepositoryurl", Description: "The git repository url"},
+				{Name: "gitsha", Description: "The specific commit SHA."},
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{
@@ -127,21 +119,13 @@ func TestCreateCDPushTemplate(t *testing.T) {
 
 func TestCreateCIDryRunTemplate(t *testing.T) {
 	validStageCIDryRunTemplate := triggersv1.TriggerTemplate{
-		TypeMeta: triggerTemplateTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("testns", "ci-dryrun-from-pr-template"),
-			statusTrackerAnnotations("ci-dryrun-from-pr-pipeline", "Stage CI Dry Run")),
+		TypeMeta:   triggerTemplateTypeMeta,
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("testns", "ci-dryrun-from-pr-template")),
 
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
-				{
-					Name:        "gitref",
-					Description: "The git revision",
-					Default:     strPtr("master"),
-				},
-				{
-					Name:        "gitrepositoryurl",
-					Description: "The git repository url",
-				},
+				{Name: "gitrepositoryurl", Description: "The git repository url"},
+				{Name: "gitsha", Description: "The specific commit SHA."},
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{

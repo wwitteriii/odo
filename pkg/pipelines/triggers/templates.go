@@ -48,10 +48,8 @@ func CreateDevCDDeployTemplate(ns, saName string) triggersv1.TriggerTemplate {
 // CreateDevCIBuildPRTemplate creates DevCIBuildPRTemplate
 func CreateDevCIBuildPRTemplate(ns, saName string) triggersv1.TriggerTemplate {
 	return triggersv1.TriggerTemplate{
-		TypeMeta: triggerTemplateTypeMeta,
-		ObjectMeta: meta.ObjectMeta(
-			meta.NamespacedName(ns, "app-ci-template"),
-			statusTrackerAnnotations("dev-ci-build-from-pr", "Dev CI Build")),
+		TypeMeta:   triggerTemplateTypeMeta,
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, "app-ci-template")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				createTemplateParamSpec("gitref", "The git branch for this PR."),
@@ -80,9 +78,8 @@ func CreateCDPushTemplate(ns, saName string) triggersv1.TriggerTemplate {
 		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, "cd-deploy-from-push-template")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
-
-				createTemplateParamSpecDefault("gitref", "The git revision", "master"),
 				createTemplateParamSpec("gitrepositoryurl", "The git repository url"),
+				createTemplateParamSpec("gitsha", "The specific commit SHA."),
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{
@@ -98,13 +95,12 @@ func CreateCDPushTemplate(ns, saName string) triggersv1.TriggerTemplate {
 // CreateCIDryRunTemplate returns TriggerTemplate for CI Dry Try
 func CreateCIDryRunTemplate(ns, saName string) triggersv1.TriggerTemplate {
 	return triggersv1.TriggerTemplate{
-		TypeMeta: triggerTemplateTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, "ci-dryrun-from-pr-template"),
-			statusTrackerAnnotations("ci-dryrun-from-pr-pipeline", "Stage CI Dry Run")),
+		TypeMeta:   triggerTemplateTypeMeta,
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, "ci-dryrun-from-pr-template")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
-				createTemplateParamSpecDefault("gitref", "The git revision", "master"),
 				createTemplateParamSpec("gitrepositoryurl", "The git repository url"),
+				createTemplateParamSpec("gitsha", "The specific commit SHA."),
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{
