@@ -32,8 +32,9 @@ func TestCreateDevCDPipelineRun(t *testing.T) {
 
 func TestCreateDevCIPipelineRun(t *testing.T) {
 	validDevCIPipelineRun := pipelinev1.PipelineRun{
-		TypeMeta:   pipelineRunTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "app-ci-pipeline-run-$(uid)")),
+		TypeMeta: pipelineRunTypeMeta,
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "app-ci-pipeline-run-$(uid)"),
+			statusTrackerAnnotations("dev-ci-build-from-pr", "Dev CI Build")),
 		Spec: pipelinev1.PipelineRunSpec{
 			ServiceAccountName: sName,
 			PipelineRef:        createPipelineRef("app-ci-pipeline"),
@@ -42,7 +43,7 @@ func TestCreateDevCIPipelineRun(t *testing.T) {
 				createPipelineBindingParam("COMMIT_SHA", "$(params.gitsha)"),
 				createPipelineBindingParam("TLSVERIFY", "$(params.tlsVerify)"),
 			},
-			Resources: createDevResource("$(params.gitref)"),
+			Resources: createDevResource("$(params.gitsha)"),
 		},
 	}
 	template := createDevCIPipelineRun(sName)
@@ -69,8 +70,9 @@ func TestCreateCDPipelineRun(t *testing.T) {
 
 func TestCreateStageCIPipelineRun(t *testing.T) {
 	validStageCIPipeline := pipelinev1.PipelineRun{
-		TypeMeta:   pipelineRunTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "ci-dryrun-from-pr-pipeline-$(uid)")),
+		TypeMeta: pipelineRunTypeMeta,
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "ci-dryrun-from-pr-pipeline-$(uid)"),
+			statusTrackerAnnotations("ci-dryrun-from-pr-pipeline", "Stage CI Dry Run")),
 		Spec: pipelinev1.PipelineRunSpec{
 			ServiceAccountName: sName,
 			PipelineRef:        createPipelineRef("ci-dryrun-from-pr-pipeline"),

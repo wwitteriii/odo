@@ -112,11 +112,12 @@ func Resources(ns, token string) (res.Resources, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate Status Tracker Secret: %w", err)
 	}
+	pipelineSA := roles.CreateServiceAccount(meta.NamespacedName(ns, "pipeline"))
 	return res.Resources{
 		serviceAccountPath: sa,
 		secretPath:         secret,
 		rolePath:           roles.CreateRole(name, roleRules),
-		roleBindingPath:    roles.CreateRoleBinding(name, sa, "Role", operatorName),
+		roleBindingPath:    roles.CreateRoleBindingForSubjects(name, "Role", operatorName, []rbacv1.Subject{{Kind: sa.Kind, Name: sa.Name, Namespace: sa.Namespace}, {Kind: pipelineSA.Kind, Name: pipelineSA.Name, Namespace: pipelineSA.Namespace}}),
 		deploymentPath:     createStatusTrackerDeployment(ns),
 	}, nil
 }
