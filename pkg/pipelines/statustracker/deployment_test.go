@@ -6,6 +6,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	ssv1alpha1 "github.com/bitnami-labs/sealed-secrets/pkg/apis/sealed-secrets/v1alpha1"
@@ -13,6 +14,7 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/deployment"
 	"github.com/openshift/odo/pkg/pipelines/meta"
 	"github.com/openshift/odo/pkg/pipelines/roles"
+	res "github.com/openshift/odo/pkg/pipelines/resources"
 )
 
 func TestCreateStatusTrackerDeployment(t *testing.T) {
@@ -84,21 +86,22 @@ func TestResource(t *testing.T) {
 	}
 
 	ns := "my-test-ns"
-	res, err := Resources(ns, "test-token")
+	result, err := Resources(ns, "test-token")
 	if err != nil {
 		t.Fatal(err)
 	}
 	name := meta.NamespacedName(ns, operatorName)
 	sa := roles.CreateServiceAccount(name)
-	want := []interface{}{
-		sa,
-		testSecret,
-		roles.CreateRole(name, roleRules),
-		roles.CreateRoleBinding(name, sa, "Role", operatorName),
-		createStatusTrackerDeployment(ns),
+	pipelineSA := roles.CreateServiceAccount(meta.NamespacedName(ns, "pipeline"))
+	want := res.Resources{
+		serviceAccountPath: sa,
+		secretPath:         testSecret,
+		rolePath:           roles.CreateRole(name, roleRules),
+		roleBindingPath:    roles.CreateRoleBindingForSubjects(name, "Role", operatorName, []rbacv1.Subject{{Kind: sa.Kind, Name: sa.Name, Namespace: sa.Namespace}, {Kind: pipelineSA.Kind, Name: pipelineSA.Name, Namespace: pipelineSA.Namespace}}),
+		deploymentPath:     createStatusTrackerDeployment(ns),
 	}
 
-	if diff := cmp.Diff(want, res); diff != "" {
+	if diff := cmp.Diff(want, result); diff != "" {
 		t.Fatalf("deployment diff: %s", diff)
 	}
 }

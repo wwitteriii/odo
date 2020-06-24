@@ -50,8 +50,8 @@ var (
 		},
 		{
 			APIGroups: []string{"rbac.authorization.k8s.io"},
-			Resources: []string{"clusterroles"},
-			Verbs:     []string{"bind", "patch"},
+			Resources: []string{"clusterroles", "roles"},
+			Verbs:     []string{"get", "bind", "patch", "create"},
 		},
 		{
 			APIGroups: []string{"rbac.authorization.k8s.io"},
@@ -154,9 +154,9 @@ func CreateDockerSecret(fs afero.Fs, dockerConfigJSONFilename, ns string) (*ssv1
 func createInitialFiles(fs afero.Fs, repo scm.Repository, prefix, gitOpsWebhookSecret, dockerConfigPath string) (res.Resources, error) {
 	cicd := &config.PipelinesConfig{Name: prefix + "cicd"}
 	pipelineConfig := &config.Config{Pipelines: cicd}
-	pipelines := createManifest(repo.URL(), pipelineConfig)
+	m := createManifest(repo.URL(), pipelineConfig)
 	initialFiles := res.Resources{
-		pipelinesFile: pipelines,
+		pipelinesFile: m,
 	}
 	resources, err := createCICDResources(fs, repo, cicd, gitOpsWebhookSecret, dockerConfigPath)
 	if err != nil {
@@ -164,10 +164,10 @@ func createInitialFiles(fs afero.Fs, repo scm.Repository, prefix, gitOpsWebhookS
 	}
 
 	files := getResourceFiles(resources)
-	prefixedResources := addPrefixToResources(pipelinesPath(pipelines.Config), resources)
+	prefixedResources := addPrefixToResources(pipelinesPath(m.GetPipelinesConfig()), resources)
 	initialFiles = res.Merge(prefixedResources, initialFiles)
 
-	pipelinesConfigKustomizations := addPrefixToResources(config.PathForPipelines(pipelines.Config.Pipelines), getCICDKustomization(files))
+	pipelinesConfigKustomizations := addPrefixToResources(config.PathForPipelines(m.GetPipelinesConfig()), getCICDKustomization(files))
 	initialFiles = res.Merge(pipelinesConfigKustomizations, initialFiles)
 
 	return initialFiles, nil
@@ -255,8 +255,8 @@ func getCICDKustomization(files []string) res.Resources {
 	}
 }
 
-func pipelinesPath(m *config.Config) string {
-	return filepath.Join(config.PathForPipelines(m.Pipelines), "base/pipelines")
+func pipelinesPath(c *config.PipelinesConfig) string {
+	return filepath.Join(config.PathForPipelines(c), "base/pipelines")
 }
 
 func addPrefixToResources(prefix string, files res.Resources) map[string]interface{} {

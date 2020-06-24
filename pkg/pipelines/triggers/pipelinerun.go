@@ -26,7 +26,8 @@ func createDevCDPipelineRun(saName string) pipelinev1.PipelineRun {
 func createDevCIPipelineRun(saName string) pipelinev1.PipelineRun {
 	return pipelinev1.PipelineRun{
 		TypeMeta:   pipelineRunTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "app-ci-pipeline-run-$(uid)")),
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "app-ci-pipeline-run-$(uid)"),
+			statusTrackerAnnotations("dev-ci-build-from-pr", "Dev CI Build")),
 		Spec: pipelinev1.PipelineRunSpec{
 			ServiceAccountName: saName,
 			PipelineRef:        createPipelineRef("app-ci-pipeline"),
@@ -35,7 +36,7 @@ func createDevCIPipelineRun(saName string) pipelinev1.PipelineRun {
 				createPipelineBindingParam("COMMIT_SHA", "$(params.gitsha)"),
 				createPipelineBindingParam("TLSVERIFY", "$(params.tlsVerify)"),
 			},
-			Resources: createDevResource("$(params.gitref)"),
+			Resources: createDevResource("$(params.gitsha)"),
 		},
 	}
 
@@ -56,7 +57,7 @@ func createCDPipelineRun(saName string) pipelinev1.PipelineRun {
 func createCIPipelineRun(saName string) pipelinev1.PipelineRun {
 	return pipelinev1.PipelineRun{
 		TypeMeta:   pipelineRunTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "ci-dryrun-from-pr-pipeline-$(uid)")),
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "ci-dryrun-from-pr-pipeline-$(uid)"), statusTrackerAnnotations("ci-dryrun-from-pr-pipeline", "Stage CI Dry Run")),
 		Spec: pipelinev1.PipelineRunSpec{
 			ServiceAccountName: saName,
 			PipelineRef:        createPipelineRef("ci-dryrun-from-pr-pipeline"),
@@ -97,7 +98,7 @@ func createResources() []pipelinev1.PipelineResourceBinding {
 			ResourceSpec: &pipelinev1alpha1.PipelineResourceSpec{
 				Type: "git",
 				Params: []pipelinev1.ResourceParam{
-					createResourceParams("revision", "$(params.gitref)"),
+					createResourceParams("revision", "$(params.gitsha)"),
 					createResourceParams("url", "$(params.gitrepositoryurl)"),
 				},
 			},

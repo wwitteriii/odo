@@ -17,9 +17,9 @@ func TestCreateInternalRegistryRoleBinding(t *testing.T) {
 		Name: "test-cicd",
 	}
 	sa := roles.CreateServiceAccount(meta.NamespacedName("test-cicd", "pipeline"))
-	gotFilename, got := createInternalRegistryRoleBinding(pipelinesConfig, "new-proj", sa)
+	got := createInternalRegistryRoleBinding(pipelinesConfig, "new-proj", sa)
 
-	want := res.Resources{"config/test-cicd/base/pipelines/02-rolebindings/internal-registry-new-proj-binding.yaml": &v1rbac.RoleBinding{
+	want := res.Resources{"02-rolebindings/internal-registry-new-proj-binding.yaml": &v1rbac.RoleBinding{
 		TypeMeta:   meta.TypeMeta("RoleBinding", "rbac.authorization.k8s.io/v1"),
 		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("new-proj", "internal-registry-new-proj-binding")),
 		Subjects:   []v1rbac.Subject{{Kind: sa.Kind, Name: sa.Name, Namespace: sa.Namespace}},
@@ -30,12 +30,8 @@ func TestCreateInternalRegistryRoleBinding(t *testing.T) {
 		},
 	}}
 
-	if diff := cmp.Diff(got, want); diff != "" {
+	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("resources do not match:\n%s", diff)
-	}
-
-	if diff := cmp.Diff(gotFilename, "02-rolebindings/internal-registry-new-proj-binding.yaml"); diff != "" {
-		t.Errorf("filename do not match:\n%s", diff)
 	}
 }
 

@@ -59,7 +59,7 @@ func (io *BootstrapParameters) Complete(name string, cmd *cobra.Command, args []
 func (io *BootstrapParameters) Validate() error {
 	gr, err := url.Parse(io.GitOpsRepoURL)
 	if err != nil {
-		return fmt.Errorf("failed to parse url %s: %v", io.GitOpsRepoURL, err)
+		return fmt.Errorf("failed to parse url %s: %w", io.GitOpsRepoURL, err)
 	}
 
 	// TODO: this won't work with GitLab as the repo can have more path elements.
@@ -86,9 +86,9 @@ func NewCmdBootstrap(name, fullName string) *cobra.Command {
 
 	initCmd := &cobra.Command{
 		Use:     name,
-		Short:   bootstrapShortDesc,
-		Long:    bootstrapLongDesc,
-		Example: fmt.Sprintf(bootstrapExample, fullName),
+		Short:   initShortDesc,
+		Long:    initLongDesc,
+		Example: fmt.Sprintf(initExample, fullName),
 		Run: func(cmd *cobra.Command, args []string) {
 			genericclioptions.GenericRun(o, cmd, args)
 		},
@@ -105,6 +105,8 @@ func NewCmdBootstrap(name, fullName string) *cobra.Command {
 	initCmd.Flags().StringVar(&o.OutputPath, "output", ".", "folder path to add Gitops resources")
 	initCmd.Flags().StringVarP(&o.Prefix, "prefix", "p", "", "add a prefix to the environment names")
 	initCmd.Flags().StringVarP(&o.ImageRepo, "image-repo", "", "", "used to push built images")
+
+	initCmd.Flags().StringVarP(&o.StatusTrackerAccessToken, "status-tracker-access-token", "", "", "used to authenticate requests to push commit-statuses to your Git hosting service")
 
 	initCmd.MarkFlagRequired("gitops-repo-url")
 	initCmd.MarkFlagRequired("app-repo-url")

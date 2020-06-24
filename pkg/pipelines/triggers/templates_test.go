@@ -100,15 +100,8 @@ func TestCreateCDPushTemplate(t *testing.T) {
 		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("testns", "cd-deploy-from-push-template")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
-				{
-					Name:        "gitref",
-					Description: "The git revision",
-					Default:     strPtr("master"),
-				},
-				{
-					Name:        "gitrepositoryurl",
-					Description: "The git repository url",
-				},
+				{Name: "gitrepositoryurl", Description: "The git repository url"},
+				{Name: "gitsha", Description: "The specific commit SHA."},
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{
@@ -133,15 +126,8 @@ func TestCreateCIDryRunTemplate(t *testing.T) {
 
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
-				{
-					Name:        "gitref",
-					Description: "The git revision",
-					Default:     strPtr("master"),
-				},
-				{
-					Name:        "gitrepositoryurl",
-					Description: "The git repository url",
-				},
+				{Name: "gitrepositoryurl", Description: "The git repository url"},
+				{Name: "gitsha", Description: "The specific commit SHA."},
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{

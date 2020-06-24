@@ -80,9 +80,8 @@ func CreateCDPushTemplate(ns, saName string) triggersv1.TriggerTemplate {
 		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, "cd-deploy-from-push-template")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
-
-				createTemplateParamSpecDefault("gitref", "The git revision", "master"),
 				createTemplateParamSpec("gitrepositoryurl", "The git repository url"),
+				createTemplateParamSpec("gitsha", "The specific commit SHA."),
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{
@@ -103,8 +102,8 @@ func CreateCIDryRunTemplate(ns, saName string) triggersv1.TriggerTemplate {
 			statusTrackerAnnotations("ci-dryrun-from-pr-pipeline", "Stage CI Dry Run")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
-				createTemplateParamSpecDefault("gitref", "The git revision", "master"),
 				createTemplateParamSpec("gitrepositoryurl", "The git repository url"),
+				createTemplateParamSpec("gitsha", "The specific commit SHA."),
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{

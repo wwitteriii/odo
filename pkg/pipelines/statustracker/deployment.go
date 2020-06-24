@@ -4,20 +4,25 @@ import (
 	"fmt"
 
 	ssv1alpha1 "github.com/bitnami-labs/sealed-secrets/pkg/apis/sealed-secrets/v1alpha1"
+	"github.com/openshift/odo/pkg/pipelines/deployment"
+	"github.com/openshift/odo/pkg/pipelines/meta"
+	res "github.com/openshift/odo/pkg/pipelines/resources"
+	"github.com/openshift/odo/pkg/pipelines/roles"
+	"github.com/openshift/odo/pkg/pipelines/secrets"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/types"
-
-	"github.com/openshift/odo/pkg/pipelines/deployment"
-	"github.com/openshift/odo/pkg/pipelines/meta"
-	"github.com/openshift/odo/pkg/pipelines/roles"
-	"github.com/openshift/odo/pkg/pipelines/secrets"
 )
 
 const (
 	operatorName         = "commit-status-tracker"
-	containerImage       = "quay.io/redhat-developer/commit-status-tracker:v0.0.1"
+	containerImage       = "quay.io/redhat-developer/commit-status-tracker:v0.0.2"
+	rolePath             = "02-rolebindings/commit-status-tracker-role.yaml"
+	roleBindingPath      = "02-rolebindings/commit-status-tracker-rolebinding.yaml"
+	serviceAccountPath   = "02-rolebindings/commit-status-tracker-service-role.yaml"
+	secretPath           = "03-secrets/commit-status-tracker.yaml"
+	deploymentPath       = "10-commit-status-tracker/operator.yaml"
 	commitStatusAppLabel = "commit-status-tracker-operator"
 )
 
@@ -98,20 +103,21 @@ func createStatusTrackerDeployment(ns string) *appsv1.Deployment {
 
 // Resources returns a list of newly created resources that are required start
 // the status-tracker service.
-func Resources(ns, token string) ([]interface{}, error) {
+func Resources(ns, token string) (res.Resources, error) {
 	name := meta.NamespacedName(ns, operatorName)
 	sa := roles.CreateServiceAccount(name)
 
-	githubAuth, err := defaultSecretSealer(meta.NamespacedName(ns, "commit-status-tracker-git-secret"), token, "token")
+	secret, err := defaultSecretSealer(meta.NamespacedName(ns, "commit-status-tracker-git-secret"), token, "token")
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate Status Tracker Secret: %v", err)
 	}
-	return []interface{}{
-		sa,
-		githubAuth,
-		roles.CreateRole(name, roleRules),
-		roles.CreateRoleBinding(name, sa, "Role", operatorName),
-		createStatusTrackerDeployment(ns),
+	pipelineSA := roles.CreateServiceAccount(meta.NamespacedName(ns, "pipeline"))
+	return res.Resources{
+		serviceAccountPath: sa,
+		secretPath:         secret,
+		rolePath:           roles.CreateRole(name, roleRules),
+		roleBindingPath:    roles.CreateRoleBindingForSubjects(name, "Role", operatorName, []rbacv1.Subject{{Kind: sa.Kind, Name: sa.Name, Namespace: sa.Namespace}, {Kind: pipelineSA.Kind, Name: pipelineSA.Name, Namespace: pipelineSA.Namespace}}),
+		deploymentPath:     createStatusTrackerDeployment(ns),
 	}, nil
 }
 

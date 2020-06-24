@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/scm"
 	"github.com/openshift/odo/pkg/pipelines/secrets"
 	"github.com/openshift/odo/pkg/pipelines/yaml"
+	"github.com/openshift/odo/pkg/pipelines/statustracker"
 )
 
 const (
@@ -42,6 +43,7 @@ type BootstrapOptions struct {
 	Prefix                   string // Used to prefix generated environment names in a shared cluster.
 	OutputPath               string // Where to write the bootstrapped files to?
 	DockerConfigJSONFilename string
+	StatusTrackerAccessToken string
 }
 
 // Bootstrap bootstraps a GitOps pipelines and repository structure.
@@ -132,6 +134,19 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	if cfg == nil {
 		return nil, errors.New("failed to find a pipeline configuration - unable to continue bootstrap")
 	}
+	kustomizePath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", "kustomization.yaml")
+	k, ok := bootstrapped[kustomizePath].(res.Kustomization)
+	if !ok {
+		return nil, fmt.Errorf("no kustomization for the %s environment found", kustomizePath)
+	}
+
+	if o.StatusTrackerAccessToken != "" {
+		trackerResources, err := statustracker.Resources(ns["cicd"], o.StatusTrackerAccessToken)
+		if err != nil {
+			return nil, err
+		}
+		bootstrapped = addResources(pipelinesPath(cfg), trackerResources, bootstrapped, &k)
+	}
 	secretFilename := filepath.Join("03-secrets", secretName+".yaml")
 	secretsPath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", secretFilename)
 	bootstrapped[secretsPath] = hookSecret
@@ -139,18 +154,12 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	bindingName, imageRepoBindingFilename, svcImageBinding := createSvcImageBinding(cfg, devEnv, serviceName, imageRepo, !isInternalRegistry)
 	bootstrapped = res.Merge(svcImageBinding, bootstrapped)
 
-	kustomizePath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", "kustomization.yaml")
-	k, ok := bootstrapped[kustomizePath].(res.Kustomization)
-	if !ok {
-		return nil, fmt.Errorf("no kustomization for the %s environment found", kustomizePath)
-	}
 	if isInternalRegistry {
-		filenames, resources, err := imagerepo.CreateInternalRegistryResources(cfg, roles.CreateServiceAccount(meta.NamespacedName(cfg.Name, saName)), imageRepo)
+		registryResources, err := imagerepo.CreateInternalRegistryResources(cfg, roles.CreateServiceAccount(meta.NamespacedName(cfg.Name, saName)), imageRepo)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get resources for internal image repository: %v", err)
 		}
-		bootstrapped = res.Merge(resources, bootstrapped)
-		k.Resources = append(k.Resources, filenames...)
+		bootstrapped = addResources(pipelinesPath(cfg), registryResources, bootstrapped, &k)
 	}
 
 	// This is specific to bootstrap, because there's only one service.
@@ -290,4 +299,10 @@ func defaultPipelines(r scm.Repository) *config.Pipelines {
 			Bindings: []string{r.PRBindingName()},
 		},
 	}
+}
+func addResources(prefixPath string, newResources res.Resources, bootstrappedResources res.Resources, kResources *res.Kustomization) res.Resources {
+	prefixedResources := addPrefixToResources(prefixPath, newResources)
+	kResources.Resources = append(kResources.Resources, getResourceFiles(newResources)...)
+	return res.Merge(prefixedResources, bootstrappedResources)
+
 }
