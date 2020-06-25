@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/openshift/odo/pkg/log"
-	"github.com/openshift/odo/pkg/odo/cli/utils"
 	"github.com/openshift/odo/pkg/odo/genericclioptions"
 	"github.com/openshift/odo/pkg/pipelines"
 	"github.com/openshift/odo/pkg/pipelines/ioutils"
+	"github.com/openshift/odo/pkg/util"
 	"github.com/spf13/cobra"
 
 	ktemplates "k8s.io/kubectl/pkg/util/templates"
@@ -65,14 +65,14 @@ func (io *BootstrapParameters) Validate() error {
 		return fmt.Errorf("repo must be org/repo: %s", strings.Trim(gr.Path, ".git"))
 	}
 	if io.GitOpsWebhookSecret == "" {
-		gitopsSecret, err := utils.GenerateSecureString(20)
+		gitopsSecret, err := util.GenerateSecureString(20)
 		if err != nil {
 			return err
 		}
 		io.GitOpsWebhookSecret = gitopsSecret
 	}
 	if io.AppWebhookSecret == "" {
-		appSecret, err := utils.GenerateSecureString(20)
+		appSecret, err := util.GenerateSecureString(20)
 		if err != nil {
 			return err
 		}
