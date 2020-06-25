@@ -1,12 +1,12 @@
 package pipelines
 
 import (
-	"crypto/rand"
 	"fmt"
 	"net/url"
 	"strings"
 
 	"github.com/openshift/odo/pkg/log"
+	"github.com/openshift/odo/pkg/odo/cli/utils"
 	"github.com/openshift/odo/pkg/odo/genericclioptions"
 	"github.com/openshift/odo/pkg/pipelines"
 	"github.com/openshift/odo/pkg/pipelines/ioutils"
@@ -18,7 +18,6 @@ import (
 const (
 	// BootstrapRecommendedCommandName the recommended command name
 	BootstrapRecommendedCommandName = "bootstrap"
-	charset                         = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$:#"
 )
 
 var (
@@ -66,14 +65,14 @@ func (io *BootstrapParameters) Validate() error {
 		return fmt.Errorf("repo must be org/repo: %s", strings.Trim(gr.Path, ".git"))
 	}
 	if io.GitOpsWebhookSecret == "" {
-		gitopsSecret, err := GenerateSecureString()
+		gitopsSecret, err := utils.GenerateSecureString(20)
 		if err != nil {
 			return err
 		}
 		io.GitOpsWebhookSecret = gitopsSecret
 	}
 	if io.AppWebhookSecret == "" {
-		appSecret, err := GenerateSecureString()
+		appSecret, err := utils.GenerateSecureString(20)
 		if err != nil {
 			return err
 		}
@@ -134,18 +133,4 @@ func removeEmptyStrings(s []string) []string {
 		}
 	}
 	return nonempty
-}
-
-//GenerateSecureString creates a webhook secret for you.
-func GenerateSecureString() (string, error) {
-	b := make([]byte, 20)
-	_, err := rand.Read(b)
-	if err != nil {
-		return "", err
-	}
-	s := make([]byte, 20)
-	for i, v := range b {
-		s[i] = charset[int(v)%len(charset)]
-	}
-	return string(s), nil
 }

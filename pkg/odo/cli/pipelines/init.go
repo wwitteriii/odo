@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/openshift/odo/pkg/log"
+	"github.com/openshift/odo/pkg/odo/cli/utils"
 	"github.com/openshift/odo/pkg/odo/genericclioptions"
 	"github.com/openshift/odo/pkg/pipelines"
 	"github.com/openshift/odo/pkg/pipelines/ioutils"
@@ -70,7 +71,7 @@ func (io *InitParameters) Validate() error {
 		return fmt.Errorf("repo must be org/repo: %s", strings.Trim(gr.Path, ".git"))
 	}
 	if io.gitOpsWebhookSecret == "" {
-		gitSecret, err := GenerateSecureString()
+		gitSecret, err := utils.GenerateSecureString(20)
 		if err != nil {
 			return err
 		}
