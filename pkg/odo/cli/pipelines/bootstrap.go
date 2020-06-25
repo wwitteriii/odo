@@ -1,6 +1,7 @@
 package pipelines
 
 import (
+	"crypto/rand"
 	"fmt"
 	"net/url"
 	"strings"
@@ -17,6 +18,7 @@ import (
 const (
 	// BootstrapRecommendedCommandName the recommended command name
 	BootstrapRecommendedCommandName = "bootstrap"
+	charset                         = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$:#"
 )
 
 var (
@@ -63,6 +65,20 @@ func (io *BootstrapParameters) Validate() error {
 	if len(removeEmptyStrings(strings.Split(gr.Path, "/"))) != 2 {
 		return fmt.Errorf("repo must be org/repo: %s", strings.Trim(gr.Path, ".git"))
 	}
+	if io.GitOpsWebhookSecret == "" {
+		gitopsSecret, err := GenerateSecureString()
+		if err != nil {
+			return err
+		}
+		io.GitOpsWebhookSecret = gitopsSecret
+	}
+	if io.AppWebhookSecret == "" {
+		appSecret, err := GenerateSecureString()
+		if err != nil {
+			return err
+		}
+		io.AppWebhookSecret = appSecret
+	}
 	return nil
 }
 
@@ -103,9 +119,7 @@ func NewCmdBootstrap(name, fullName string) *cobra.Command {
 	initCmd.Flags().StringVarP(&o.ImageRepo, "image-repo", "", "", "used to push built images")
 
 	initCmd.MarkFlagRequired("gitops-repo-url")
-	initCmd.MarkFlagRequired("gitops-webhook-secret")
 	initCmd.MarkFlagRequired("app-repo-url")
-	initCmd.MarkFlagRequired("app-webhook-secret")
 	initCmd.MarkFlagRequired("dockercfgjson")
 	initCmd.MarkFlagRequired("image-repo")
 
@@ -120,4 +134,18 @@ func removeEmptyStrings(s []string) []string {
 		}
 	}
 	return nonempty
+}
+
+//GenerateSecureString creates a webhook secret for you.
+func GenerateSecureString() (string, error) {
+	b := make([]byte, 20)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	s := make([]byte, 20)
+	for i, v := range b {
+		s[i] = charset[int(v)%len(charset)]
+	}
+	return string(s), nil
 }
