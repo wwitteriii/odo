@@ -21,7 +21,6 @@ import (
 	res "github.com/openshift/odo/pkg/pipelines/resources"
 	"github.com/openshift/odo/pkg/pipelines/roles"
 	"github.com/openshift/odo/pkg/pipelines/scm"
-	"github.com/openshift/odo/pkg/pipelines/secret"
 	"github.com/openshift/odo/pkg/pipelines/secrets"
 	"github.com/openshift/odo/pkg/pipelines/yaml"
 )
@@ -48,14 +47,14 @@ type BootstrapOptions struct {
 // Bootstrap bootstraps a GitOps pipelines and repository structure.
 func Bootstrap(o *BootstrapOptions, appFs afero.Fs) error {
 	if o.GitOpsWebhookSecret == "" {
-		gitopsSecret, err := secret.GenerateSecureString(20)
+		gitopsSecret, err := secrets.GenerateSecureString(20)
 		if err != nil {
 			return err
 		}
 		o.GitOpsWebhookSecret = gitopsSecret
 	}
 	if o.AppWebhookSecret == "" {
-		appSecret, err := secret.GenerateSecureString(20)
+		appSecret, err := secrets.GenerateSecureString(20)
 		if err != nil {
 			return err
 		}
