@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/roles"
 	"github.com/openshift/odo/pkg/pipelines/routes"
 	"github.com/openshift/odo/pkg/pipelines/scm"
+	"github.com/openshift/odo/pkg/pipelines/secret"
 	"github.com/openshift/odo/pkg/pipelines/secrets"
 	"github.com/openshift/odo/pkg/pipelines/tasks"
 	"github.com/openshift/odo/pkg/pipelines/triggers"
@@ -106,7 +107,13 @@ const (
 
 // Init bootstraps a GitOps pipelines and repository structure.
 func Init(o *InitParameters, fs afero.Fs) error {
-
+	if o.GitOpsWebhookSecret == "" {
+		gitSecret, err := secret.GenerateSecureString(20)
+		if err != nil {
+			return err
+		}
+		o.GitOpsWebhookSecret = gitSecret
+	}
 	exists, err := ioutils.IsExisting(fs, o.OutputPath)
 	if exists {
 		return err

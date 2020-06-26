@@ -9,7 +9,6 @@ import (
 	"github.com/openshift/odo/pkg/odo/genericclioptions"
 	"github.com/openshift/odo/pkg/pipelines"
 	"github.com/openshift/odo/pkg/pipelines/ioutils"
-	"github.com/openshift/odo/pkg/util"
 	"github.com/spf13/cobra"
 
 	ktemplates "k8s.io/kubectl/pkg/util/templates"
@@ -70,13 +69,7 @@ func (io *InitParameters) Validate() error {
 	if len(removeEmptyStrings(strings.Split(gr.Path, "/"))) != 2 {
 		return fmt.Errorf("repo must be org/repo: %s", strings.Trim(gr.Path, ".git"))
 	}
-	if io.gitOpsWebhookSecret == "" {
-		gitSecret, err := util.GenerateSecureString(20)
-		if err != nil {
-			return err
-		}
-		io.gitOpsWebhookSecret = gitSecret
-	}
+
 	return nil
 }
 
