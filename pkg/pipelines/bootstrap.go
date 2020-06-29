@@ -47,14 +47,14 @@ type BootstrapOptions struct {
 // Bootstrap bootstraps a GitOps pipelines and repository structure.
 func Bootstrap(o *BootstrapOptions, appFs afero.Fs) error {
 	if o.GitOpsWebhookSecret == "" {
-		gitopsSecret, err := secrets.GenerateString(20)
+		gitopsSecret, err := secrets.GenerateString(webhookSecretLength)
 		if err != nil {
 			return err
 		}
 		o.GitOpsWebhookSecret = gitopsSecret
 	}
 	if o.AppWebhookSecret == "" {
-		appSecret, err := secrets.GenerateString(20)
+		appSecret, err := secrets.GenerateString(webhookSecretLength)
 		if err != nil {
 			return err
 		}

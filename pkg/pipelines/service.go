@@ -68,7 +68,7 @@ func serviceResources(m *config.Manifest, fs afero.Fs, p *AddServiceParameters) 
 
 	cfg := m.GetPipelinesConfig()
 	if cfg != nil && p.WebhookSecret == "" && p.GitRepoURL != "" {
-		gitSecret, err := secrets.GenerateString(20)
+		gitSecret, err := secrets.GenerateString(webhookSecretLength)
 		if err != nil {
 			return nil, err
 		}
