@@ -106,7 +106,7 @@ const (
 // Init bootstraps a GitOps pipelines and repository structure.
 func Init(o *InitParameters, fs afero.Fs) error {
 	if o.GitOpsWebhookSecret == "" {
-		gitSecret, err := secrets.GenerateSecureString(20)
+		gitSecret, err := secrets.GenerateString(20)
 		if err != nil {
 			return err
 		}

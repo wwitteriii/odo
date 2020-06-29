@@ -7,8 +7,8 @@ import (
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$:#"
 
-// GenerateSecureString creates a random secret of the desired length specifically for the webhook secrets.
-func GenerateSecureString(length int) (string, error) {
+// GenerateString creates a random secret of the desired length specifically for the webhook secrets.
+func GenerateString(length int) (string, error) {
 	b := make([]byte, length)
 	_, err := rand.Read(b)
 	if err != nil {
