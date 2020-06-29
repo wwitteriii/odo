@@ -12,7 +12,7 @@ func GenerateString(length int) (string, error) {
 	b := make([]byte, length)
 	_, err := rand.Read(b)
 	if err != nil {
-		return "", fmt.Errorf("Failed to generate secure webhook secret")
+		return "", fmt.Errorf("Failed to generate string of desired length")
 	}
 	s := make([]byte, length)
 	for i, v := range b {
