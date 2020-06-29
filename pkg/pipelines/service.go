@@ -70,7 +70,7 @@ func serviceResources(m *config.Manifest, fs afero.Fs, p *AddServiceParameters) 
 	if cfg != nil && p.WebhookSecret == "" && p.GitRepoURL != "" {
 		gitSecret, err := secrets.GenerateString(webhookSecretLength)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to generate service webhook secret: %v", err)
 		}
 		p.WebhookSecret = gitSecret
 

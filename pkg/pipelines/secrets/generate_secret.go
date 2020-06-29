@@ -7,12 +7,12 @@ import (
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$:#"
 
-// GenerateString creates a random secret of the desired length specifically for the webhook secrets.
+// GenerateString creates a random secret of the desired length
 func GenerateString(length int) (string, error) {
 	b := make([]byte, length)
 	_, err := rand.Read(b)
 	if err != nil {
-		return "", fmt.Errorf("Failed to generate string of desired length %d", length)
+		return "", fmt.Errorf("Failed to generate secret of desired length %d", length)
 	}
 	s := make([]byte, length)
 	for i, v := range b {
