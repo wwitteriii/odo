@@ -134,12 +134,6 @@ func TestNewEnvironment(t *testing.T) {
 			name: "test-env",
 			want: &config.Environment{
 				Name: "test-env",
-				Pipelines: &config.Pipelines{
-					Integration: &config.TemplateBinding{
-						Template: appCITemplateName,
-						Bindings: []string{},
-					},
-				},
 			},
 		},
 		{
@@ -159,12 +153,6 @@ func TestNewEnvironment(t *testing.T) {
 			name: "test-env",
 			want: &config.Environment{
 				Name: "test-env",
-				Pipelines: &config.Pipelines{
-					Integration: &config.TemplateBinding{
-						Template: appCITemplateName,
-						Bindings: []string{},
-					},
-				},
 			},
 		},
 		{

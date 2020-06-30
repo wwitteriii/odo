@@ -280,12 +280,3 @@ func createBootstrapService(appName, ns, name string) *corev1.Service {
 func repoToServiceName(repoName string) string {
 	return repoName + "-svc"
 }
-
-func defaultPipelines(r scm.Repository) *config.Pipelines {
-	return &config.Pipelines{
-		Integration: &config.TemplateBinding{
-			Template: appCITemplateName,
-			Bindings: []string{},
-		},
-	}
-}

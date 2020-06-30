@@ -6,7 +6,6 @@ import (
 
 	"github.com/openshift/odo/pkg/pipelines/config"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
-	"github.com/openshift/odo/pkg/pipelines/scm"
 	"github.com/openshift/odo/pkg/pipelines/yaml"
 	"github.com/spf13/afero"
 )
@@ -55,13 +54,8 @@ func AddEnv(o *EnvParameters, appFs afero.Fs) error {
 func newEnvironment(m *config.Manifest, name string) (*config.Environment, error) {
 	pipelinesConfig := m.GetPipelinesConfig()
 	if pipelinesConfig != nil && m.GitOpsURL != "" {
-		r, err := scm.NewRepository(m.GitOpsURL)
-		if err != nil {
-			return nil, err
-		}
 		return &config.Environment{
-			Name:      name,
-			Pipelines: defaultPipelines(r),
+			Name: name,
 		}, nil
 	}
 

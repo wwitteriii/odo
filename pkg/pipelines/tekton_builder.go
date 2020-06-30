@@ -50,6 +50,10 @@ func (tb *tektonBuilder) Service(env *config.Environment, svc *config.Service) e
 		return err
 	}
 	pipelines := getPipelines(env, svc, repo)
+	// skip creating triggers if pipelines are not found in both service and environment
+	if pipelines == nil {
+		return nil
+	}
 	ciTrigger := repo.CreateCITrigger(triggerName(svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, appCITemplateName, append(pipelines.Integration.Bindings, repo.PRBindingName()))
 	cdTrigger := repo.CreateCDTrigger("app-push-"+svc.Name, svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, appPushTemplateName, append(pipelines.Integration.Bindings, repo.PushBindingName()))
 	tb.triggers = append(tb.triggers, ciTrigger, cdTrigger)
@@ -73,11 +77,14 @@ func createTriggersForCICD(gitOpsRepo string, cfg *config.PipelinesConfig) ([]v1
 }
 
 func getPipelines(env *config.Environment, svc *config.Service, r scm.Repository) *config.Pipelines {
-	pipelines := defaultPipelines(r)
+	var pipelines *config.Pipelines
 	if env.Pipelines != nil {
 		pipelines = clonePipelines(env.Pipelines)
 	}
 	if svc.Pipelines != nil {
+		if pipelines == nil {
+			pipelines = newPipeline()
+		}
 		if len(svc.Pipelines.Integration.Bindings) > 0 {
 			pipelines.Integration.Bindings = svc.Pipelines.Integration.Bindings[:]
 		}
@@ -99,4 +106,10 @@ func clonePipelines(p *config.Pipelines) *config.Pipelines {
 
 func triggerName(svc string) string {
 	return fmt.Sprintf("app-ci-build-from-pr-%s", svc)
+}
+
+func newPipeline() *config.Pipelines {
+	return &config.Pipelines{
+		Integration: &config.TemplateBinding{},
+	}
 }

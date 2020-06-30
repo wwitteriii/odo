@@ -109,19 +109,14 @@ func TestGetPipelines(t *testing.T) {
 			testPipelines("svc"),
 		},
 		{
-			"Default pipelines are used",
+			"Pipelines are not present in both service and environment",
 			&config.Environment{
 				Name: "test-env",
 			},
 			&config.Service{
 				Name: "test-service",
 			},
-			&config.Pipelines{
-				Integration: &config.TemplateBinding{
-					Template: "app-ci-template",
-					Bindings: []string{},
-				},
-			},
+			nil,
 		},
 		{
 			"Only override the bindings in the service",
@@ -195,6 +190,9 @@ func fakeTriggers(t *testing.T, m *config.Manifest, gitOpsRepo string) []trigger
 		repo, err := scm.NewRepository(svc.SourceURL)
 		assertNoError(t, err)
 		pipelines := getPipelines(env, svc, repo)
+		if pipelines == nil {
+			continue
+		}
 		devCITrigger := repo.CreateCITrigger(fmt.Sprintf("app-ci-build-from-pr-%s", svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, appCITemplateName, append(pipelines.Integration.Bindings, repo.PRBindingName()))
 		devCDTrigger := repo.CreateCDTrigger(fmt.Sprintf("app-push-%s", svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, appPushTemplateName, append(pipelines.Integration.Bindings, repo.PushBindingName()))
 		triggers = append(triggers, devCITrigger, devCDTrigger)
