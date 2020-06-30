@@ -38,8 +38,8 @@ type InitParameters struct {
 	output                   string // path to add Gitops resources
 	prefix                   string // used to generate the environments in a shared cluster
 	imageRepo                string
-	internalRegistryHostname string
-	// generic context options common to all commands
+	internalRegistryHostname string // generic context options common to all commands
+	StatusTrackerAccessToken string
 	*genericclioptions.Context
 }
 
@@ -85,6 +85,7 @@ func (io *InitParameters) Run() error {
 		Prefix:                   io.prefix,
 		ImageRepo:                io.imageRepo,
 		InternalRegistryHostname: io.internalRegistryHostname,
+		StatusTrackerAccessToken: io.StatusTrackerAccessToken,
 	}
 	err := pipelines.Init(&options, ioutils.NewFilesystem())
 	if err != nil {
@@ -116,6 +117,6 @@ func NewCmdInit(name, fullName string) *cobra.Command {
 	initCmd.Flags().StringVar(&o.dockercfgjson, "dockercfgjson", "", "dockercfg json pathname")
 	initCmd.Flags().StringVar(&o.internalRegistryHostname, "internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "internal image registry hostname")
 	initCmd.Flags().StringVar(&o.imageRepo, "image-repo", "", "image repository in this form <registry>/<username>/<repository> or <project>/<app> for internal registry")
-
+	initCmd.Flags().StringVar(&o.StatusTrackerAccessToken, "status-tracker-access-token", "", "used to authenticate requests to push commit-statuses to your Git hosting service")
 	return initCmd
 }

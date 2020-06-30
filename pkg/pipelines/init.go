@@ -38,6 +38,7 @@ type InitParameters struct {
 	InternalRegistryHostname string
 	OutputPath               string
 	Prefix                   string
+	StatusTrackerAccessToken string
 }
 
 // PolicyRules to be bound to service account
@@ -84,6 +85,9 @@ const (
 	rolesPath                = "02-rolebindings/pipeline-service-role.yaml"
 	rolebindingsPath         = "02-rolebindings/pipeline-service-rolebinding.yaml"
 	serviceAccountPath       = "02-rolebindings/pipeline-service-account.yaml"
+	statusTrackerRole        = "02-rolebindings/commit-status-tracker-role.yaml"
+	stustTrackerRolebinding  = "02-rolebindings/commit-status-tracker-rolebinding.yaml"
+	statustrackerserviceRole = "02-rolebindings/commit-status-tracker-service-role.yaml"
 	secretsPath              = "03-secrets/gitops-webhook-secret.yaml"
 	dockerConfigPath         = "03-secrets/docker-config.yaml"
 	gitopsTasksPath          = "04-tasks/deploy-from-source-task.yaml"
