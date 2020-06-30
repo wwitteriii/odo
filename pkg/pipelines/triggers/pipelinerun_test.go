@@ -20,7 +20,7 @@ func TestCreateDevCIPipelineRun(t *testing.T) {
 		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "app-ci-pipeline-run-$(uid)")),
 		Spec: pipelinev1.PipelineRunSpec{
 			ServiceAccountName: sName,
-			PipelineRef:        createPipelineRef("application-pipeline"),
+			PipelineRef:        createPipelineRef("app-ci-pipeline"),
 			Params: []pipelinev1.Param{
 				createPipelineBindingParam("REPO", "$(params.fullname)"),
 				createPipelineBindingParam("COMMIT_SHA", "$(params.gitsha)"),

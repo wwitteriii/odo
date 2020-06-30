@@ -51,7 +51,7 @@ func TestCreateDevCIBuildPRTemplate(t *testing.T) {
 	validdevCIPRTemplate := triggersv1.TriggerTemplate{
 		TypeMeta: triggerTemplateTypeMeta,
 		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("testns", "app-ci-template"),
-			statusTrackerAnnotations("application-pipeline", "Application CI Build")),
+			statusTrackerAnnotations("app-ci-pipeline", "Application CI Build")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				{
@@ -163,7 +163,7 @@ func TestAppPushTemplate(t *testing.T) {
 	want := triggersv1.TriggerTemplate{
 		TypeMeta: triggerTemplateTypeMeta,
 		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("cicd", "app-push-template"),
-			statusTrackerAnnotations("application-pipeline", "Application Push Build")),
+			statusTrackerAnnotations("app-ci-pipeline", "Application Push Build")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: appTemplateParams(),
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{

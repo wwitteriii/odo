@@ -46,7 +46,7 @@ func CreateDevCIBuildPRTemplate(ns, saName string) triggersv1.TriggerTemplate {
 		TypeMeta: triggerTemplateTypeMeta,
 		ObjectMeta: meta.ObjectMeta(
 			meta.NamespacedName(ns, "app-ci-template"),
-			statusTrackerAnnotations("application-pipeline", "Application CI Build")),
+			statusTrackerAnnotations("app-ci-pipeline", "Application CI Build")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: appTemplateParams(),
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
@@ -66,7 +66,7 @@ func CreateAppPushTemplate(ns, saName string) triggersv1.TriggerTemplate {
 	return triggersv1.TriggerTemplate{
 		TypeMeta: triggerTemplateTypeMeta,
 		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, "app-push-template"),
-			statusTrackerAnnotations("application-pipeline", "Application Push Build")),
+			statusTrackerAnnotations("app-ci-pipeline", "Application Push Build")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: appTemplateParams(),
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{

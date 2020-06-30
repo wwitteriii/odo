@@ -89,7 +89,7 @@ const (
 	gitopsTasksPath          = "04-tasks/deploy-from-source-task.yaml"
 	appTaskPath              = "04-tasks/deploy-using-kubectl-task.yaml"
 	ciPipelinesPath          = "05-pipelines/ci-dryrun-from-pr-pipeline.yaml"
-	appCiPipelinesPath       = "05-pipelines/application-pipeline.yaml"
+	appCiPipelinesPath       = "05-pipelines/app-ci-pipeline.yaml"
 	cdPipelinesPath          = "05-pipelines/cd-deploy-from-push-pipeline.yaml"
 	prTemplatePath           = "07-templates/ci-dryrun-from-pr-template.yaml"
 	pushTemplatePath         = "07-templates/cd-deploy-from-push-template.yaml"
@@ -212,7 +212,7 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 	outputs[appTaskPath] = tasks.CreateDeployUsingKubectlTask(cicdNamespace)
 	outputs[ciPipelinesPath] = pipelines.CreateCIPipeline(meta.NamespacedName(cicdNamespace, "ci-dryrun-from-pr-pipeline"), cicdNamespace)
 	outputs[cdPipelinesPath] = pipelines.CreateCDPipeline(meta.NamespacedName(cicdNamespace, "cd-deploy-from-push-pipeline"), cicdNamespace)
-	outputs[appCiPipelinesPath] = pipelines.CreateAppCIPipeline(meta.NamespacedName(cicdNamespace, "application-pipeline"))
+	outputs[appCiPipelinesPath] = pipelines.CreateAppCIPipeline(meta.NamespacedName(cicdNamespace, "app-ci-pipeline"))
 	createTriggerBindings(repo, outputs, cicdNamespace)
 	outputs[prTemplatePath] = triggers.CreateCIDryRunTemplate(cicdNamespace, saName)
 	outputs[pushTemplatePath] = triggers.CreateCDPushTemplate(cicdNamespace, saName)
