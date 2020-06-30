@@ -51,7 +51,7 @@ func TestCreateDevCIBuildPRTemplate(t *testing.T) {
 	validdevCIPRTemplate := triggersv1.TriggerTemplate{
 		TypeMeta: triggerTemplateTypeMeta,
 		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("testns", "app-ci-template"),
-			statusTrackerAnnotations("dev-ci-build-from-pr", "Dev CI Build")),
+			statusTrackerAnnotations("application-pipeline", "Application CI Build")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				{
@@ -155,6 +155,29 @@ func TestCreateCIDryRunTemplate(t *testing.T) {
 	template := CreateCIDryRunTemplate("testns", serviceAccName)
 	if diff := cmp.Diff(validStageCIDryRunTemplate, template); diff != "" {
 		t.Fatalf("createCIdryrunptemplate failed:\n%s", diff)
+	}
+
+}
+
+func TestAppPushTemplate(t *testing.T) {
+	want := triggersv1.TriggerTemplate{
+		TypeMeta: triggerTemplateTypeMeta,
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("cicd", "app-push-template"),
+			statusTrackerAnnotations("application-pipeline", "Application Push Build")),
+		Spec: triggersv1.TriggerTemplateSpec{
+			Params: appTemplateParams(),
+			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
+				{
+					RawExtension: runtime.RawExtension{
+						Raw: createDevCDResourceTemplate("pipeline"),
+					},
+				},
+			},
+		},
+	}
+	got := CreateAppPushTemplate("cicd", "pipeline")
+	if diff := cmp.Diff(got, want); diff != "" {
+		t.Fatalf("CreateAppPushPipeline failed: \n%s", diff)
 	}
 
 }

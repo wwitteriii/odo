@@ -89,11 +89,12 @@ const (
 	gitopsTasksPath          = "04-tasks/deploy-from-source-task.yaml"
 	appTaskPath              = "04-tasks/deploy-using-kubectl-task.yaml"
 	ciPipelinesPath          = "05-pipelines/ci-dryrun-from-pr-pipeline.yaml"
-	appCiPipelinesPath       = "05-pipelines/app-ci-pipeline.yaml"
+	appCiPipelinesPath       = "05-pipelines/application-pipeline.yaml"
 	cdPipelinesPath          = "05-pipelines/cd-deploy-from-push-pipeline.yaml"
 	prTemplatePath           = "07-templates/ci-dryrun-from-pr-template.yaml"
 	pushTemplatePath         = "07-templates/cd-deploy-from-push-template.yaml"
 	appCIBuildPRTemplatePath = "07-templates/app-ci-build-pr-template.yaml"
+	appPushTemplatePath      = "07-templates/app-push-template.yaml"
 	eventListenerPath        = "08-eventlisteners/cicd-event-listener.yaml"
 	routePath                = "09-routes/gitops-webhook-event-listener.yaml"
 
@@ -211,11 +212,12 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 	outputs[appTaskPath] = tasks.CreateDeployUsingKubectlTask(cicdNamespace)
 	outputs[ciPipelinesPath] = pipelines.CreateCIPipeline(meta.NamespacedName(cicdNamespace, "ci-dryrun-from-pr-pipeline"), cicdNamespace)
 	outputs[cdPipelinesPath] = pipelines.CreateCDPipeline(meta.NamespacedName(cicdNamespace, "cd-deploy-from-push-pipeline"), cicdNamespace)
-	outputs[appCiPipelinesPath] = pipelines.CreateAppCIPipeline(meta.NamespacedName(cicdNamespace, "app-ci-pipeline"))
+	outputs[appCiPipelinesPath] = pipelines.CreateAppCIPipeline(meta.NamespacedName(cicdNamespace, "application-pipeline"))
 	createTriggerBindings(repo, outputs, cicdNamespace)
 	outputs[prTemplatePath] = triggers.CreateCIDryRunTemplate(cicdNamespace, saName)
 	outputs[pushTemplatePath] = triggers.CreateCDPushTemplate(cicdNamespace, saName)
 	outputs[appCIBuildPRTemplatePath] = triggers.CreateDevCIBuildPRTemplate(cicdNamespace, saName)
+	outputs[appPushTemplatePath] = triggers.CreateAppPushTemplate(cicdNamespace, saName)
 	outputs[eventListenerPath] = eventlisteners.Generate(repo, cicdNamespace, saName, eventlisteners.GitOpsWebhookSecret)
 	route, err := routes.Generate(cicdNamespace)
 	if err != nil {

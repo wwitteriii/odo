@@ -60,12 +60,6 @@ func TestBootstrapManifest(t *testing.T) {
 			GitOpsURL: "https://github.com/my-org/gitops.git",
 			Environments: []*config.Environment{
 				{
-					Pipelines: &config.Pipelines{
-						Integration: &config.TemplateBinding{
-							Template: "app-ci-template",
-							Bindings: []string{"github-pr-binding"},
-						},
-					},
 					Name: "tst-dev",
 					Services: []*config.Service{
 						{
@@ -78,7 +72,7 @@ func TestBootstrapManifest(t *testing.T) {
 								},
 							},
 							Pipelines: &config.Pipelines{
-								Integration: &config.TemplateBinding{Bindings: []string{"tst-dev-http-api-svc-binding", "github-pr-binding"}},
+								Integration: &config.TemplateBinding{Bindings: []string{"tst-dev-http-api-svc-binding"}},
 							},
 						},
 					},
@@ -115,13 +109,14 @@ func TestBootstrapManifest(t *testing.T) {
 		"03-secrets/webhook-secret-tst-dev-http-api-svc.yaml",
 		"04-tasks/deploy-from-source-task.yaml",
 		"04-tasks/deploy-using-kubectl-task.yaml",
-		"05-pipelines/app-ci-pipeline.yaml",
+		"05-pipelines/application-pipeline.yaml",
 		"05-pipelines/cd-deploy-from-push-pipeline.yaml",
 		"05-pipelines/ci-dryrun-from-pr-pipeline.yaml",
 		"06-bindings/github-pr-binding.yaml",
 		"06-bindings/github-push-binding.yaml",
 		"06-bindings/tst-dev-http-api-svc-binding.yaml",
 		"07-templates/app-ci-build-pr-template.yaml",
+		"07-templates/app-push-template.yaml",
 		"07-templates/cd-deploy-from-push-template.yaml",
 		"07-templates/ci-dryrun-from-pr-template.yaml",
 		"08-eventlisteners/cicd-event-listener.yaml",

@@ -14,15 +14,10 @@ var (
 	triggerTemplateTypeMeta = meta.TypeMeta("TriggerTemplate", "triggers.tekton.dev/v1alpha1")
 )
 
-// GenerateTemplates will return a slice of trigger templates
-func GenerateTemplates(ns, saName string) []triggersv1.TriggerTemplate {
-	return []triggersv1.TriggerTemplate{
-		CreateDevCDDeployTemplate(ns, saName),
-		CreateDevCIBuildPRTemplate(ns, saName),
-		CreateCDPushTemplate(ns, saName),
-		CreateCIDryRunTemplate(ns, saName),
-	}
-}
+const (
+	appPRImage   = "$(params.imageRepo):$(params.gitref)-$(params.gitsha)"
+	appPushImage = "$(params.imageRepo):$(params.gitsha)"
+)
 
 // CreateDevCDDeployTemplate creates DevCDDeployTemplate
 func CreateDevCDDeployTemplate(ns, saName string) triggersv1.TriggerTemplate {
@@ -51,16 +46,9 @@ func CreateDevCIBuildPRTemplate(ns, saName string) triggersv1.TriggerTemplate {
 		TypeMeta: triggerTemplateTypeMeta,
 		ObjectMeta: meta.ObjectMeta(
 			meta.NamespacedName(ns, "app-ci-template"),
-			statusTrackerAnnotations("dev-ci-build-from-pr", "Dev CI Build")),
+			statusTrackerAnnotations("application-pipeline", "Application CI Build")),
 		Spec: triggersv1.TriggerTemplateSpec{
-			Params: []triggersv1.ParamSpec{
-				createTemplateParamSpec("gitref", "The git branch for this PR."),
-				createTemplateParamSpec("gitsha", "the specific commit SHA."),
-				createTemplateParamSpec("gitrepositoryurl", "The git repository URL."),
-				createTemplateParamSpec("fullname", "The GitHub repository for this PullRequest."),
-				createTemplateParamSpec("imageRepo", "The repository to push built images to."),
-				createTemplateParamSpec("tlsVerify", "Enable image repostiory TLS certification verification."),
-			},
+			Params: appTemplateParams(),
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{
 					RawExtension: runtime.RawExtension{
@@ -71,6 +59,36 @@ func CreateDevCIBuildPRTemplate(ns, saName string) triggersv1.TriggerTemplate {
 		},
 	}
 
+}
+
+// CreateAppPushTemplate returns a trigger template for push event
+func CreateAppPushTemplate(ns, saName string) triggersv1.TriggerTemplate {
+	return triggersv1.TriggerTemplate{
+		TypeMeta: triggerTemplateTypeMeta,
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, "app-push-template"),
+			statusTrackerAnnotations("application-pipeline", "Application Push Build")),
+		Spec: triggersv1.TriggerTemplateSpec{
+			Params: appTemplateParams(),
+			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
+				{
+					RawExtension: runtime.RawExtension{
+						Raw: createDevCDResourceTemplate(saName),
+					},
+				},
+			},
+		},
+	}
+}
+
+func appTemplateParams() []triggersv1.ParamSpec {
+	return []triggersv1.ParamSpec{
+		createTemplateParamSpec("gitref", "The git branch for this PR."),
+		createTemplateParamSpec("gitsha", "the specific commit SHA."),
+		createTemplateParamSpec("gitrepositoryurl", "The git repository URL."),
+		createTemplateParamSpec("fullname", "The GitHub repository for this PullRequest."),
+		createTemplateParamSpec("imageRepo", "The repository to push built images to."),
+		createTemplateParamSpec("tlsVerify", "Enable image repostiory TLS certification verification."),
+	}
 }
 
 // CreateCDPushTemplate returns TriggerTemplate for CD Push Request
@@ -133,12 +151,12 @@ func createTemplateParamSpec(name string, description string) triggersv1.ParamSp
 }
 
 func createDevCDResourceTemplate(saName string) []byte {
-	byteTemplate, _ := json.Marshal(createDevCDPipelineRun(saName))
+	byteTemplate, _ := json.Marshal(createDevCIPipelineRun(saName, appPushImage))
 	return []byte(string(byteTemplate))
 }
 
 func createDevCIResourceTemplate(saName string) []byte {
-	byteTemplateCI, _ := json.Marshal(createDevCIPipelineRun(saName))
+	byteTemplateCI, _ := json.Marshal(createDevCIPipelineRun(saName, appPRImage))
 	return []byte(string(byteTemplateCI))
 }
 

@@ -50,8 +50,9 @@ func (tb *tektonBuilder) Service(env *config.Environment, svc *config.Service) e
 		return err
 	}
 	pipelines := getPipelines(env, svc, repo)
-	ciTrigger := repo.CreateCITrigger(triggerName(svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, pipelines.Integration.Template, pipelines.Integration.Bindings)
-	tb.triggers = append(tb.triggers, ciTrigger)
+	ciTrigger := repo.CreateCITrigger(triggerName(svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, appCITemplateName, append(pipelines.Integration.Bindings, repo.PRBindingName()))
+	cdTrigger := repo.CreateCDTrigger("app-push-"+svc.Name, svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, appPushTemplateName, append(pipelines.Integration.Bindings, repo.PushBindingName()))
+	tb.triggers = append(tb.triggers, ciTrigger, cdTrigger)
 	return nil
 }
 

@@ -26,9 +26,10 @@ import (
 )
 
 const (
-	pipelinesFile     = "pipelines.yaml"
-	bootstrapImage    = "nginxinc/nginx-unprivileged:latest"
-	appCITemplateName = "app-ci-template"
+	pipelinesFile       = "pipelines.yaml"
+	bootstrapImage      = "nginxinc/nginx-unprivileged:latest"
+	appCITemplateName   = "app-ci-template"
+	appPushTemplateName = "app-push-template"
 )
 
 // BootstrapOptions is a struct that provides the optional flags
@@ -151,11 +152,10 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		bootstrapped = res.Merge(resources, bootstrapped)
 		k.Resources = append(k.Resources, filenames...)
 	}
-
 	// This is specific to bootstrap, because there's only one service.
 	devEnv.Services[0].Pipelines = &config.Pipelines{
 		Integration: &config.TemplateBinding{
-			Bindings: append([]string{bindingName}, devEnv.Pipelines.Integration.Bindings[:]...),
+			Bindings: append([]string{bindingName}),
 		},
 	}
 	bootstrapped[pipelinesFile] = m
@@ -199,7 +199,6 @@ func bootstrapEnvironments(repo scm.Repository, prefix, secretName string, ns ma
 				}
 				env.Apps = []*config.Application{app}
 				env.Services = []*config.Service{svc}
-				env.Pipelines = defaultPipelines(repo)
 			}
 			envs = append(envs, env)
 		}
@@ -286,7 +285,7 @@ func defaultPipelines(r scm.Repository) *config.Pipelines {
 	return &config.Pipelines{
 		Integration: &config.TemplateBinding{
 			Template: appCITemplateName,
-			Bindings: []string{r.PRBindingName()},
+			Bindings: []string{},
 		},
 	}
 }
