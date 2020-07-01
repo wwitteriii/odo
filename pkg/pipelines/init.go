@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/routes"
 	"github.com/openshift/odo/pkg/pipelines/scm"
 	"github.com/openshift/odo/pkg/pipelines/secrets"
+	"github.com/openshift/odo/pkg/pipelines/statustracker"
 	"github.com/openshift/odo/pkg/pipelines/tasks"
 	"github.com/openshift/odo/pkg/pipelines/triggers"
 	"github.com/openshift/odo/pkg/pipelines/yaml"
@@ -122,7 +123,7 @@ func Init(o *InitParameters, fs afero.Fs) error {
 		return err
 	}
 
-	outputs, err := createInitialFiles(fs, gitOpsRepo, o.Prefix, o.GitOpsWebhookSecret, o.DockerConfigJSONFilename)
+	outputs, err := createInitialFiles(fs, gitOpsRepo, o.Prefix, o.GitOpsWebhookSecret, o.DockerConfigJSONFilename, o.StatusTrackerAccessToken)
 	if err != nil {
 		return err
 	}
@@ -155,14 +156,14 @@ func CreateDockerSecret(fs afero.Fs, dockerConfigJSONFilename, ns string) (*ssv1
 
 }
 
-func createInitialFiles(fs afero.Fs, repo scm.Repository, prefix, gitOpsWebhookSecret, dockerConfigPath string) (res.Resources, error) {
+func createInitialFiles(fs afero.Fs, repo scm.Repository, prefix, gitOpsWebhookSecret, dockerConfigPath, StatusTrackerAccessToken string) (res.Resources, error) {
 	cicd := &config.PipelinesConfig{Name: prefix + "cicd"}
 	pipelineConfig := &config.Config{Pipelines: cicd}
 	m := createManifest(repo.URL(), pipelineConfig)
 	initialFiles := res.Resources{
 		pipelinesFile: m,
 	}
-	resources, err := createCICDResources(fs, repo, cicd, gitOpsWebhookSecret, dockerConfigPath)
+	resources, err := createCICDResources(fs, repo, cicd, gitOpsWebhookSecret, dockerConfigPath, StatusTrackerAccessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +179,7 @@ func createInitialFiles(fs afero.Fs, repo scm.Repository, prefix, gitOpsWebhookS
 }
 
 // createCICDResources creates resources assocated to pipelines.
-func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *config.PipelinesConfig, gitOpsWebhookSecret, dockerConfigJSONPath string) (res.Resources, error) {
+func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *config.PipelinesConfig, gitOpsWebhookSecret, dockerConfigJSONPath, StatusTracker string) (res.Resources, error) {
 	cicdNamespace := pipelineConfig.Name
 	// key: path of the resource
 	// value: YAML content of the resource
@@ -204,6 +205,15 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 
 		// add secret and sa to outputs
 		outputs[serviceAccountPath] = roles.AddSecretToSA(sa, dockerSecretName)
+	}
+
+	if StatusTracker != "" {
+		trackerResources, err := statustracker.Resources(cicdNamespace, StatusTracker)
+		if err != nil {
+			return nil, err
+		}
+		outputs = res.Merge(outputs, trackerResources)
+
 	}
 
 	outputs[rolebindingsPath] = roles.CreateClusterRoleBinding(meta.NamespacedName("", roleBindingName), sa, "ClusterRole", roles.ClusterRoleName)

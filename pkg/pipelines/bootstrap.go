@@ -22,8 +22,8 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/roles"
 	"github.com/openshift/odo/pkg/pipelines/scm"
 	"github.com/openshift/odo/pkg/pipelines/secrets"
-	"github.com/openshift/odo/pkg/pipelines/yaml"
 	"github.com/openshift/odo/pkg/pipelines/statustracker"
+	"github.com/openshift/odo/pkg/pipelines/yaml"
 )
 
 const (
@@ -100,7 +100,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		return nil, fmt.Errorf("invalid app repo URL: %v", err)
 	}
 
-	bootstrapped, err := createInitialFiles(appFs, gitOpsRepo, o.Prefix, o.GitOpsWebhookSecret, o.DockerConfigJSONFilename)
+	bootstrapped, err := createInitialFiles(appFs, gitOpsRepo, o.Prefix, o.GitOpsWebhookSecret, o.DockerConfigJSONFilename, o.StatusTrackerAccessToken)
 	if err != nil {
 		return nil, err
 	}
