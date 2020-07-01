@@ -100,7 +100,7 @@ func NewCmdBootstrap(name, fullName string) *cobra.Command {
 	initCmd.Flags().StringVar(&o.ServiceRepoURL, "service-repo-url", "", "Service source e.g. https://github.com/organisation/service")
 	initCmd.Flags().StringVar(&o.ServiceWebhookSecret, "service-webhook-secret", "", "Provide the GitHub webhook secret for Service repository (if not provided, it will be auto-generated)")
 
-	initCmd.Flags().StringVar(&o.DockerConfigJSONFilename, "dockercfgjson", "", "provide the dockercfgjson path")
+	initCmd.Flags().StringVar(&o.DockerConfigJSONFilename, "dockercfgjson", "$HOME/.docker/config.json", "provide the dockercfgjson path")
 	initCmd.Flags().StringVar(&o.InternalRegistryHostname, "internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "internal image registry hostname")
 	initCmd.Flags().StringVar(&o.OutputPath, "output", ".", "folder path to add Gitops resources")
 	initCmd.Flags().StringVarP(&o.Prefix, "prefix", "p", "", "add a prefix to the environment names")
@@ -108,7 +108,6 @@ func NewCmdBootstrap(name, fullName string) *cobra.Command {
 
 	initCmd.MarkFlagRequired("gitops-repo-url")
 	initCmd.MarkFlagRequired("app-repo-url")
-	initCmd.MarkFlagRequired("dockercfgjson")
 	initCmd.MarkFlagRequired("image-repo")
 
 	return initCmd
