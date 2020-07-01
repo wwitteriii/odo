@@ -50,7 +50,7 @@ func AddService(p *AddServiceOptions, fs afero.Fs) error {
 	}
 	cfg := m.GetPipelinesConfig()
 	if cfg != nil {
-		base := filepath.Join(outputPath, config.PathForPipelines(cfg), "base", "pipelines")
+		base := filepath.Join(outputPath, config.PathForPipelines(cfg), "base")
 		err = updateKustomization(fs, base)
 		if err != nil {
 			return err
@@ -96,7 +96,7 @@ func serviceResources(m *config.Manifest, fs afero.Fs, o *AddServiceOptions) (re
 			},
 		}
 		secretFilename := filepath.Join("03-secrets", secretName+".yaml")
-		secretsPath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", secretFilename)
+		secretsPath := filepath.Join(config.PathForPipelines(cfg), "base", secretFilename)
 		files[secretsPath] = hookSecret
 
 		if o.ImageRepo != "" {
@@ -193,7 +193,7 @@ func makeSvcImageBindingFilename(bindingName string) string {
 }
 
 func makeImageBindingPath(cfg *config.PipelinesConfig, imageRepoBindingFilename string) string {
-	return filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", imageRepoBindingFilename)
+	return filepath.Join(config.PathForPipelines(cfg), "base", imageRepoBindingFilename)
 }
 
 func createSvcImageBinding(cfg *config.PipelinesConfig, env *config.Environment, svcName, imageRepo string, isTLSVerify bool) (string, string, res.Resources) {

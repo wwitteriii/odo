@@ -52,7 +52,7 @@ func TestBuildCreatesArgoCD(t *testing.T) {
 	}
 
 	want := res.Resources{
-		"config/argocd/config/test-dev-http-api-app.yaml": &argoappv1.Application{
+		"config/argocd/test-dev-http-api-app.yaml": &argoappv1.Application{
 			TypeMeta:   applicationTypeMeta,
 			ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ArgoCDNamespace, "test-dev-http-api")),
 			Spec: argoappv1.ApplicationSpec{
@@ -65,7 +65,7 @@ func TestBuildCreatesArgoCD(t *testing.T) {
 				SyncPolicy: syncPolicy,
 			},
 		},
-		"config/argocd/config/kustomization.yaml": &res.Kustomization{Resources: []string{"test-dev-http-api-app.yaml"}},
+		"config/argocd/kustomization.yaml": &res.Kustomization{Resources: []string{"test-dev-http-api-app.yaml"}},
 	}
 
 	if diff := cmp.Diff(want, files); diff != "" {
@@ -99,7 +99,7 @@ func TestBuildCreatesArgoCDWithMultipleApps(t *testing.T) {
 		t.Fatalf("got %d files, want 3\n", len(files))
 	}
 	want := &res.Kustomization{Resources: []string{"test-dev-http-api-app.yaml", "test-production-http-api-app.yaml"}}
-	if diff := cmp.Diff(want, files["config/argocd/config/kustomization.yaml"]); diff != "" {
+	if diff := cmp.Diff(want, files["config/argocd/kustomization.yaml"]); diff != "" {
 		t.Fatalf("files didn't match: %s\n", diff)
 	}
 }
@@ -164,7 +164,7 @@ func TestBuildWithRepoConfig(t *testing.T) {
 	}
 
 	want := res.Resources{
-		"config/argocd/config/test-production-prod-api-app.yaml": &argoappv1.Application{
+		"config/argocd/test-production-prod-api-app.yaml": &argoappv1.Application{
 			TypeMeta:   applicationTypeMeta,
 			ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ArgoCDNamespace, "test-production-prod-api")),
 			Spec: argoappv1.ApplicationSpec{
@@ -177,7 +177,7 @@ func TestBuildWithRepoConfig(t *testing.T) {
 				SyncPolicy: syncPolicy,
 			},
 		},
-		"config/argocd/config/kustomization.yaml": &res.Kustomization{Resources: []string{"test-production-prod-api-app.yaml"}},
+		"config/argocd/kustomization.yaml": &res.Kustomization{Resources: []string{"test-production-prod-api-app.yaml"}},
 	}
 
 	if diff := cmp.Diff(want, files); diff != "" {
@@ -209,7 +209,7 @@ func TestBuildAddsClusterToApp(t *testing.T) {
 	}
 
 	want := res.Resources{
-		"config/argocd/config/test-dev-http-api-app.yaml": &argoappv1.Application{
+		"config/argocd/test-dev-http-api-app.yaml": &argoappv1.Application{
 			TypeMeta:   applicationTypeMeta,
 			ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ArgoCDNamespace, "test-dev-http-api")),
 			Spec: argoappv1.ApplicationSpec{
@@ -222,7 +222,7 @@ func TestBuildAddsClusterToApp(t *testing.T) {
 				SyncPolicy: syncPolicy,
 			},
 		},
-		"config/argocd/config/kustomization.yaml": &res.Kustomization{Resources: []string{"test-dev-http-api-app.yaml"}},
+		"config/argocd/kustomization.yaml": &res.Kustomization{Resources: []string{"test-dev-http-api-app.yaml"}},
 	}
 
 	if diff := cmp.Diff(want, files); diff != "" {

@@ -129,13 +129,13 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		return nil, errors.New("failed to find a pipeline configuration - unable to continue bootstrap")
 	}
 	secretFilename := filepath.Join("03-secrets", secretName+".yaml")
-	secretsPath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", secretFilename)
+	secretsPath := filepath.Join(config.PathForPipelines(cfg), "base", secretFilename)
 	bootstrapped[secretsPath] = hookSecret
 
 	bindingName, imageRepoBindingFilename, svcImageBinding := createSvcImageBinding(cfg, devEnv, serviceName, imageRepo, !isInternalRegistry)
 	bootstrapped = res.Merge(svcImageBinding, bootstrapped)
 
-	kustomizePath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", "kustomization.yaml")
+	kustomizePath := filepath.Join(config.PathForPipelines(cfg), "base", "kustomization.yaml")
 	k, ok := bootstrapped[kustomizePath].(res.Kustomization)
 	if !ok {
 		return nil, fmt.Errorf("no kustomization for the %s environment found", kustomizePath)

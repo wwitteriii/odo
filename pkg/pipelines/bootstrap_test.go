@@ -54,10 +54,10 @@ func TestBootstrapManifest(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := res.Resources{
-		"config/tst-cicd/base/pipelines/03-secrets/webhook-secret-tst-dev-http-api.yaml": hookSecret,
-		"environments/tst-dev/services/http-api/base/config/100-deployment.yaml":         deployment.Create("app-taxi", "tst-dev", "http-api", bootstrapImage, deployment.ContainerPort(8080)),
-		"environments/tst-dev/services/http-api/base/config/200-service.yaml":            createBootstrapService("app-taxi", "tst-dev", "http-api"),
-		"environments/tst-dev/services/http-api/base/config/kustomization.yaml":          &res.Kustomization{Resources: []string{"100-deployment.yaml", "200-service.yaml"}},
+		"config/tst-cicd/base/03-secrets/webhook-secret-tst-dev-http-api.yaml":   hookSecret,
+		"environments/tst-dev/services/http-api/base/config/100-deployment.yaml": deployment.Create("app-taxi", "tst-dev", "http-api", bootstrapImage, deployment.ContainerPort(8080)),
+		"environments/tst-dev/services/http-api/base/config/200-service.yaml":    createBootstrapService("app-taxi", "tst-dev", "http-api"),
+		"environments/tst-dev/services/http-api/base/config/kustomization.yaml":  &res.Kustomization{Resources: []string{"100-deployment.yaml", "200-service.yaml"}},
 		pipelinesFile: &config.Manifest{
 			GitOpsURL: "https://github.com/my-org/gitops.git",
 			Environments: []*config.Environment{
@@ -129,7 +129,7 @@ func TestBootstrapManifest(t *testing.T) {
 		"08-eventlisteners/cicd-event-listener.yaml",
 		"09-routes/gitops-webhook-event-listener.yaml",
 	}
-	k := r["config/tst-cicd/base/pipelines/kustomization.yaml"].(res.Kustomization)
+	k := r["config/tst-cicd/base/kustomization.yaml"].(res.Kustomization)
 	if diff := cmp.Diff(wantResources, k.Resources); diff != "" {
 		t.Fatalf("did not add the secret to the base kustomization: %s\n", diff)
 	}

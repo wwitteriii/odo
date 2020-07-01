@@ -250,20 +250,17 @@ func createManifest(gitOpsRepoURL string, configEnv *config.Config, envs ...*con
 
 func getCICDKustomization(files []string) res.Resources {
 	return res.Resources{
-		"base/kustomization.yaml": resources.Kustomization{
-			Bases: []string{"./pipelines"},
-		},
 		"overlays/kustomization.yaml": resources.Kustomization{
 			Bases: []string{"../base"},
 		},
-		"base/pipelines/kustomization.yaml": resources.Kustomization{
+		"base/kustomization.yaml": resources.Kustomization{
 			Resources: files,
 		},
 	}
 }
 
 func pipelinesPath(m *config.Config) string {
-	return filepath.Join(config.PathForPipelines(m.Pipelines), "base/pipelines")
+	return filepath.Join(config.PathForPipelines(m.Pipelines), "base")
 }
 
 func addPrefixToResources(prefix string, files res.Resources) map[string]interface{} {

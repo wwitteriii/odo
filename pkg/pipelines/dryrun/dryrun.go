@@ -23,7 +23,7 @@ execute() {
 
 if [[ -d "${argo_path}" ]]; then
   printf "Apply $(basename ${argo_path}) applications\n"
-  execute "${argo_path}/config"
+  execute "${argo_path}"
   is_argocd=true
 fi
 
