@@ -21,13 +21,11 @@ type repository struct {
 }
 
 type triggerSpec interface {
-	prBindingParams() []triggersv1.Param
-	pushBindingParams() []triggersv1.Param
+	bindingParams() []triggersv1.Param
 	ciDryRunFilters() string
 	cdDeployFilters() string
 	eventInterceptor(secretNamespace, secretName string) *triggersv1.EventInterceptor
-	prBindingName() string
-	pushBindingName() string
+	bindingName() string
 }
 
 // NewRepository returns a suitable Repository instance
@@ -46,24 +44,14 @@ func NewRepository(url string) (Repository, error) {
 	return git(url)
 }
 
-func (r *repository) CreatePRBinding(ns string) (triggersv1.TriggerBinding, string) {
+func (r *repository) CreateBinding(ns string) (triggersv1.TriggerBinding, string) {
 	return triggersv1.TriggerBinding{
 		TypeMeta:   triggers.TriggerBindingTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, r.spec.prBindingName())),
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, r.spec.bindingName())),
 		Spec: triggersv1.TriggerBindingSpec{
-			Params: r.spec.prBindingParams(),
+			Params: r.spec.bindingParams(),
 		},
-	}, r.spec.prBindingName()
-}
-
-func (r *repository) CreatePushBinding(ns string) (triggersv1.TriggerBinding, string) {
-	return triggersv1.TriggerBinding{
-		TypeMeta:   triggers.TriggerBindingTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, r.spec.pushBindingName())),
-		Spec: triggersv1.TriggerBindingSpec{
-			Params: r.spec.pushBindingParams(),
-		},
-	}, r.spec.pushBindingName()
+	}, r.spec.bindingName()
 }
 
 func (r *repository) CreateCITrigger(name, secretName, secretNS, template string, bindings []string) triggersv1.EventListenerTrigger {
@@ -82,20 +70,16 @@ func (r *repository) createTrigger(name, filters, template string, bindings []st
 	return triggersv1.EventListenerTrigger{
 		Name: name,
 		Interceptors: []*triggersv1.EventInterceptor{
-			createEventInterceptor(filters, r.path),
 			interceptor,
+			createEventInterceptor(filters, r.path),
 		},
 		Bindings: createBindings(bindings),
 		Template: createListenerTemplate(template),
 	}
 }
 
-func (r *repository) PRBindingName() string {
-	return r.spec.prBindingName()
-}
-
-func (r *repository) PushBindingName() string {
-	return r.spec.pushBindingName()
+func (r *repository) BindingName() string {
+	return r.spec.bindingName()
 }
 
 // URL returns the URL of the GitHub repository

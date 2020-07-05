@@ -8,14 +8,13 @@ import (
 )
 
 const (
-	githubCIDryRunFilters = "(header.match('X-GitHub-Event', 'pull_request') && body.action == 'opened' || body.action == 'synchronize') && body.pull_request.head.repo.full_name == '%s'"
-	githubCDDeployFilters = "(header.match('X-GitHub-Event', 'push') && body.repository.full_name == '%s') && body.ref.startsWith('refs/heads/master')"
+	githubCIDryRunFilters = "(header.match('X-GitHub-Event', 'push') && body.repository.full_name == '%s') && !body.ref.endsWith(body.repository.default_branch)"
+	githubCDDeployFilters = "(header.match('X-GitHub-Event', 'push') && body.repository.full_name == '%s') && body.ref.endsWith(body.repository.default_branch)"
 	githubType            = "github"
 )
 
 type githubSpec struct {
-	prBinding   string
-	pushBinding string
+	binding string
 }
 
 func init() {
@@ -27,7 +26,7 @@ func newGitHub(rawURL string) (Repository, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &repository{url: rawURL, path: path, spec: &githubSpec{prBinding: "github-pr-binding", pushBinding: "github-push-binding"}}, nil
+	return &repository{url: rawURL, path: path, spec: &githubSpec{binding: "github-binding"}}, nil
 }
 
 func proccessGitHubPath(parsedURL *url.URL) (string, error) {
@@ -43,28 +42,16 @@ func proccessGitHubPath(parsedURL *url.URL) (string, error) {
 	return path, nil
 }
 
-func (r *githubSpec) prBindingName() string {
-	return r.prBinding
+func (r *githubSpec) bindingName() string {
+	return r.binding
 }
 
-func (r *githubSpec) pushBindingName() string {
-	return r.pushBinding
-}
-
-func (r *githubSpec) prBindingParams() []triggersv1.Param {
-	return []triggersv1.Param{
-		createBindingParam("gitref", "$(body.pull_request.head.ref)"),
-		createBindingParam("gitsha", "$(body.pull_request.head.sha)"),
-		createBindingParam("gitrepositoryurl", "$(body.repository.clone_url)"),
-		createBindingParam("fullname", "$(body.repository.full_name)"),
-	}
-}
-
-func (r *githubSpec) pushBindingParams() []triggersv1.Param {
+func (r *githubSpec) bindingParams() []triggersv1.Param {
 	return []triggersv1.Param{
 		createBindingParam("gitref", "$(body.ref)"),
 		createBindingParam("gitsha", "$(body.head_commit.id)"),
 		createBindingParam("gitrepositoryurl", "$(body.repository.clone_url)"),
+		createBindingParam("fullname", "$(body.repository.full_name)"),
 	}
 }
 

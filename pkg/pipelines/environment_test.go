@@ -137,7 +137,7 @@ func TestNewEnvironment(t *testing.T) {
 				Pipelines: &config.Pipelines{
 					Integration: &config.TemplateBinding{
 						Template: appCITemplateName,
-						Bindings: []string{"github-pr-binding"},
+						Bindings: []string{"github-binding"},
 					},
 				},
 			},
@@ -162,7 +162,7 @@ func TestNewEnvironment(t *testing.T) {
 				Pipelines: &config.Pipelines{
 					Integration: &config.TemplateBinding{
 						Template: appCITemplateName,
-						Bindings: []string{"gitlab-pr-binding"},
+						Bindings: []string{"gitlab-binding"},
 					},
 				},
 			},

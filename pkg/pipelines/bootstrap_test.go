@@ -65,7 +65,7 @@ func TestBootstrapManifest(t *testing.T) {
 					Pipelines: &config.Pipelines{
 						Integration: &config.TemplateBinding{
 							Template: "app-ci-template",
-							Bindings: []string{"github-pr-binding"},
+							Bindings: []string{"github-binding"},
 						},
 					},
 					Name: "tst-dev",
@@ -80,7 +80,7 @@ func TestBootstrapManifest(t *testing.T) {
 								},
 							},
 							Pipelines: &config.Pipelines{
-								Integration: &config.TemplateBinding{Bindings: []string{"tst-dev-http-api-binding", "github-pr-binding"}},
+								Integration: &config.TemplateBinding{Bindings: []string{"tst-dev-http-api-binding", "github-binding"}},
 							},
 						},
 					},
@@ -120,8 +120,7 @@ func TestBootstrapManifest(t *testing.T) {
 		"05-pipelines/app-ci-pipeline.yaml",
 		"05-pipelines/cd-deploy-from-push-pipeline.yaml",
 		"05-pipelines/ci-dryrun-from-pr-pipeline.yaml",
-		"06-bindings/github-pr-binding.yaml",
-		"06-bindings/github-push-binding.yaml",
+		"06-bindings/github-binding.yaml",
 		"06-bindings/tst-dev-http-api-binding.yaml",
 		"07-templates/app-ci-build-pr-template.yaml",
 		"07-templates/cd-deploy-from-push-template.yaml",

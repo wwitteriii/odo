@@ -234,10 +234,8 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 
 // Trigger bindings for repository types will be created during bootstrap
 func createTriggerBindings(r scm.Repository, outputs res.Resources, ns string) {
-	prBinding, prBindingName := r.CreatePRBinding(ns)
-	outputs[filepath.Join("06-bindings", prBindingName+".yaml")] = prBinding
-	pushBinding, pushBindingName := r.CreatePushBinding(ns)
-	outputs[filepath.Join("06-bindings", pushBindingName+".yaml")] = pushBinding
+	binding, bindingName := r.CreateBinding(ns)
+	outputs[filepath.Join("06-bindings", bindingName+".yaml")] = binding
 }
 
 func createManifest(gitOpsRepoURL string, configEnv *config.Config, envs ...*config.Environment) *config.Manifest {

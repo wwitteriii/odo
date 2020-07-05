@@ -50,8 +50,9 @@ func (tb *tektonBuilder) Service(env *config.Environment, svc *config.Service) e
 		return err
 	}
 	pipelines := getPipelines(env, svc, repo)
-	ciTrigger := repo.CreateCITrigger(triggerName(svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, pipelines.Integration.Template, pipelines.Integration.Bindings)
-	tb.triggers = append(tb.triggers, ciTrigger)
+	ciTrigger := repo.CreateCITrigger(ciTriggerName(svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, pipelines.Integration.Template, pipelines.Integration.Bindings)
+	cdTrigger := repo.CreateCDTrigger(cdTriggerName(svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, pipelines.Integration.Template, pipelines.Integration.Bindings)
+	tb.triggers = append(tb.triggers, ciTrigger, cdTrigger)
 	return nil
 }
 
@@ -65,8 +66,8 @@ func createTriggersForCICD(gitOpsRepo string, cfg *config.PipelinesConfig) ([]v1
 	if err != nil {
 		return []v1alpha1.EventListenerTrigger{}, err
 	}
-	ciTrigger := repo.CreateCITrigger("ci-dryrun-from-pr", eventlisteners.GitOpsWebhookSecret, cfg.Name, "ci-dryrun-from-pr-template", []string{repo.PRBindingName()})
-	cdTrigger := repo.CreateCDTrigger("cd-deploy-from-push", eventlisteners.GitOpsWebhookSecret, cfg.Name, "cd-deploy-from-push-template", []string{repo.PushBindingName()})
+	ciTrigger := repo.CreateCITrigger("ci-dryrun-from-pr", eventlisteners.GitOpsWebhookSecret, cfg.Name, "ci-dryrun-from-pr-template", []string{repo.BindingName()})
+	cdTrigger := repo.CreateCDTrigger("cd-deploy-from-push", eventlisteners.GitOpsWebhookSecret, cfg.Name, "cd-deploy-from-push-template", []string{repo.BindingName()})
 	triggers = append(triggers, ciTrigger, cdTrigger)
 	return triggers, nil
 }
@@ -96,6 +97,10 @@ func clonePipelines(p *config.Pipelines) *config.Pipelines {
 	}
 }
 
-func triggerName(svc string) string {
+func ciTriggerName(svc string) string {
 	return fmt.Sprintf("app-ci-build-from-pr-%s", svc)
+}
+
+func cdTriggerName(svc string) string {
+	return fmt.Sprintf("app-cd-build-from-push-%s", svc)
 }

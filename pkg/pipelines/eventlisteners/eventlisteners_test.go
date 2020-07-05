@@ -23,11 +23,6 @@ func TestGenerateEventListener(t *testing.T) {
 					Name: "ci-dryrun-from-pr",
 					Interceptors: []*triggersv1.EventInterceptor{
 						{
-							CEL: &triggersv1.CELInterceptor{
-								Filter: "(header.match('X-GitHub-Event', 'pull_request') && body.action == 'opened' || body.action == 'synchronize') && body.pull_request.head.repo.full_name == 'org/test'",
-							},
-						},
-						{
 							GitHub: &triggersv1.GitHubInterceptor{
 								SecretRef: &triggersv1.SecretRef{
 									SecretName: "test",
@@ -36,10 +31,18 @@ func TestGenerateEventListener(t *testing.T) {
 								},
 							},
 						},
+						{
+							CEL: &triggersv1.CELInterceptor{
+								Filter: "(header.match('X-GitHub-Event', 'push') && body.repository.full_name == 'org/test') && !body.ref.endsWith(body.repository.default_branch)",
+								Overlays: []triggersv1.CELOverlay{
+									{Key: "ref", Expression: "split(body.ref,'/')[2]"},
+								},
+							},
+						},
 					},
 					Bindings: []*triggersv1.EventListenerBinding{
 						{
-							Name: "github-pr-binding",
+							Name: "github-binding",
 						},
 					},
 					Template: triggersv1.EventListenerTemplate{
@@ -50,11 +53,6 @@ func TestGenerateEventListener(t *testing.T) {
 					Name: "cd-deploy-from-push",
 					Interceptors: []*triggersv1.EventInterceptor{
 						{
-							CEL: &triggersv1.CELInterceptor{
-								Filter: "(header.match('X-GitHub-Event', 'push') && body.repository.full_name == 'org/test') && body.ref.startsWith('refs/heads/master')",
-							},
-						},
-						{
 							GitHub: &triggersv1.GitHubInterceptor{
 								SecretRef: &triggersv1.SecretRef{
 									SecretName: "test",
@@ -63,10 +61,18 @@ func TestGenerateEventListener(t *testing.T) {
 								},
 							},
 						},
+						{
+							CEL: &triggersv1.CELInterceptor{
+								Filter: "(header.match('X-GitHub-Event', 'push') && body.repository.full_name == 'org/test') && body.ref.endsWith(body.repository.default_branch)",
+								Overlays: []triggersv1.CELOverlay{
+									{Key: "ref", Expression: "split(body.ref,'/')[2]"},
+								},
+							},
+						},
 					},
 					Bindings: []*triggersv1.EventListenerBinding{
 						{
-							Name: "github-push-binding",
+							Name: "github-binding",
 						},
 					},
 					Template: triggersv1.EventListenerTemplate{

@@ -40,6 +40,9 @@ func createEventInterceptor(filter string, repoName string) *triggersv1.EventInt
 	return &triggersv1.EventInterceptor{
 		CEL: &triggersv1.CELInterceptor{
 			Filter: fmt.Sprintf(filter, repoName),
+			Overlays: []triggersv1.CELOverlay{
+				{Key: "ref", Expression: "split(body.ref,'/')[2]"},
+			},
 		},
 	}
 }

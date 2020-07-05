@@ -8,14 +8,13 @@ import (
 )
 
 const (
-	gitlabCIDryRunFilters = "header.match('X-Gitlab-Event','Merge Request Hook') && body.object_attributes.state == 'opened' && body.project.path_with_namespace == '%s'  && body.project.default_branch == body.object_attributes.target_branch"
+	gitlabCIDryRunFilters = "header.match('X-Gitlab-Event','Push Hook') && body.project.path_with_namespace == '%s' && !body.ref.endsWith(body.project.default_branch)"
 	gitlabCDDeployFilters = "header.match('X-Gitlab-Event','Push Hook') && body.project.path_with_namespace == '%s' && body.ref.endsWith(body.project.default_branch)"
 	gitlabType            = "gitlab"
 )
 
 type gitlabSpec struct {
-	prBinding   string
-	pushBinding string
+	binding string
 }
 
 func init() {
@@ -27,7 +26,7 @@ func newGitLab(rawURL string) (Repository, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &repository{url: rawURL, path: path, spec: &gitlabSpec{prBinding: "gitlab-pr-binding", pushBinding: "gitlab-push-binding"}}, nil
+	return &repository{url: rawURL, path: path, spec: &gitlabSpec{binding: "gitlab-binding"}}, nil
 }
 
 func proccessGitLabPath(parsedURL *url.URL) (string, error) {
@@ -42,28 +41,16 @@ func proccessGitLabPath(parsedURL *url.URL) (string, error) {
 	return path, nil
 }
 
-func (r *gitlabSpec) prBindingName() string {
-	return r.prBinding
+func (r *gitlabSpec) bindingName() string {
+	return r.binding
 }
 
-func (r *gitlabSpec) pushBindingName() string {
-	return r.pushBinding
-}
-
-func (r *gitlabSpec) prBindingParams() []triggersv1.Param {
-	return []triggersv1.Param{
-		createBindingParam("gitref", "$(body.object_attributes.source_branch)"),
-		createBindingParam("gitsha", "$(body.object_attributes.last_commit.id)"),
-		createBindingParam("gitrepositoryurl", "$(body.project.git_http_url)"),
-		createBindingParam("fullname", "$(body.project.path_with_namespace)"),
-	}
-}
-
-func (r *gitlabSpec) pushBindingParams() []triggersv1.Param {
+func (r *gitlabSpec) bindingParams() []triggersv1.Param {
 	return []triggersv1.Param{
 		createBindingParam("gitref", "$(body.ref)"),
 		createBindingParam("gitsha", "$(body.after)"),
 		createBindingParam("gitrepositoryurl", "$(body.project.git_http_url)"),
+		createBindingParam("fullname", "$(body.project.path_with_namespace)"),
 	}
 }
 

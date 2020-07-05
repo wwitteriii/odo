@@ -29,8 +29,8 @@ func Generate(repo scm.Repository, ns, saName, secretName string) triggersv1.Eve
 			ServiceAccountName: saName,
 			Triggers: []triggersv1.EventListenerTrigger{
 				repo.CreateCITrigger("ci-dryrun-from-pr", secretName, ns, "ci-dryrun-from-pr-template",
-					[]string{"github-pr-binding"}),
-				repo.CreateCDTrigger("cd-deploy-from-push", secretName, ns, "cd-deploy-from-push-template", []string{"github-push-binding"}),
+					[]string{"github-binding"}),
+				repo.CreateCDTrigger("cd-deploy-from-push", secretName, ns, "cd-deploy-from-push-template", []string{"github-binding"}),
 			},
 		},
 	}

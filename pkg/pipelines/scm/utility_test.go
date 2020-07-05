@@ -33,6 +33,9 @@ func TestCreateEventInterceptor(t *testing.T) {
 	validEventInterceptor := triggersv1.EventInterceptor{
 		CEL: &triggersv1.CELInterceptor{
 			Filter: "sampleFilter sample",
+			Overlays: []triggersv1.CELOverlay{
+				{Key: "ref", Expression: "split(body.ref,'/')[2]"},
+			},
 		},
 	}
 	eventInterceptor := createEventInterceptor("sampleFilter %s", "sample")
