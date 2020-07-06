@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	gitlabCIDryRunFilters = "header.match('X-Gitlab-Event','Push Hook') && body.project.path_with_namespace == '%s' && !body.ref.endsWith(body.project.default_branch)"
-	gitlabCDDeployFilters = "header.match('X-Gitlab-Event','Push Hook') && body.project.path_with_namespace == '%s' && body.ref.endsWith(body.project.default_branch)"
+	gitlabCIDryRunFilters = "header.match('X-Gitlab-Event','Push Hook') && body.project.path_with_namespace == '%s' && body.ref != 'refs/heads/'+body.project.default_branch"
+	gitlabCDDeployFilters = "header.match('X-Gitlab-Event','Push Hook') && body.project.path_with_namespace == '%s' && body.ref == 'refs/heads/'+body.project.default_branch"
 	gitlabType            = "gitlab"
 )
 
@@ -26,7 +26,7 @@ func newGitLab(rawURL string) (Repository, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &repository{url: rawURL, path: path, spec: &gitlabSpec{binding: "gitlab-binding"}}, nil
+	return &repository{url: rawURL, path: path, spec: &gitlabSpec{binding: "gitlab-push-binding"}}, nil
 }
 
 func proccessGitLabPath(parsedURL *url.URL) (string, error) {

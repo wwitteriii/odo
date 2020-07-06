@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	githubCIDryRunFilters = "(header.match('X-GitHub-Event', 'push') && body.repository.full_name == '%s') && !body.ref.endsWith(body.repository.default_branch)"
-	githubCDDeployFilters = "(header.match('X-GitHub-Event', 'push') && body.repository.full_name == '%s') && body.ref.endsWith(body.repository.default_branch)"
+	githubCIDryRunFilters = "(header.match('X-GitHub-Event', 'push') && body.repository.full_name == '%s') && body.ref != 'refs/heads/'+body.repository.default_branch"
+	githubCDDeployFilters = "(header.match('X-GitHub-Event', 'push') && body.repository.full_name == '%s') && body.ref == 'refs/heads/'+body.repository.default_branch"
 	githubType            = "github"
 )
 
@@ -26,7 +26,7 @@ func newGitHub(rawURL string) (Repository, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &repository{url: rawURL, path: path, spec: &githubSpec{binding: "github-binding"}}, nil
+	return &repository{url: rawURL, path: path, spec: &githubSpec{binding: "github-push-binding"}}, nil
 }
 
 func proccessGitHubPath(parsedURL *url.URL) (string, error) {

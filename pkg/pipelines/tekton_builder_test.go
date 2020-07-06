@@ -119,7 +119,7 @@ func TestGetPipelines(t *testing.T) {
 			&config.Pipelines{
 				Integration: &config.TemplateBinding{
 					Template: "app-ci-template",
-					Bindings: []string{"github-binding"},
+					Bindings: []string{"github-push-binding"},
 				},
 			},
 		},

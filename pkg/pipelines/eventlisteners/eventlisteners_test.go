@@ -33,7 +33,7 @@ func TestGenerateEventListener(t *testing.T) {
 						},
 						{
 							CEL: &triggersv1.CELInterceptor{
-								Filter: "(header.match('X-GitHub-Event', 'push') && body.repository.full_name == 'org/test') && !body.ref.endsWith(body.repository.default_branch)",
+								Filter: "(header.match('X-GitHub-Event', 'push') && body.repository.full_name == 'org/test') && body.ref != 'refs/heads/'+body.repository.default_branch",
 								Overlays: []triggersv1.CELOverlay{
 									{Key: "ref", Expression: "split(body.ref,'/')[2]"},
 								},
@@ -63,7 +63,7 @@ func TestGenerateEventListener(t *testing.T) {
 						},
 						{
 							CEL: &triggersv1.CELInterceptor{
-								Filter: "(header.match('X-GitHub-Event', 'push') && body.repository.full_name == 'org/test') && body.ref.endsWith(body.repository.default_branch)",
+								Filter: "(header.match('X-GitHub-Event', 'push') && body.repository.full_name == 'org/test') && body.ref == 'refs/heads/'+body.repository.default_branch",
 								Overlays: []triggersv1.CELOverlay{
 									{Key: "ref", Expression: "split(body.ref,'/')[2]"},
 								},

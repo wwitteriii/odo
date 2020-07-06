@@ -16,7 +16,7 @@ func TestCreateBindingForGithub(t *testing.T) {
 	want := triggersv1.TriggerBinding{
 		TypeMeta: triggers.TriggerBindingTypeMeta,
 		ObjectMeta: v1.ObjectMeta{
-			Name:      "github-binding",
+			Name:      "github-push-binding",
 			Namespace: "testns",
 		},
 		Spec: triggersv1.TriggerBindingSpec{
@@ -29,8 +29,8 @@ func TestCreateBindingForGithub(t *testing.T) {
 		},
 	}
 	got, name := repo.CreateBinding("testns")
-	if name != "github-binding" {
-		t.Fatalf("CreateBinding() returned a wrong binding: want %v got %v", "github-binding", name)
+	if name != "github-push-binding" {
+		t.Fatalf("CreateBinding() returned a wrong binding: want %v got %v", "github-push-binding", name)
 	}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatalf("CreateBinding() failed:\n%s", diff)
