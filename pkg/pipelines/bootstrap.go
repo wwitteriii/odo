@@ -33,15 +33,9 @@ const (
 
 // BootstrapOptions is a struct that provides the optional flags
 type BootstrapOptions struct {
-	GitOpsRepoURL            string // This is where the pipelines and configuration are.
-	GitOpsWebhookSecret      string // This is the secret for authenticating hooks from your GitOps repo.
-	ServiceRepoURL           string // This is the full URL to your GitHub repository for your service source.
-	ServiceWebhookSecret     string // This is the secret for authenticating hooks from your service source.
-	InternalRegistryHostname string // This is the internal registry hostname used for pushing images.
-	ImageRepo                string // This is where built images are pushed to.
-	Prefix                   string // Used to prefix generated environment names in a shared cluster.
-	OutputPath               string // Where to write the bootstrapped files to?
-	DockerConfigJSONFilename string
+	InitOptions
+	ServiceRepoURL       string // This is the full URL to your GitHub repository for your app source.
+	ServiceWebhookSecret string // This is the secret for authenticating hooks from your app source.
 }
 
 // Bootstrap bootstraps a GitOps pipelines and repository structure.
@@ -98,7 +92,9 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		return nil, fmt.Errorf("invalid app repo URL: %v", err)
 	}
 
-	bootstrapped, err := createInitialFiles(appFs, gitOpsRepo, o.Prefix, o.GitOpsWebhookSecret, o.DockerConfigJSONFilename)
+	bootstrapped, err := createInitialFiles(
+		appFs, gitOpsRepo, o.Prefix, o.GitOpsWebhookSecret,
+		o.DockerConfigJSONFilename, o.SealedSecretsNamespace)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +120,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	hookSecret, err := secrets.CreateSealedSecret(
 		meta.NamespacedName(ns["cicd"], secretName),
 		o.ServiceWebhookSecret,
-		eventlisteners.WebhookSecretKey)
+		eventlisteners.WebhookSecretKey, o.SealedSecretsNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate GitHub Webhook Secret: %v", err)
 	}
@@ -133,13 +129,13 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		return nil, errors.New("failed to find a pipeline configuration - unable to continue bootstrap")
 	}
 	secretFilename := filepath.Join("03-secrets", secretName+".yaml")
-	secretsPath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", secretFilename)
+	secretsPath := filepath.Join(config.PathForPipelines(cfg), "base", secretFilename)
 	bootstrapped[secretsPath] = hookSecret
 
 	bindingName, imageRepoBindingFilename, svcImageBinding := createSvcImageBinding(cfg, devEnv, serviceName, imageRepo, !isInternalRegistry)
 	bootstrapped = res.Merge(svcImageBinding, bootstrapped)
 
-	kustomizePath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", "kustomization.yaml")
+	kustomizePath := filepath.Join(config.PathForPipelines(cfg), "base", "kustomization.yaml")
 	k, ok := bootstrapped[kustomizePath].(res.Kustomization)
 	if !ok {
 		return nil, fmt.Errorf("no kustomization for the %s environment found", kustomizePath)

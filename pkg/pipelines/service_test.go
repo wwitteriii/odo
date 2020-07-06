@@ -24,28 +24,21 @@ import (
 )
 
 func TestServiceResourcesWithCICD(t *testing.T) {
-	defer func(f secrets.PublicKeyFunc) {
-		secrets.DefaultPublicKeyFunc = f
-	}(secrets.DefaultPublicKeyFunc)
-
-	secrets.DefaultPublicKeyFunc = func() (*rsa.PublicKey, error) {
-		key, err := rsa.GenerateKey(rand.Reader, 1024)
-		if err != nil {
-			t.Fatalf("failed to generate a private RSA key: %s", err)
-		}
-		return &key.PublicKey, nil
-	}
-
+	defer stubDefaultPublicKeyFunc(t)()
 	fakeFs := ioutils.NewMapFilesystem()
 	m := buildManifest(true, false)
-	hookSecret, err := secrets.CreateSealedSecret(meta.NamespacedName("cicd", "webhook-secret-test-dev-test"), "123", eventlisteners.WebhookSecretKey)
+	hookSecret, err := secrets.CreateSealedSecret(
+		meta.NamespacedName(
+			"cicd", "webhook-secret-test-dev-test"),
+		"123",
+		eventlisteners.WebhookSecretKey, "test-ns")
 	assertNoError(t, err)
 
 	want := res.Resources{
-		"config/cicd/base/pipelines/03-secrets/webhook-secret-test-dev-test.yaml": hookSecret,
-		"environments/test-dev/apps/test-app/base/kustomization.yaml":             &res.Kustomization{Bases: []string{"../../../services/test-svc", "../../../services/test"}},
-		"environments/test-dev/apps/test-app/kustomization.yaml":                  &res.Kustomization{Bases: []string{"overlays"}},
-		"environments/test-dev/apps/test-app/overlays/kustomization.yaml":         &res.Kustomization{Bases: []string{"../base"}},
+		"config/cicd/base/03-secrets/webhook-secret-test-dev-test.yaml":   hookSecret,
+		"environments/test-dev/apps/test-app/base/kustomization.yaml":     &res.Kustomization{Bases: []string{"../../../services/test-svc", "../../../services/test"}},
+		"environments/test-dev/apps/test-app/kustomization.yaml":          &res.Kustomization{Bases: []string{"overlays"}},
+		"environments/test-dev/apps/test-app/overlays/kustomization.yaml": &res.Kustomization{Bases: []string{"../base"}},
 		"pipelines.yaml": &config.Manifest{
 			Config: &config.Config{
 				Pipelines: &config.PipelinesConfig{
@@ -92,7 +85,7 @@ func TestServiceResourcesWithCICD(t *testing.T) {
 		},
 	}
 
-	got, err := serviceResources(m, fakeFs, &AddServiceParameters{
+	got, err := serviceResources(m, fakeFs, &AddServiceOptions{
 		AppName:           "test-app",
 		EnvName:           "test-dev",
 		GitRepoURL:        "http://github.com/org/test",
@@ -110,18 +103,7 @@ func TestServiceResourcesWithCICD(t *testing.T) {
 }
 
 func TestServiceResourcesWithArgoCD(t *testing.T) {
-	defer func(f secrets.PublicKeyFunc) {
-		secrets.DefaultPublicKeyFunc = f
-	}(secrets.DefaultPublicKeyFunc)
-
-	secrets.DefaultPublicKeyFunc = func() (*rsa.PublicKey, error) {
-		key, err := rsa.GenerateKey(rand.Reader, 1024)
-		if err != nil {
-			t.Fatalf("failed to generate a private RSA key: %s", err)
-		}
-		return &key.PublicKey, nil
-	}
-
+	defer stubDefaultPublicKeyFunc(t)()
 	fakeFs := ioutils.NewMapFilesystem()
 	m := buildManifest(false, true)
 
@@ -163,7 +145,7 @@ func TestServiceResourcesWithArgoCD(t *testing.T) {
 		},
 	}
 
-	got, err := serviceResources(m, fakeFs, &AddServiceParameters{
+	got, err := serviceResources(m, fakeFs, &AddServiceOptions{
 		AppName:           "test-app",
 		EnvName:           "test-dev",
 		GitRepoURL:        "http://github.com/org/test",
@@ -217,7 +199,7 @@ func TestServiceResourcesWithoutArgoCD(t *testing.T) {
 		},
 	}
 
-	got, err := serviceResources(m, fakeFs, &AddServiceParameters{
+	got, err := serviceResources(m, fakeFs, &AddServiceOptions{
 		AppName:           "test-app",
 		EnvName:           "test-dev",
 		GitRepoURL:        "http://github.com/org/test",
@@ -272,7 +254,7 @@ func TestAddServiceWithoutApp(t *testing.T) {
 		},
 	}
 
-	got, err := serviceResources(m, fakeFs, &AddServiceParameters{
+	got, err := serviceResources(m, fakeFs, &AddServiceOptions{
 		AppName:           "new-app",
 		EnvName:           "test-dev",
 		GitRepoURL:        "http://github.com/org/test",
@@ -289,17 +271,7 @@ func TestAddServiceWithoutApp(t *testing.T) {
 }
 
 func TestAddService(t *testing.T) {
-	defer func(f secrets.PublicKeyFunc) {
-		secrets.DefaultPublicKeyFunc = f
-	}(secrets.DefaultPublicKeyFunc)
-
-	secrets.DefaultPublicKeyFunc = func() (*rsa.PublicKey, error) {
-		key, err := rsa.GenerateKey(rand.Reader, 1024)
-		if err != nil {
-			t.Fatalf("failed to generate a private RSA key: %s", err)
-		}
-		return &key.PublicKey, nil
-	}
+	defer stubDefaultPublicKeyFunc(t)()
 
 	fakeFs := ioutils.NewMapFilesystem()
 	outputPath := afero.GetTempDir(fakeFs, "test")
@@ -316,13 +288,13 @@ func TestAddService(t *testing.T) {
 		"environments/test-dev/services/test/base/kustomization.yaml",
 		"environments/test-dev/services/test/overlays/kustomization.yaml",
 		"environments/test-dev/services/test/kustomization.yaml",
-		"config/cicd/base/pipelines/03-secrets/webhook-secret-test-dev-test.yaml",
-		"config/cicd/base/pipelines/kustomization.yaml",
+		"config/cicd/base/03-secrets/webhook-secret-test-dev-test.yaml",
+		"config/cicd/base/kustomization.yaml",
 		"pipelines.yaml",
-		"config/argocd/config/test-dev-test-app-app.yaml",
-		"config/argocd/config/test-dev-new-app-app.yaml",
+		"config/argocd/test-dev-test-app-app.yaml",
+		"config/argocd/test-dev-new-app-app.yaml",
 	}
-	err = AddService(&AddServiceParameters{
+	err = AddService(&AddServiceOptions{
 		AppName:           "new-app",
 		EnvName:           "test-dev",
 		GitRepoURL:        "http://github.com/org/test",
@@ -339,18 +311,7 @@ func TestAddService(t *testing.T) {
 }
 
 func TestServiceWithArgoCD(t *testing.T) {
-	defer func(f secrets.PublicKeyFunc) {
-		secrets.DefaultPublicKeyFunc = f
-	}(secrets.DefaultPublicKeyFunc)
-
-	secrets.DefaultPublicKeyFunc = func() (*rsa.PublicKey, error) {
-		key, err := rsa.GenerateKey(rand.Reader, 1024)
-		if err != nil {
-			t.Fatalf("failed to generate a private RSA key: %s", err)
-		}
-		return &key.PublicKey, nil
-	}
-
+	defer stubDefaultPublicKeyFunc(t)()
 	fakeFs := ioutils.NewMapFilesystem()
 	m := buildManifest(true, true)
 	want := res.Resources{
@@ -402,7 +363,7 @@ func TestServiceWithArgoCD(t *testing.T) {
 	argo, err := argocd.Build("argocd", "http://github.com/org/test", m)
 	assertNoError(t, err)
 	want = res.Merge(argo, want)
-	got, err := serviceResources(m, fakeFs, &AddServiceParameters{
+	got, err := serviceResources(m, fakeFs, &AddServiceOptions{
 		AppName:           "test-app",
 		EnvName:           "test-dev",
 		GitRepoURL:        "http://github.com/org/test",
@@ -512,9 +473,23 @@ func TestCreateSvcImageBinding(t *testing.T) {
 		},
 	}
 
-	wantResources := res.Resources{"config/cicd/base/pipelines/06-bindings/new-env-new-svc-binding.yaml": triggerBinding}
+	wantResources := res.Resources{"config/cicd/base/06-bindings/new-env-new-svc-binding.yaml": triggerBinding}
 	if diff := cmp.Diff(resources, wantResources); diff != "" {
 		t.Errorf("resources failed: %v", diff)
 	}
+}
 
+func stubDefaultPublicKeyFunc(t *testing.T) func() {
+	origDefaultPublicKeyFunc := secrets.DefaultPublicKeyFunc
+	secrets.DefaultPublicKeyFunc = func(string) (*rsa.PublicKey, error) {
+		key, err := rsa.GenerateKey(rand.Reader, 1024)
+		if err != nil {
+			t.Fatalf("failed to generate a private RSA key: %s", err)
+		}
+		return &key.PublicKey, nil
+	}
+
+	return func() {
+		secrets.DefaultPublicKeyFunc = origDefaultPublicKeyFunc
+	}
 }

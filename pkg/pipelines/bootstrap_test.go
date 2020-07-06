@@ -26,7 +26,7 @@ func TestBootstrapManifest(t *testing.T) {
 		secrets.DefaultPublicKeyFunc = f
 	}(secrets.DefaultPublicKeyFunc)
 
-	secrets.DefaultPublicKeyFunc = func() (*rsa.PublicKey, error) {
+	secrets.DefaultPublicKeyFunc = func(ns string) (*rsa.PublicKey, error) {
 		key, err := rsa.GenerateKey(rand.Reader, 1024)
 		if err != nil {
 			t.Fatalf("failed to generate a private RSA key: %s", err)
@@ -35,11 +35,13 @@ func TestBootstrapManifest(t *testing.T) {
 	}
 
 	params := &BootstrapOptions{
-		Prefix:               "tst-",
-		GitOpsRepoURL:        testGitOpsRepo,
-		GitOpsWebhookSecret:  "123",
+		InitOptions: InitOptions{
+			Prefix:              "tst-",
+			GitOpsRepoURL:       testGitOpsRepo,
+			ImageRepo:           "image/repo",
+			GitOpsWebhookSecret: "123",
+		},
 		ServiceRepoURL:       testSvcRepo,
-		ImageRepo:            "image/repo",
 		ServiceWebhookSecret: "456",
 	}
 
@@ -47,15 +49,15 @@ func TestBootstrapManifest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	hookSecret, err := secrets.CreateSealedSecret(meta.NamespacedName("tst-cicd", "webhook-secret-tst-dev-http-api"), "456", eventlisteners.WebhookSecretKey)
+	hookSecret, err := secrets.CreateSealedSecret(meta.NamespacedName("tst-cicd", "webhook-secret-tst-dev-http-api"), "456", eventlisteners.WebhookSecretKey, "test-ns")
 	if err != nil {
 		t.Fatal(err)
 	}
 	want := res.Resources{
-		"config/tst-cicd/base/pipelines/03-secrets/webhook-secret-tst-dev-http-api.yaml": hookSecret,
-		"environments/tst-dev/services/http-api/base/config/100-deployment.yaml":         deployment.Create("app-taxi", "tst-dev", "http-api", bootstrapImage, deployment.ContainerPort(8080)),
-		"environments/tst-dev/services/http-api/base/config/200-service.yaml":            createBootstrapService("app-taxi", "tst-dev", "http-api"),
-		"environments/tst-dev/services/http-api/base/config/kustomization.yaml":          &res.Kustomization{Resources: []string{"100-deployment.yaml", "200-service.yaml"}},
+		"config/tst-cicd/base/03-secrets/webhook-secret-tst-dev-http-api.yaml":   hookSecret,
+		"environments/tst-dev/services/http-api/base/config/100-deployment.yaml": deployment.Create("app-taxi", "tst-dev", "http-api", bootstrapImage, deployment.ContainerPort(8080)),
+		"environments/tst-dev/services/http-api/base/config/200-service.yaml":    createBootstrapService("app-taxi", "tst-dev", "http-api"),
+		"environments/tst-dev/services/http-api/base/config/kustomization.yaml":  &res.Kustomization{Resources: []string{"100-deployment.yaml", "200-service.yaml"}},
 		pipelinesFile: &config.Manifest{
 			GitOpsURL: "https://github.com/my-org/gitops.git",
 			Environments: []*config.Environment{
@@ -127,7 +129,7 @@ func TestBootstrapManifest(t *testing.T) {
 		"08-eventlisteners/cicd-event-listener.yaml",
 		"09-routes/gitops-webhook-event-listener.yaml",
 	}
-	k := r["config/tst-cicd/base/pipelines/kustomization.yaml"].(res.Kustomization)
+	k := r["config/tst-cicd/base/kustomization.yaml"].(res.Kustomization)
 	if diff := cmp.Diff(wantResources, k.Resources); diff != "" {
 		t.Fatalf("did not add the secret to the base kustomization: %s\n", diff)
 	}
@@ -157,5 +159,4 @@ func TestApplicationFromRepo(t *testing.T) {
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatalf("bootstrapped resources:\n%s", diff)
 	}
-
 }

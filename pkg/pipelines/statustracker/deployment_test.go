@@ -17,7 +17,6 @@ import (
 
 func TestCreateStatusTrackerDeployment(t *testing.T) {
 	deploy := createStatusTrackerDeployment("dana-cicd")
-
 	want := &appsv1.Deployment{
 		TypeMeta:   meta.TypeMeta("Deployment", "apps/v1"),
 		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("dana-cicd", operatorName)),
@@ -79,12 +78,12 @@ func TestResource(t *testing.T) {
 	}(defaultSecretSealer)
 
 	testSecret := &ssv1alpha1.SealedSecret{}
-	defaultSecretSealer = func(ns types.NamespacedName, data, secretKey string) (*ssv1alpha1.SealedSecret, error) {
+	defaultSecretSealer = func(ns types.NamespacedName, data, secretKey, _ string) (*ssv1alpha1.SealedSecret, error) {
 		return testSecret, nil
 	}
 
 	ns := "my-test-ns"
-	res, err := Resources(ns, "test-token")
+	res, err := Resources(ns, "test-token", "sealed-secrets-ns")
 	if err != nil {
 		t.Fatal(err)
 	}

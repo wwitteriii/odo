@@ -14,3 +14,24 @@ func AddGitSuffixIfNecessary(url string) string {
 	log.Infof("Adding .git to %s", url)
 	return url + ".git"
 }
+
+// RemoveEmptyStrings returns a slice with all the empty strings removed from the
+// source slice.
+func RemoveEmptyStrings(s []string) []string {
+	nonempty := []string{}
+	for _, v := range s {
+		if v != "" {
+			nonempty = append(nonempty, v)
+		}
+	}
+	return nonempty
+}
+
+// MaybeCompletePrefix adds a hyphen on the end of the prefix if it doesn't have
+// one to make prefix-generated names look a bit nicer.
+func MaybeCompletePrefix(s string) string {
+	if s != "" && !strings.HasSuffix(s, "-") {
+		return s + "-"
+	}
+	return s
+}

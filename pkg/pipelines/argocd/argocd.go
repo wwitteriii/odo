@@ -65,7 +65,7 @@ type argocdBuilder struct {
 }
 
 func (b *argocdBuilder) Application(env *config.Environment, app *config.Application) error {
-	basePath := filepath.Join(config.PathForArgoCD(), "config")
+	basePath := filepath.Join(config.PathForArgoCD())
 	argoFiles := res.Resources{}
 	filename := filepath.Join(basePath, env.Name+"-"+app.Name+"-app.yaml")
 
@@ -82,7 +82,7 @@ func argoCDConfigResources(argoCDConfig *config.ArgoCDConfig, files res.Resource
 	if argoCDConfig.Namespace == "" {
 		return nil
 	}
-	basePath := filepath.Join(config.PathForArgoCD(), "config")
+	basePath := filepath.Join(config.PathForArgoCD())
 	filename := filepath.Join(basePath, "kustomization.yaml")
 	resourceNames := []string{}
 	for k := range files {

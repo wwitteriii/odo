@@ -1,8 +1,6 @@
 package pipelines
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -12,7 +10,6 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/ioutils"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
 	"github.com/openshift/odo/pkg/pipelines/scm"
-	"github.com/openshift/odo/pkg/pipelines/secrets"
 )
 
 var testpipelineConfig = &config.PipelinesConfig{Name: "tst-cicd"}
@@ -35,21 +32,11 @@ func TestInitialFiles(t *testing.T) {
 	prefix := "tst-"
 	gitOpsURL := "https://github.com/foo/test-repo"
 	gitOpsWebhook := "123"
-	defer func(f secrets.PublicKeyFunc) {
-		secrets.DefaultPublicKeyFunc = f
-	}(secrets.DefaultPublicKeyFunc)
-
-	secrets.DefaultPublicKeyFunc = func() (*rsa.PublicKey, error) {
-		key, err := rsa.GenerateKey(rand.Reader, 1024)
-		if err != nil {
-			t.Fatalf("failed to generate a private RSA key: %s", err)
-		}
-		return &key.PublicKey, nil
-	}
+	defer stubDefaultPublicKeyFunc(t)()
 	fakeFs := ioutils.NewMapFilesystem()
 	repo, err := scm.NewRepository(gitOpsURL)
 	assertNoError(t, err)
-	got, err := createInitialFiles(fakeFs, repo, prefix, gitOpsWebhook, "")
+	got, err := createInitialFiles(fakeFs, repo, prefix, gitOpsWebhook, "", "test-ns")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,13 +44,13 @@ func TestInitialFiles(t *testing.T) {
 	want := res.Resources{
 		pipelinesFile: createManifest(gitOpsURL, &config.Config{Pipelines: testpipelineConfig}),
 	}
-	resources, err := createCICDResources(fakeFs, repo, testpipelineConfig, gitOpsWebhook, "")
+	resources, err := createCICDResources(fakeFs, repo, testpipelineConfig, gitOpsWebhook, "", "test-ns")
 	if err != nil {
 		t.Fatalf("CreatePipelineResources() failed due to :%s\n", err)
 	}
 	files := getResourceFiles(resources)
 
-	want = res.Merge(addPrefixToResources("config/tst-cicd/base/pipelines", resources), want)
+	want = res.Merge(addPrefixToResources("config/tst-cicd/base", resources), want)
 	want = res.Merge(addPrefixToResources("config/tst-cicd", getCICDKustomization(files)), want)
 
 	if diff := cmp.Diff(want, got, cmpopts.IgnoreMapEntries(ignoreSecrets)); diff != "" {
@@ -72,18 +59,15 @@ func TestInitialFiles(t *testing.T) {
 }
 
 func ignoreSecrets(k string, v interface{}) bool {
-	return k == "config/tst-cicd/base/pipelines/03-secrets/gitops-webhook-secret.yaml"
+	return k == "config/tst-cicd/base/03-secrets/gitops-webhook-secret.yaml"
 }
 
 func TestGetCICDKustomization(t *testing.T) {
 	want := res.Resources{
-		"base/kustomization.yaml": res.Kustomization{
-			Bases: []string{"./pipelines"},
-		},
 		"overlays/kustomization.yaml": res.Kustomization{
 			Bases: []string{"../base"},
 		},
-		"base/pipelines/kustomization.yaml": res.Kustomization{
+		"base/kustomization.yaml": res.Kustomization{
 			Resources: []string{"resource1", "resource2"},
 		},
 	}

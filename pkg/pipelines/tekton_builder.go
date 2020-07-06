@@ -56,7 +56,7 @@ func (tb *tektonBuilder) Service(env *config.Environment, svc *config.Service) e
 }
 
 func getEventListenerPath(cicdPath string) string {
-	return filepath.Join(cicdPath, "base", "pipelines", eventListenerPath)
+	return filepath.Join(cicdPath, "base", eventListenerPath)
 }
 
 func createTriggersForCICD(gitOpsRepo string, cfg *config.PipelinesConfig) ([]v1alpha1.EventListenerTrigger, error) {
