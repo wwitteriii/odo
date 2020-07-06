@@ -107,11 +107,10 @@ func NewCmdBootstrap(name, fullName string) *cobra.Command {
 	bootstrapCmd.Flags().StringVarP(&o.ImageRepo, "image-repo", "", "", "Used to push built images")
 
 	bootstrapCmd.Flags().StringVarP(&o.SealedSecretsNamespace, "sealed-secrets-ns", "", "", "namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
+
 	bootstrapCmd.MarkFlagRequired("gitops-repo-url")
 	bootstrapCmd.MarkFlagRequired("app-repo-url")
-	bootstrapCmd.MarkFlagRequired("dockercfgjson")
 	bootstrapCmd.MarkFlagRequired("image-repo")
-
 	bootstrapCmd.MarkFlagRequired("gitops-repo-url")
 	bootstrapCmd.MarkFlagRequired("gitops-webhook-secret")
 	bootstrapCmd.MarkFlagRequired("app-repo-url")
