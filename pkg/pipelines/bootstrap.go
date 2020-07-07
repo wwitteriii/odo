@@ -101,7 +101,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	appName := repoToAppName(repoName)
 	serviceName := repoName
 	secretName := secrets.MakeServiceWebhookSecretName(ns["dev"], serviceName)
-	envs, configEnv, err := bootstrapEnvironments(appRepo, o.Prefix, secretName, ns)
+	envs, configEnv, err := bootstrapEnvironments(appRepo, o.Prefix, secretName, o.ArgoCDNamespace, ns)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +178,7 @@ func bootstrapServiceDeployment(dev *config.Environment, appName string) (res.Re
 	return resources, nil
 }
 
-func bootstrapEnvironments(repo scm.Repository, prefix, secretName string, ns map[string]string) ([]*config.Environment, *config.Config, error) {
+func bootstrapEnvironments(repo scm.Repository, prefix, secretName, argoCDNamespace string, ns map[string]string) ([]*config.Environment, *config.Config, error) {
 	envs := []*config.Environment{}
 	var pipelinesConfig *config.PipelinesConfig
 	for _, k := range []string{"cicd", "dev", "stage"} {
@@ -203,7 +203,8 @@ func bootstrapEnvironments(repo scm.Repository, prefix, secretName string, ns ma
 			envs = append(envs, env)
 		}
 	}
-	cfg := &config.Config{Pipelines: pipelinesConfig, ArgoCD: &config.ArgoCDConfig{Namespace: "argocd"}}
+
+	cfg := &config.Config{Pipelines: pipelinesConfig, ArgoCD: &config.ArgoCDConfig{Namespace: argoCDNamespace}}
 	return envs, cfg, nil
 }
 
