@@ -112,6 +112,7 @@ func NewCmdBootstrap(name, fullName string) *cobra.Command {
 
 	bootstrapCmd.Flags().StringVar(&o.SealedSecretsService.Namespace, "sealed-secrets-ns", "sealed-secrets", "namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
 	bootstrapCmd.Flags().StringVar(&o.SealedSecretsService.Name, "sealed-secrets-svc", "sealedsecretcontroller-sealed-secrets", "name of the Sealed Secrets services that encrypts secrets")
+	bootstrapCmd.Flags().StringVarP(&o.ArgoCDNamespace, "argocd-ns", "", "argocd", "namespace in which the argocd operator is installed, to deploy the apps in argocd")
 
 	bootstrapCmd.MarkFlagRequired("gitops-repo-url")
 	bootstrapCmd.MarkFlagRequired("service-repo-url")
