@@ -27,8 +27,8 @@ func PathForPipelines(pipeline *PipelinesConfig) string {
 }
 
 // PathForArgoCD returns the path for recording ArgoCD configuration.
-func PathForArgoCD() string {
-	return filepath.Join("config", "argocd")
+func PathForArgoCD(argocdNS string) string {
+	return filepath.Join("config", argocdNS)
 }
 
 // Manifest describes a set of environments, apps and services for deployment.

@@ -61,7 +61,6 @@ type resource struct {
 const (
 	defaultServer      = "https://kubernetes.default.svc"
 	defaultProject     = "default"
-	ArgoCDNamespace    = "argocd"
 	parentAppFile      = "argo-app.yaml"
 	argoCDResourceFile = "argocd.yaml"
 )
@@ -97,7 +96,7 @@ type argocdBuilder struct {
 }
 
 func (b *argocdBuilder) Application(env *config.Environment, app *config.Application) error {
-	basePath := filepath.Join(config.PathForArgoCD())
+	basePath := filepath.Join(config.PathForArgoCD(b.argoNS))
 	argoFiles := res.Resources{}
 	filename := filepath.Join(basePath, env.Name+"-"+app.Name+"-app.yaml")
 
@@ -114,7 +113,7 @@ func argoCDConfigResources(cfg *config.Config, repoURL string, files res.Resourc
 	if cfg.ArgoCD.Namespace == "" {
 		return nil
 	}
-	basePath := filepath.Join(config.PathForArgoCD())
+	basePath := filepath.Join(config.PathForArgoCD(argoCDConfig.Namespace))
 	filename := filepath.Join(basePath, "kustomization.yaml")
 	files[filepath.Join(basePath, "argo-app.yaml")] = ignoreDifferences(makeApplication("argo-app", cfg.ArgoCD.Namespace, defaultProject, cfg.ArgoCD.Namespace, defaultServer, argoappv1.ApplicationSource{RepoURL: repoURL, Path: basePath}))
 	if cfg.Pipelines != nil {

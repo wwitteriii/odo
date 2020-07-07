@@ -56,7 +56,7 @@ func buildResources(fs afero.Fs, o *BuildParameters, m *config.Manifest) (res.Re
 	}
 
 	resources = res.Merge(elFiles, resources)
-	argoApps, err := argocd.Build(argocd.ArgoCDNamespace, m.GitOpsURL, m)
+	argoApps, err := argocd.Build(m.Config.ArgoCD.Namespace, m.GitOpsURL, m)
 	if err != nil {
 		return nil, err
 	}

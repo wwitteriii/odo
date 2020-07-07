@@ -8,7 +8,7 @@ import (
 
 const scriptTemplate = `#!/bin/sh
 is_argocd=false
-argo_path="config/argocd"
+argo_path="config/{{ .ARGOCDEnv }}"
 cicd_path="config/{{ .CICDEnv }}"
 cmd={{ .Cmd }}
 overall_exit=0
@@ -51,14 +51,15 @@ exit $overall_exit
 `
 
 type templateParam struct {
-	Cmd     string
-	CICDEnv string
+	Cmd       string
+	CICDEnv   string
+	ARGOCDEnv string
 }
 
 // MakeScript will create a script that can dry-run/apply
 // across all environments/applications
-func MakeScript(command, cicdEnv string) (string, error) {
-	params := templateParam{CICDEnv: cicdEnv, Cmd: command}
+func MakeScript(command, cicdEnv, argoCDEnv string) (string, error) {
+	params := templateParam{ARGOCDEnv: argoCDEnv, CICDEnv: cicdEnv, Cmd: command}
 	template, err := template.New("dryrun_script").Parse(scriptTemplate)
 	if err != nil {
 		return "", fmt.Errorf("unable to parse template: %v", err)

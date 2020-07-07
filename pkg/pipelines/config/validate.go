@@ -198,7 +198,7 @@ func (vv *validateVisitor) validateConfig(manifest *Manifest) []error {
 	errs := []error{}
 	if manifest.Config != nil {
 		if manifest.Config.ArgoCD != nil {
-			if err := validateName(manifest.Config.ArgoCD.Namespace, yamlPath(PathForArgoCD())); err != nil {
+			if err := validateName(manifest.Config.ArgoCD.Namespace, yamlPath(PathForArgoCD(manifest.Config.ArgoCD.Namespace))); err != nil {
 				errs = append(errs, err)
 			}
 			vv.configNames[manifest.Config.ArgoCD.Namespace] = true

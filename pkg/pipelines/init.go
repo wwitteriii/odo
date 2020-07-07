@@ -213,7 +213,7 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 	}
 
 	outputs[rolebindingsPath] = roles.CreateClusterRoleBinding(meta.NamespacedName("", roleBindingName), sa, "ClusterRole", roles.ClusterRoleName)
-	script, err := dryrun.MakeScript("kubectl", cicdNamespace)
+	script, err := dryrun.MakeScript("kubectl", cicdNamespace, argoCDNS)
 	if err != nil {
 		return nil, err
 	}
