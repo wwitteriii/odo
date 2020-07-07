@@ -100,16 +100,15 @@ func NewCmdBootstrap(name, fullName string) *cobra.Command {
 	bootstrapCmd.Flags().StringVar(&o.ServiceRepoURL, "service-repo-url", "", "Service source e.g. https://github.com/organisation/service")
 	bootstrapCmd.Flags().StringVar(&o.ServiceWebhookSecret, "service-webhook-secret", "", "Provide the GitHub webhook secret for Service repository (if not provided, it will be auto-generated)")
 
-	bootstrapCmd.Flags().StringVar(&o.DockerConfigJSONFilename, "dockercfgjson", "", "provide the dockercfgjson path")
+	bootstrapCmd.Flags().StringVar(&o.DockerConfigJSONFilename, "dockercfgjson", "~/.docker/config.json", "authenticates the image push to the desired image registry, path to config.json")
 	bootstrapCmd.Flags().StringVar(&o.InternalRegistryHostname, "internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "internal image registry hostname")
-	bootstrapCmd.Flags().StringVar(&o.OutputPath, "output", ".", "Folder path to add Gitops resources")
-	bootstrapCmd.Flags().StringVarP(&o.Prefix, "prefix", "p", "", "Add a prefix to the environment names")
-	bootstrapCmd.Flags().StringVarP(&o.ImageRepo, "image-repo", "", "", "Used to push built images")
+	bootstrapCmd.Flags().StringVar(&o.OutputPath, "output", ".", "folder path to add Gitops resources")
+	bootstrapCmd.Flags().StringVarP(&o.Prefix, "prefix", "p", "", "add a prefix to the environment names")
+	bootstrapCmd.Flags().StringVarP(&o.ImageRepo, "image-repo", "", "", "used to push built images")
 
 	bootstrapCmd.Flags().StringVarP(&o.SealedSecretsNamespace, "sealed-secrets-ns", "", "kube-system", "namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
 	bootstrapCmd.MarkFlagRequired("gitops-repo-url")
 	bootstrapCmd.MarkFlagRequired("service-repo-url")
-	bootstrapCmd.MarkFlagRequired("dockercfgjson")
 	bootstrapCmd.MarkFlagRequired("image-repo")
 
 	return bootstrapCmd
