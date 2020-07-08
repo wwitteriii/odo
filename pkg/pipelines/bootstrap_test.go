@@ -41,7 +41,6 @@ func TestBootstrapManifest(t *testing.T) {
 		ServiceRepoURL:           testSvcRepo,
 		ImageRepo:                "image/repo",
 		ServiceWebhookSecret:     "456",
-		Prefix:                   "tst-",
 		StatusTrackerAccessToken: "this-is-a-test",
 	}
 
