@@ -180,7 +180,8 @@ func bootstrapServiceDeployment(dev *config.Environment, appName string) (res.Re
 func bootstrapEnvironments(repo scm.Repository, prefix, secretName string, ns map[string]string) ([]*config.Environment, *config.Config, error) {
 	envs := []*config.Environment{}
 	var pipelinesConfig *config.PipelinesConfig
-	for k, v := range ns {
+	for _, k := range []string{"cicd", "dev", "stage"} {
+		v := ns[k]
 		if k == "cicd" {
 			pipelinesConfig = &config.PipelinesConfig{Name: prefix + "cicd"}
 		} else {
