@@ -47,8 +47,8 @@ func (r *githubSpec) pushBindingName() string {
 
 func (r *githubSpec) pushBindingParams() []triggersv1.Param {
 	return []triggersv1.Param{
-		createBindingParam("gitref", "$(body.ref)"),
-		createBindingParam("gitsha", "$(body.head_commit.id)"),
+		createBindingParam("io.openshift.build.commit.ref", "$(body.ref)"),
+		createBindingParam("io.openshift.build.commit.id", "$(body.head_commit.id)"),
 		createBindingParam("gitrepositoryurl", "$(body.repository.clone_url)"),
 		createBindingParam("fullname", "$(body.repository.full_name)"),
 		createBindingParam("commitdate", "$(body.head_commit.timestamp)"),

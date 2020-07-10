@@ -81,11 +81,11 @@ func CreateCDPushTemplate(ns, saName string) triggersv1.TriggerTemplate {
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 
-				createTemplateParamSpecDefault("gitref", "The git revision", "master"),
+				createTemplateParamSpecDefault("io.openshift.build.commit.ref", "The git revision", "master"),
 				createTemplateParamSpec("gitrepositoryurl", "The git repository url"),
-				createTemplateParamSpec("commitdate", "The date at which the commit was made"),
-				createTemplateParamSpec("commitauthor", "The name of the github user handle that made the commit"),
-				createTemplateParamSpec("commitmessage", "The commit message"),
+				createTemplateParamSpec("io.openshift.build.commit.date", "The date at which the commit was made"),
+				createTemplateParamSpec("io.openshift.build.commit.author", "The name of the github user handle that made the commit"),
+				createTemplateParamSpec("io.openshift.build.commit.message", "The commit message"),
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{
