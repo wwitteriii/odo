@@ -83,6 +83,9 @@ func CreateCDPushTemplate(ns, saName string) triggersv1.TriggerTemplate {
 
 				createTemplateParamSpecDefault("gitref", "The git revision", "master"),
 				createTemplateParamSpec("gitrepositoryurl", "The git repository url"),
+				createTemplateParamSpec("commitdate", "The date at which the commit was made"),
+				createTemplateParamSpec("commitauthor", "The name of the github user handle that made the commit"),
+				createTemplateParamSpec("commitmessage", "The commit message"),
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{

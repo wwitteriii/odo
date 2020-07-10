@@ -51,6 +51,9 @@ func (r *githubSpec) pushBindingParams() []triggersv1.Param {
 		createBindingParam("gitsha", "$(body.head_commit.id)"),
 		createBindingParam("gitrepositoryurl", "$(body.repository.clone_url)"),
 		createBindingParam("fullname", "$(body.repository.full_name)"),
+		createBindingParam("commitdate", "$(body.head_commit.timestamp)"),
+		createBindingParam("commitmessage", "$(body.head_commit.message"),
+		createBindingParam("commitauthor", "$(body.head_commit.author.name)"),
 	}
 }
 
