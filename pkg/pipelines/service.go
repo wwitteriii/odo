@@ -150,7 +150,9 @@ func createImageRepoResources(m *config.Manifest, cfg *config.PipelinesConfig, e
 	filenames = append(filenames, bindingFilename)
 
 	if isInternalRegistry {
-		files, regRes, err := imagerepo.CreateInternalRegistryResources(cfg, roles.CreateServiceAccount(meta.NamespacedName(cfg.Name, saName)), imageRepo)
+		files, regRes, err := imagerepo.CreateInternalRegistryResources(cfg,
+			roles.CreateServiceAccount(meta.NamespacedName(cfg.Name, saName)),
+			imageRepo, m.GitOpsURL)
 		if err != nil {
 			return nil, nil, "", fmt.Errorf("failed to get resources for internal image repository: %v", err)
 		}

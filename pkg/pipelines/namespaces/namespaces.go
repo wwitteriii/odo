@@ -10,6 +10,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+const (
+	vcsURIAnnotation = "app.openshift.io/vcs-uri"
+)
+
 var (
 	namespaceBaseNames = map[string]string{
 		"dev":   "dev",
@@ -21,10 +25,10 @@ var (
 )
 
 // Namespaces create namespaces for the given names.
-func Namespaces(names []string) []*corev1.Namespace {
+func Namespaces(names []string, gitOpsRepoURL string) []*corev1.Namespace {
 	ns := []*corev1.Namespace{}
 	for _, n := range names {
-		ns = append(ns, Create(n))
+		ns = append(ns, Create(n, gitOpsRepoURL))
 	}
 	return ns
 }
@@ -40,11 +44,14 @@ func NamesWithPrefix(prefix string) map[string]string {
 }
 
 // Create creates a Namespace value from a string.
-func Create(name string) *corev1.Namespace {
+func Create(name, gitOpsRepoURL string) *corev1.Namespace {
 	ns := &corev1.Namespace{
 		TypeMeta: namespaceTypeMeta,
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
+			Annotations: map[string]string{
+				vcsURIAnnotation: gitOpsRepoURL,
+			},
 		},
 	}
 	return ns

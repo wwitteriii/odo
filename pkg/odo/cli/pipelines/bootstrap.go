@@ -39,7 +39,11 @@ type BootstrapParameters struct {
 
 // NewBootstrapParameters bootstraps a BootstrapParameters instance.
 func NewBootstrapParameters() *BootstrapParameters {
-	return &BootstrapParameters{BootstrapOptions: &pipelines.BootstrapOptions{}}
+	return &BootstrapParameters{
+		BootstrapOptions: &pipelines.BootstrapOptions{
+			InitOptions: &pipelines.InitOptions{},
+		},
+	}
 }
 
 // Complete completes BootstrapParameters after they've been created.

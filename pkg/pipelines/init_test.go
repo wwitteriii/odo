@@ -32,19 +32,20 @@ func TestInitialFiles(t *testing.T) {
 	prefix := "tst-"
 	gitOpsURL := "https://github.com/foo/test-repo"
 	gitOpsWebhook := "123"
+	o := &InitOptions{Prefix: prefix, GitOpsRepoURL: gitOpsURL, GitOpsWebhookSecret: gitOpsWebhook}
+
 	defer stubDefaultPublicKeyFunc(t)()
 	fakeFs := ioutils.NewMapFilesystem()
 	repo, err := scm.NewRepository(gitOpsURL)
 	assertNoError(t, err)
-	got, err := createInitialFiles(fakeFs, repo, prefix, gitOpsWebhook, "", "test-ns")
-	if err != nil {
-		t.Fatal(err)
-	}
+
+	got, err := createInitialFiles(fakeFs, repo, o)
+	assertNoError(t, err)
 
 	want := res.Resources{
 		pipelinesFile: createManifest(gitOpsURL, &config.Config{Pipelines: testpipelineConfig}),
 	}
-	resources, err := createCICDResources(fakeFs, repo, testpipelineConfig, gitOpsWebhook, "", "test-ns")
+	resources, err := createCICDResources(fakeFs, repo, testpipelineConfig, o)
 	if err != nil {
 		t.Fatalf("CreatePipelineResources() failed due to :%s\n", err)
 	}
@@ -99,30 +100,4 @@ func TestAddPrefixToResources(t *testing.T) {
 	if diff := cmp.Diff(want, addPrefixToResources("test-prefix", files)); diff != "" {
 		t.Fatalf("addPrefixToResources failed, diff %s\n", diff)
 	}
-}
-
-func TestMerge(t *testing.T) {
-	map1 := map[string]interface{}{
-		"test-1": "value-1",
-	}
-	map2 := map[string]interface{}{
-		"test-1": "value-a",
-		"test-2": "value-2",
-	}
-	map3 := map[string]interface{}{
-		"test-1": "value-a",
-		"test-2": "value-2",
-	}
-
-	want := res.Resources{
-		"test-1": "value-1",
-		"test-2": "value-2",
-	}
-	if diff := cmp.Diff(want, res.Merge(map1, map2)); diff != "" {
-		t.Fatalf("merge failed: %s\n", diff)
-	}
-	if diff := cmp.Diff(map2, map3); diff != "" {
-		t.Fatalf("original map changed %s\n", diff)
-	}
-
 }

@@ -263,8 +263,8 @@ func TestAddServiceWithoutApp(t *testing.T) {
 		ServiceName:       "test",
 	})
 	assertNoError(t, err)
-	for w := range want {
-		if diff := cmp.Diff(got[w], want[w]); diff != "" {
+	for i := range want {
+		if diff := cmp.Diff(want[i], got[i]); diff != "" {
 			t.Fatalf("serviceResources() failed: %v", diff)
 		}
 	}
@@ -381,13 +381,10 @@ func TestServiceWithArgoCD(t *testing.T) {
 }
 
 func buildManifest(withPipelines, withArgoCD bool) *config.Manifest {
-
 	m := config.Manifest{
 		GitOpsURL: "http://github.com/org/test",
 	}
-
 	m.Environments = environment(withPipelines)
-
 	if withArgoCD {
 		m.Config = &config.Config{
 			ArgoCD: &config.ArgoCDConfig{
@@ -404,7 +401,6 @@ func buildManifest(withPipelines, withArgoCD bool) *config.Manifest {
 			Name: "cicd",
 		}
 	}
-
 	return &m
 }
 

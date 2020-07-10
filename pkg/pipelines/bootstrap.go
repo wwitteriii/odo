@@ -33,7 +33,7 @@ const (
 
 // BootstrapOptions is a struct that provides the optional flags
 type BootstrapOptions struct {
-	InitOptions
+	*InitOptions
 	ServiceRepoURL       string // This is the full URL to your GitHub repository for your app source.
 	ServiceWebhookSecret string // This is the secret for authenticating hooks from your app source.
 }
@@ -92,9 +92,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		return nil, fmt.Errorf("invalid app repo URL: %v", err)
 	}
 
-	bootstrapped, err := createInitialFiles(
-		appFs, gitOpsRepo, o.Prefix, o.GitOpsWebhookSecret,
-		o.DockerConfigJSONFilename, o.SealedSecretsNamespace)
+	bootstrapped, err := createInitialFiles(appFs, gitOpsRepo, o.InitOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +139,9 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		return nil, fmt.Errorf("no kustomization for the %s environment found", kustomizePath)
 	}
 	if isInternalRegistry {
-		filenames, resources, err := imagerepo.CreateInternalRegistryResources(cfg, roles.CreateServiceAccount(meta.NamespacedName(cfg.Name, saName)), imageRepo)
+		filenames, resources, err := imagerepo.CreateInternalRegistryResources(
+			cfg, roles.CreateServiceAccount(meta.NamespacedName(cfg.Name, saName)),
+			imageRepo, o.GitOpsRepoURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get resources for internal image repository: %v", err)
 		}

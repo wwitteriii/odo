@@ -21,7 +21,7 @@ func TestCompleteBootstrapParameters(t *testing.T) {
 
 	for _, tt := range completeTests {
 		o := BootstrapParameters{
-			&pipelines.BootstrapOptions{InitOptions: pipelines.InitOptions{Prefix: tt.prefix}},
+			&pipelines.BootstrapOptions{InitOptions: &pipelines.InitOptions{Prefix: tt.prefix}},
 			&genericclioptions.Context{},
 		}
 
@@ -56,7 +56,7 @@ func TestAddSuffixWithBootstrap(t *testing.T) {
 		t.Run(test.name, func(rt *testing.T) {
 			o := BootstrapParameters{
 				&pipelines.BootstrapOptions{
-					InitOptions:    pipelines.InitOptions{GitOpsRepoURL: test.gitOpsURL},
+					InitOptions:    &pipelines.InitOptions{GitOpsRepoURL: test.gitOpsURL},
 					ServiceRepoURL: test.appURL},
 				&genericclioptions.Context{}}
 
@@ -88,7 +88,7 @@ func TestValidateBootstrapParameters(t *testing.T) {
 	for _, tt := range optionTests {
 		o := BootstrapParameters{
 			&pipelines.BootstrapOptions{
-				InitOptions: pipelines.InitOptions{GitOpsRepoURL: tt.gitRepo, Prefix: "test"}},
+				InitOptions: &pipelines.InitOptions{GitOpsRepoURL: tt.gitRepo, Prefix: "test"}},
 			&genericclioptions.Context{},
 		}
 		err := o.Validate()

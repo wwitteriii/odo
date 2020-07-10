@@ -35,7 +35,7 @@ func TestBootstrapManifest(t *testing.T) {
 	}
 
 	params := &BootstrapOptions{
-		InitOptions: InitOptions{
+		InitOptions: &InitOptions{
 			Prefix:              "tst-",
 			GitOpsRepoURL:       testGitOpsRepo,
 			ImageRepo:           "image/repo",

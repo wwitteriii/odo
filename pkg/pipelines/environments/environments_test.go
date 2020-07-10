@@ -13,9 +13,11 @@ import (
 	"github.com/spf13/afero"
 )
 
+const testGitOpsRepoURL = "https://github.com/example/example.git"
+
 func TestBuildEnvironmentFilesWithAppsToEnvironment(t *testing.T) {
 	var appFs = ioutils.NewMapFilesystem()
-	m := buildManifest(true)
+	m := buildManifestWithCICD()
 
 	files, err := Build(appFs, m, "pipelines", AppsToEnvironments)
 	if err != nil {
@@ -25,10 +27,11 @@ func TestBuildEnvironmentFilesWithAppsToEnvironment(t *testing.T) {
 		"environments/test-dev/apps/my-app-1/base/kustomization.yaml": &res.Kustomization{Bases: []string{
 			"../../../services/service-http",
 			"../../../services/service-metrics",
-			"../../../env/base"}},
+			"../../../env/base"},
+		},
 		"environments/test-dev/apps/my-app-1/kustomization.yaml":                     &res.Kustomization{Bases: []string{"overlays"}},
 		"environments/test-dev/apps/my-app-1/overlays/kustomization.yaml":            &res.Kustomization{Bases: []string{"../base"}},
-		"environments/test-dev/env/base/test-dev-environment.yaml":                   namespaces.Create("test-dev"),
+		"environments/test-dev/env/base/test-dev-environment.yaml":                   namespaces.Create("test-dev", testGitOpsRepoURL),
 		"environments/test-dev/env/base/test-dev-rolebinding.yaml":                   createRoleBinding(m.Environments[0], "environments/test-dev/env/base", "cicd", "pipelines"),
 		"environments/test-dev/env/base/kustomization.yaml":                          &res.Kustomization{Resources: []string{"test-dev-environment.yaml", "test-dev-rolebinding.yaml"}},
 		"environments/test-dev/env/overlays/kustomization.yaml":                      &res.Kustomization{Bases: []string{"../base"}},
@@ -47,19 +50,22 @@ func TestBuildEnvironmentFilesWithAppsToEnvironment(t *testing.T) {
 
 func TestBuildEnvironmentFilesWithEnvironmentsToApps(t *testing.T) {
 	var appFs = ioutils.NewMapFilesystem()
-	m := buildManifest(true)
+	m := buildManifestWithCICD()
 
 	files, err := Build(appFs, m, "pipelines", EnvironmentsToApps)
 	if err != nil {
 		t.Fatal(err)
 	}
 	want := res.Resources{
-		"environments/test-dev/apps/my-app-1/base/kustomization.yaml": &res.Kustomization{Bases: []string{
-			"../../../services/service-http",
-			"../../../services/service-metrics"}},
+		"environments/test-dev/apps/my-app-1/base/kustomization.yaml": &res.Kustomization{
+			Bases: []string{
+				"../../../services/service-http",
+				"../../../services/service-metrics",
+			},
+		},
 		"environments/test-dev/apps/my-app-1/kustomization.yaml":          &res.Kustomization{Bases: []string{"overlays"}},
 		"environments/test-dev/apps/my-app-1/overlays/kustomization.yaml": &res.Kustomization{Bases: []string{"../base"}},
-		"environments/test-dev/env/base/test-dev-environment.yaml":        namespaces.Create("test-dev"),
+		"environments/test-dev/env/base/test-dev-environment.yaml":        namespaces.Create("test-dev", testGitOpsRepoURL),
 		"environments/test-dev/env/base/test-dev-rolebinding.yaml":        createRoleBinding(m.Environments[0], "environments/test-dev/env/base", "cicd", "pipelines"),
 		"environments/test-dev/env/base/kustomization.yaml": &res.Kustomization{
 			Resources: []string{"test-dev-environment.yaml", "test-dev-rolebinding.yaml"},
@@ -151,7 +157,7 @@ func TestBuildEnvironmentsAddsKustomizedFiles(t *testing.T) {
 
 func TestBuildEnvironmentFilesWithNoCICDEnv(t *testing.T) {
 	var appFs = ioutils.NewMapFilesystem()
-	m := buildManifest(false)
+	m := buildManifest()
 
 	files, err := Build(appFs, m, "pipelines", AppsToEnvironments)
 	if err != nil {
@@ -159,13 +165,15 @@ func TestBuildEnvironmentFilesWithNoCICDEnv(t *testing.T) {
 	}
 
 	want := res.Resources{
-		"environments/test-dev/apps/my-app-1/base/kustomization.yaml": &res.Kustomization{Bases: []string{
-			"../../../services/service-http",
-			"../../../services/service-metrics",
-			"../../../env/base"}},
+		"environments/test-dev/apps/my-app-1/base/kustomization.yaml": &res.Kustomization{
+			Bases: []string{
+				"../../../services/service-http",
+				"../../../services/service-metrics",
+				"../../../env/base"},
+		},
 		"environments/test-dev/apps/my-app-1/kustomization.yaml":                     &res.Kustomization{Bases: []string{"overlays"}},
 		"environments/test-dev/apps/my-app-1/overlays/kustomization.yaml":            &res.Kustomization{Bases: []string{"../base"}},
-		"environments/test-dev/env/base/test-dev-environment.yaml":                   namespaces.Create("test-dev"),
+		"environments/test-dev/env/base/test-dev-environment.yaml":                   namespaces.Create("test-dev", testGitOpsRepoURL),
 		"environments/test-dev/env/base/kustomization.yaml":                          &res.Kustomization{Resources: []string{"test-dev-environment.yaml"}},
 		"environments/test-dev/env/overlays/kustomization.yaml":                      &res.Kustomization{Bases: []string{"../base"}},
 		"environments/test-dev/services/service-http/kustomization.yaml":             &res.Kustomization{Bases: []string{"overlays"}},
@@ -190,18 +198,19 @@ func filesFromResources(r res.Resources) []string {
 	return names
 }
 
-func buildManifest(withCICD bool) *config.Manifest {
-	if withCICD {
-		return &config.Manifest{
-			Config: &config.Config{
-				Pipelines: &config.PipelinesConfig{
-					Name: "cicd",
-				},
-			},
-			Environments: createEnvironment(),
-		}
+func buildManifestWithCICD() *config.Manifest {
+	m := buildManifest()
+	m.Config = &config.Config{
+		Pipelines: &config.PipelinesConfig{
+			Name: "cicd",
+		},
 	}
+	return m
+}
+
+func buildManifest() *config.Manifest {
 	return &config.Manifest{
+		GitOpsURL:    testGitOpsRepoURL,
 		Environments: createEnvironment(),
 	}
 

@@ -34,6 +34,7 @@ type envBuilder struct {
 	fs              afero.Fs
 	saName          string
 	appLinks        AppLinks
+	gitOpsRepoURL   string
 }
 
 // Build generates a set of resources from the manifest, related to the
@@ -41,13 +42,20 @@ type envBuilder struct {
 func Build(fs afero.Fs, m *config.Manifest, saName string, o AppLinks) (res.Resources, error) {
 	files := res.Resources{}
 	cfg := m.GetPipelinesConfig()
-	eb := &envBuilder{fs: fs, files: files, pipelinesConfig: cfg, saName: saName, appLinks: o}
+	eb := &envBuilder{
+		fs:              fs,
+		files:           files,
+		pipelinesConfig: cfg,
+		saName:          saName,
+		appLinks:        o,
+		gitOpsRepoURL:   m.GitOpsURL,
+	}
 	return eb.files, m.Walk(eb)
 }
 
 func (b *envBuilder) Application(env *config.Environment, app *config.Application) error {
 	appPath := filepath.Join(config.PathForApplication(env, app))
-	appFiles, err := filesForApplication(env, appPath, app, b.appLinks)
+	appFiles, err := filesForApplication(env, b.gitOpsRepoURL, appPath, app, b.appLinks)
 	if err != nil {
 		return err
 	}
@@ -78,7 +86,7 @@ func (b *envBuilder) Service(env *config.Environment, svc *config.Service) error
 func (b *envBuilder) Environment(env *config.Environment) error {
 	envPath := filepath.Join(config.PathForEnvironment(env), "env")
 	basePath := filepath.Join(envPath, "base")
-	envFiles := filesForEnvironment(basePath, env)
+	envFiles := filesForEnvironment(basePath, env, b.gitOpsRepoURL)
 	kustomizedFilenames, err := ListFiles(b.fs, basePath)
 	if err != nil {
 		return fmt.Errorf("failed to list initial files for %s: %s", basePath, err)
@@ -110,14 +118,14 @@ func (b *envBuilder) Environment(env *config.Environment) error {
 	return nil
 }
 
-func filesForEnvironment(basePath string, env *config.Environment) res.Resources {
+func filesForEnvironment(basePath string, env *config.Environment, gitOpsRepoURL string) res.Resources {
 	envFiles := res.Resources{}
 	filename := filepath.Join(basePath, fmt.Sprintf("%s-environment.yaml", env.Name))
-	envFiles[filename] = namespaces.Create(env.Name)
+	envFiles[filename] = namespaces.Create(env.Name, gitOpsRepoURL)
 	return envFiles
 }
 
-func filesForApplication(env *config.Environment, appPath string, app *config.Application, o AppLinks) (res.Resources, error) {
+func filesForApplication(env *config.Environment, gitOpsRepoURL, appPath string, app *config.Application, o AppLinks) (res.Resources, error) {
 	envPath := filepath.Join(config.PathForEnvironment(env), "env")
 	envBasePath := filepath.Join(envPath, "base")
 	envFiles := res.Resources{}
@@ -148,9 +156,10 @@ func filesForApplication(env *config.Environment, appPath string, app *config.Ap
 	}
 
 	envFiles[filepath.Join(appPath, kustomization)] = &res.Kustomization{Bases: []string{"overlays"}}
-	envFiles[filepath.Join(appPath, "base", kustomization)] = &res.Kustomization{Bases: relServices}
+	envFiles[filepath.Join(appPath, "base", kustomization)] = &res.Kustomization{
+		Bases: relServices,
+	}
 	envFiles[overlaysFile] = &res.Kustomization{Bases: []string{overlayRel}}
-
 	return envFiles, nil
 }
 

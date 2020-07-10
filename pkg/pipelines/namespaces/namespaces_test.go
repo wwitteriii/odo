@@ -9,12 +9,15 @@ import (
 	testclient "k8s.io/client-go/kubernetes/fake"
 )
 
+const testGitOpsRepoURL = "https://github.com/redhat-developer/testing.git"
+
 func TestCreate(t *testing.T) {
-	ns := Create("test-environment")
+	ns := Create("test-environment", testGitOpsRepoURL)
 	want := &corev1.Namespace{
 		TypeMeta: namespaceTypeMeta,
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-environment",
+			Name:        "test-environment",
+			Annotations: map[string]string{vcsURIAnnotation: testGitOpsRepoURL},
 		},
 	}
 
@@ -40,11 +43,11 @@ func TestNamespaces(t *testing.T) {
 		"test-dev",
 		"test-stage",
 		"test-cicd",
-	})
+	}, testGitOpsRepoURL)
 	want := []*corev1.Namespace{
-		Create("test-dev"),
-		Create("test-stage"),
-		Create("test-cicd"),
+		Create("test-dev", testGitOpsRepoURL),
+		Create("test-stage", testGitOpsRepoURL),
+		Create("test-cicd", testGitOpsRepoURL),
 	}
 	if diff := cmp.Diff(want, ns); diff != "" {
 		t.Fatalf("Namespaces() failed got\n%s", diff)
@@ -68,7 +71,7 @@ func TestExists(t *testing.T) {
 			false,
 		},
 	}
-	validNamespace := Create("sample")
+	validNamespace := Create("sample", testGitOpsRepoURL)
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			cs := testclient.NewSimpleClientset(validNamespace)

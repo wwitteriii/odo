@@ -78,7 +78,7 @@ func setupGitOpsTree(t *testing.T, fs afero.Fs, base string, withArgoCD bool) {
 	if withArgoCD {
 		argoDir := res.Resources{
 			"config/argocd/config/kustomization.yaml": res.Kustomization{Resources: []string{"argo.yaml"}},
-			"config/argocd/config/argo.yaml":          namespaces.Create("argo"),
+			"config/argocd/config/argo.yaml":          namespaces.Create("argo", "https://example.com/gitops.git"),
 		}
 		files = res.Merge(argoDir, files)
 	}

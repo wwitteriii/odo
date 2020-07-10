@@ -36,5 +36,4 @@ func TestMerge(t *testing.T) {
 			t.Fatalf("failed merge: %s\n", diff)
 		}
 	}
-
 }

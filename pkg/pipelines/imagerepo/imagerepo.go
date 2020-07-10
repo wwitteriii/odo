@@ -59,7 +59,7 @@ func imageRepoValidationErrors(imageRepo string) error {
 	return fmt.Errorf("failed to parse image repo:%s, expected image repository in the form <registry>/<username>/<repository> or <project>/<app> for internal registry", imageRepo)
 }
 
-func CreateInternalRegistryResources(cfg *config.PipelinesConfig, sa *corev1.ServiceAccount, imageRepo string) ([]string, res.Resources, error) {
+func CreateInternalRegistryResources(cfg *config.PipelinesConfig, sa *corev1.ServiceAccount, imageRepo, gitOpsRepoURL string) ([]string, res.Resources, error) {
 	// Provide access to service account for using internal registry
 	namespace := strings.Split(imageRepo, "/")[1]
 
@@ -68,7 +68,7 @@ func CreateInternalRegistryResources(cfg *config.PipelinesConfig, sa *corev1.Ser
 
 	filename := filepath.Join("01-namespaces", fmt.Sprintf("%s.yaml", namespace))
 	namespacePath := filepath.Join(config.PathForPipelines(cfg), "base", "pipelines", filename)
-	resources[namespacePath] = namespaces.Create(namespace)
+	resources[namespacePath] = namespaces.Create(namespace, gitOpsRepoURL)
 	filenames = append(filenames, filename)
 
 	filename, roleBinding := createInternalRegistryRoleBinding(cfg, namespace, sa)
