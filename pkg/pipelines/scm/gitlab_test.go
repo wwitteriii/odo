@@ -34,8 +34,17 @@ func TestCreatePushBindingForGitlab(t *testing.T) {
 					Value: "$(body.project.git_http_url)",
 				},
 				{
+					Name:  "io.openshift.build.commit.date",
+					Value: "$(body.commits[body.commits.length-1].timestamp)",
+				},
+
+				{
+					Name:  "io.openshift.build.commit.message",
+					Value: "(body.commits[body.commits.length-1].message)",
+				},
+				{
 					Name:  "io.openshift.build.commit.author",
-					Value: "$(body.user_username)",
+					Value: "$(body.commits[body.commits.length-1].author.name)",
 				},
 			},
 		},
