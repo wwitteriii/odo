@@ -21,10 +21,22 @@ func TestCreatePushBindingForGitlab(t *testing.T) {
 		},
 		Spec: triggersv1.TriggerBindingSpec{
 			Params: []triggersv1.Param{
-				{Name: "gitref", Value: "$(body.ref)"},
-				{Name: "gitsha", Value: "$(body.after)"},
-				{Name: "gitrepositoryurl", Value: "$(body.project.git_http_url)"},
-				{Name: "fullname", Value: "$(body.project.path_with_namespace)"},
+				{
+					Name:  "io.openshift.build.commit.ref",
+					Value: "$(body.ref)",
+				},
+				{
+					Name:  "io.openshift.build.commit.id",
+					Value: "$(body.after)",
+				},
+				{
+					Name:  "gitrepositoryurl",
+					Value: "$(body.project.git_http_url)",
+				},
+				{
+					Name:  "io.openshift.build.commit.author",
+					Value: "$(body.user_username)",
+				},
 			},
 		},
 	}
