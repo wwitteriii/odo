@@ -110,8 +110,8 @@ func NewCmdBootstrap(name, fullName string) *cobra.Command {
 	bootstrapCmd.Flags().StringVarP(&o.Prefix, "prefix", "p", "", "add a prefix to the environment names")
 	bootstrapCmd.Flags().StringVarP(&o.ImageRepo, "image-repo", "", "", "used to push built images")
 
-	bootstrapCmd.Flags().StringVar(&o.SealedSecretsServices.Namespace, "sealed-secrets-ns", "sealed-secrets", "namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
-	bootstrapCmd.Flags().StringVar(&o.SealedSecretsServices.Name, "sealed-secrets-svc", "sealedsecretservices-sealed-secrets", "name of the Sealed Secrets services that encrypts secrets")
+	bootstrapCmd.Flags().StringVar(&o.SealedSecretsService.Namespace, "sealed-secrets-ns", "sealed-secrets", "namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
+	bootstrapCmd.Flags().StringVar(&o.SealedSecretsService.Name, "sealed-secrets-svc", "sealedsecretcontroller-sealed-secrets", "name of the Sealed Secrets services that encrypts secrets")
 
 	bootstrapCmd.MarkFlagRequired("gitops-repo-url")
 	bootstrapCmd.MarkFlagRequired("service-repo-url")

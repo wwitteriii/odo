@@ -83,7 +83,7 @@ func TestResource(t *testing.T) {
 	}
 
 	ns := "my-test-ns"
-	res, err := Resources(ns, "test-token", meta.NamespacedName("sealed-secrets-ns", "sealed-secrets-controller"))
+	res, err := Resources(ns, "test-token", meta.NamespacedName("sealed-secrets-ns", "sealed-secrets-svc"))
 	if err != nil {
 		t.Fatal(err)
 	}

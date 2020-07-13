@@ -31,7 +31,7 @@ func TestServiceResourcesWithCICD(t *testing.T) {
 	hookSecret, err := secrets.CreateSealedSecret(
 		meta.NamespacedName(
 			"cicd", "webhook-secret-test-dev-test"),
-		meta.NamespacedName("test-ns", "controller"),
+		meta.NamespacedName("test-ns", "service"),
 		"123",
 		eventlisteners.WebhookSecretKey)
 	assertNoError(t, err)

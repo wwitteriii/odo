@@ -98,11 +98,11 @@ func createStatusTrackerDeployment(ns string) *appsv1.Deployment {
 
 // Resources returns a list of newly created resources that are required start
 // the status-tracker service.
-func Resources(ns, token string, sealedSecretsController types.NamespacedName) ([]interface{}, error) {
+func Resources(ns, token string, sealedSecretsservice types.NamespacedName) ([]interface{}, error) {
 	name := meta.NamespacedName(ns, operatorName)
 	sa := roles.CreateServiceAccount(name)
 
-	githubAuth, err := defaultSecretSealer(meta.NamespacedName(ns, "commit-status-tracker-git-secret"), sealedSecretsController, token, "token")
+	githubAuth, err := defaultSecretSealer(meta.NamespacedName(ns, "commit-status-tracker-git-secret"), sealedSecretsservice, token, "token")
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate Status Tracker Secret: %v", err)
 	}

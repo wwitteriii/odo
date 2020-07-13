@@ -27,7 +27,7 @@ func TestBootstrapManifest(t *testing.T) {
 		secrets.DefaultPublicKeyFunc = f
 	}(secrets.DefaultPublicKeyFunc)
 
-	secrets.DefaultPublicKeyFunc = func(controller types.NamespacedName) (*rsa.PublicKey, error) {
+	secrets.DefaultPublicKeyFunc = func(service types.NamespacedName) (*rsa.PublicKey, error) {
 		key, err := rsa.GenerateKey(rand.Reader, 1024)
 		if err != nil {
 			t.Fatalf("failed to generate a private RSA key: %s", err)
@@ -50,7 +50,7 @@ func TestBootstrapManifest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	hookSecret, err := secrets.CreateSealedSecret(meta.NamespacedName("tst-cicd", "webhook-secret-tst-dev-http-api"), meta.NamespacedName("test-ns", "controller"), "456", eventlisteners.WebhookSecretKey)
+	hookSecret, err := secrets.CreateSealedSecret(meta.NamespacedName("tst-cicd", "webhook-secret-tst-dev-http-api"), meta.NamespacedName("test-ns", "service"), "456", eventlisteners.WebhookSecretKey)
 	if err != nil {
 		t.Fatal(err)
 	}
