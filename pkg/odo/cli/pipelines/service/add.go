@@ -76,8 +76,8 @@ func newCmdAdd(name, fullName string) *cobra.Command {
 	cmd.Flags().StringVar(&o.InternalRegistryHostname, "internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "internal image registry hostname")
 	cmd.Flags().StringVar(&o.PipelinesFilePath, "pipelines-file", "pipelines.yaml", "path to pipelines file")
 
-	cmd.Flags().StringVar(&o.SealedSecretsController.Namespace, "sealed-secrets-ns", "sealed-secrets", "namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
-	cmd.Flags().StringVar(&o.SealedSecretsController.Name, "sealed-secrets-controller", "sealedsecretcontroller-sealed-secrets", "name of the Sealed Secrets controller that encrypts secrets")
+	cmd.Flags().StringVar(&o.SealedSecretsServices.Namespace, "sealed-secrets-ns", "sealed-secrets", "namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
+	cmd.Flags().StringVar(&o.SealedSecretsServices.Name, "sealed-secrets-svc", "sealedsecretservices-sealed-secrets", "name of the Sealed Secrets services that encrypts secrets")
 
 	// required flags
 	_ = cmd.MarkFlagRequired("service-name")

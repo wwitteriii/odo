@@ -117,7 +117,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	}
 	hookSecret, err := secrets.CreateSealedSecret(
 		meta.NamespacedName(ns["cicd"], secretName),
-		o.SealedSecretsController,
+		o.SealedSecretsServices,
 		o.ServiceWebhookSecret,
 		eventlisteners.WebhookSecretKey)
 	if err != nil {

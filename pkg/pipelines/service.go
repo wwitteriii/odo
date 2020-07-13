@@ -29,7 +29,7 @@ type AddServiceOptions struct {
 	PipelinesFilePath        string
 	ServiceName              string
 	WebhookSecret            string
-	SealedSecretsController  types.NamespacedName // SealedSecrets controller name
+	SealedSecretsServices    types.NamespacedName // SealedSecrets controller name
 }
 
 func AddService(p *AddServiceOptions, fs afero.Fs) error {
@@ -84,7 +84,7 @@ func serviceResources(m *config.Manifest, fs afero.Fs, o *AddServiceOptions) (re
 	if cfg != nil {
 		secretName := secrets.MakeServiceWebhookSecretName(o.EnvName, svc.Name)
 		hookSecret, err := secrets.CreateSealedSecret(
-			meta.NamespacedName(cfg.Name, secretName), o.SealedSecretsController, o.WebhookSecret,
+			meta.NamespacedName(cfg.Name, secretName), o.SealedSecretsServices, o.WebhookSecret,
 			eventlisteners.WebhookSecretKey)
 		if err != nil {
 			return nil, err

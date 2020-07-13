@@ -101,8 +101,8 @@ func NewCmdInit(name, fullName string) *cobra.Command {
 	initCmd.Flags().StringVar(&o.InternalRegistryHostname, "internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "internal image registry hostname")
 	initCmd.Flags().StringVar(&o.ImageRepo, "image-repo", "", "image repository in this form <registry>/<username>/<repository> or <project>/<app> for internal registry")
 
-	initCmd.Flags().StringVar(&o.SealedSecretsController.Namespace, "sealed-secrets-ns", "sealed-secrets", "namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
-	initCmd.Flags().StringVar(&o.SealedSecretsController.Name, "sealed-secrets-controller", "sealedsecretcontroller-sealed-secrets", "name of the Sealed Secrets controller that encrypts secrets")
+	initCmd.Flags().StringVar(&o.SealedSecretsServices.Namespace, "sealed-secrets-ns", "sealed-secrets", "namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
+	initCmd.Flags().StringVar(&o.SealedSecretsServices.Name, "sealed-secrets-svc", "sealedsecretServices-sealed-secrets", "name of the Sealed Secrets Services that encrypts secrets")
 
 	return initCmd
 }
