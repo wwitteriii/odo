@@ -117,8 +117,9 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	}
 	hookSecret, err := secrets.CreateSealedSecret(
 		meta.NamespacedName(ns["cicd"], secretName),
+		o.SealedSecretsController,
 		o.ServiceWebhookSecret,
-		eventlisteners.WebhookSecretKey, o.SealedSecretsNamespace, o.SealedSecretsController)
+		eventlisteners.WebhookSecretKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate GitHub Webhook Secret: %v", err)
 	}

@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/afero"
 
 	v1rbac "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	ssv1alpha1 "github.com/bitnami-labs/sealed-secrets/pkg/apis/sealed-secrets/v1alpha1"
 )
@@ -36,11 +37,10 @@ type InitOptions struct {
 	GitOpsWebhookSecret      string // This is the secret for authenticating hooks from your GitOps repo.
 	Prefix                   string
 	DockerConfigJSONFilename string
-	InternalRegistryHostname string // This is the internal registry hostname used for pushing images.
-	ImageRepo                string // This is where built images are pushed to.
-	OutputPath               string // Where to write the bootstrapped files to?
-	SealedSecretsNamespace   string // Where do we find the SealedSecrets service?
-	SealedSecretsController  string // Sealed Secret Controller name
+	InternalRegistryHostname string               // This is the internal registry hostname used for pushing images.
+	ImageRepo                string               // This is where built images are pushed to.
+	OutputPath               string               // Where to write the bootstrapped files to?
+	SealedSecretsController  types.NamespacedName // SealedSecrets controller name
 }
 
 // PolicyRules to be bound to service account
@@ -159,7 +159,7 @@ func createInitialFiles(fs afero.Fs, repo scm.Repository, o *InitOptions) (res.R
 
 // createDockerSecret creates a secret that allows pushing images to upstream
 // repositories.
-func createDockerSecret(fs afero.Fs, dockerConfigJSONFilename, secretNS, sealedSecretsNS, sealedSecretsController string) (*ssv1alpha1.SealedSecret, error) {
+func createDockerSecret(fs afero.Fs, dockerConfigJSONFilename, secretNS string, sealedSecretsController types.NamespacedName) (*ssv1alpha1.SealedSecret, error) {
 	if dockerConfigJSONFilename == "" {
 		return nil, errors.New("failed to generate path to file: --dockerconfigjson flag is not provided")
 	}
@@ -173,7 +173,7 @@ func createDockerSecret(fs afero.Fs, dockerConfigJSONFilename, secretNS, sealedS
 	}
 	defer f.Close()
 
-	dockerSecret, err := secrets.CreateSealedDockerConfigSecret(meta.NamespacedName(secretNS, dockerSecretName), f, sealedSecretsNS, sealedSecretsController)
+	dockerSecret, err := secrets.CreateSealedDockerConfigSecret(meta.NamespacedName(secretNS, dockerSecretName), sealedSecretsController, f)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 	// value: YAML content of the resource
 	outputs := map[string]interface{}{}
 	githubSecret, err := secrets.CreateSealedSecret(meta.NamespacedName(cicdNamespace, eventlisteners.GitOpsWebhookSecret),
-		o.GitOpsWebhookSecret, eventlisteners.WebhookSecretKey, o.SealedSecretsNamespace, o.SealedSecretsController)
+		o.SealedSecretsController, o.GitOpsWebhookSecret, eventlisteners.WebhookSecretKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate GitHub Webhook Secret: %v", err)
 	}
@@ -201,7 +201,7 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 
 	if o.DockerConfigJSONFilename != "" {
 		dockerSecret, err := createDockerSecret(fs, o.DockerConfigJSONFilename, cicdNamespace,
-			o.SealedSecretsNamespace, o.SealedSecretsController)
+			o.SealedSecretsController)
 		if err != nil {
 			return nil, err
 		}

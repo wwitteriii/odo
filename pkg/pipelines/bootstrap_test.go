@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/meta"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
 	"github.com/openshift/odo/pkg/pipelines/secrets"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -26,7 +27,7 @@ func TestBootstrapManifest(t *testing.T) {
 		secrets.DefaultPublicKeyFunc = f
 	}(secrets.DefaultPublicKeyFunc)
 
-	secrets.DefaultPublicKeyFunc = func(ns, controller string) (*rsa.PublicKey, error) {
+	secrets.DefaultPublicKeyFunc = func(controller types.NamespacedName) (*rsa.PublicKey, error) {
 		key, err := rsa.GenerateKey(rand.Reader, 1024)
 		if err != nil {
 			t.Fatalf("failed to generate a private RSA key: %s", err)
@@ -49,7 +50,7 @@ func TestBootstrapManifest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	hookSecret, err := secrets.CreateSealedSecret(meta.NamespacedName("tst-cicd", "webhook-secret-tst-dev-http-api"), "456", eventlisteners.WebhookSecretKey, "test-ns", "controller")
+	hookSecret, err := secrets.CreateSealedSecret(meta.NamespacedName("tst-cicd", "webhook-secret-tst-dev-http-api"), meta.NamespacedName("test-ns", "controller"), "456", eventlisteners.WebhookSecretKey)
 	if err != nil {
 		t.Fatal(err)
 	}
