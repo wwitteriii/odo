@@ -99,6 +99,8 @@ func NewCmdInit(name, fullName string) *cobra.Command {
 	initCmd.Flags().StringVar(&o.DockerConfigJSONFilename, "dockercfgjson", "~/.docker/config.json", "authenticates the image push to the desired image registry, path to config.json")
 	initCmd.Flags().StringVar(&o.InternalRegistryHostname, "internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "internal image registry hostname")
 	initCmd.Flags().StringVar(&o.ImageRepo, "image-repo", "", "image repository in this form <registry>/<username>/<repository> or <project>/<app> for internal registry")
-	initCmd.Flags().StringVarP(&o.SealedSecretsNamespace, "sealed-secrets-ns", "", "kube-system", "namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
+	initCmd.Flags().StringVarP(&o.SealedSecretsNamespace, "sealed-secrets-ns", "", "sealed-secrets", "namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
+	initCmd.Flags().StringVarP(&o.SealedSecretsController, "sealed-secrets-controller", "", "sealedsecretcontroller-sealed-secrets", "SealedSecrets Controller name (default: sealedsecretcontroller-sealed-secrets)")
+
 	return initCmd
 }

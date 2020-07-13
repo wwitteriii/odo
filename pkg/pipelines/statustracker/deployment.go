@@ -21,7 +21,7 @@ const (
 	commitStatusAppLabel = "commit-status-tracker-operator"
 )
 
-type secretSealer = func(types.NamespacedName, string, string, string) (*ssv1alpha1.SealedSecret, error)
+type secretSealer = func(types.NamespacedName, string, string, string, string) (*ssv1alpha1.SealedSecret, error)
 
 var defaultSecretSealer secretSealer = secrets.CreateSealedSecret
 
@@ -98,11 +98,11 @@ func createStatusTrackerDeployment(ns string) *appsv1.Deployment {
 
 // Resources returns a list of newly created resources that are required start
 // the status-tracker service.
-func Resources(ns, token, sealedSecretsNS string) ([]interface{}, error) {
+func Resources(ns, token, sealedSecretsNS, sealedSecretsController string) ([]interface{}, error) {
 	name := meta.NamespacedName(ns, operatorName)
 	sa := roles.CreateServiceAccount(name)
 
-	githubAuth, err := defaultSecretSealer(meta.NamespacedName(ns, "commit-status-tracker-git-secret"), token, "token", sealedSecretsNS)
+	githubAuth, err := defaultSecretSealer(meta.NamespacedName(ns, "commit-status-tracker-git-secret"), token, "token", sealedSecretsNS, sealedSecretsController)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate Status Tracker Secret: %v", err)
 	}

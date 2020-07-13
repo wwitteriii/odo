@@ -31,7 +31,7 @@ func TestServiceResourcesWithCICD(t *testing.T) {
 		meta.NamespacedName(
 			"cicd", "webhook-secret-test-dev-test"),
 		"123",
-		eventlisteners.WebhookSecretKey, "test-ns")
+		eventlisteners.WebhookSecretKey, "test-ns", "controller")
 	assertNoError(t, err)
 
 	want := res.Resources{
@@ -477,7 +477,7 @@ func TestCreateSvcImageBinding(t *testing.T) {
 
 func stubDefaultPublicKeyFunc(t *testing.T) func() {
 	origDefaultPublicKeyFunc := secrets.DefaultPublicKeyFunc
-	secrets.DefaultPublicKeyFunc = func(string) (*rsa.PublicKey, error) {
+	secrets.DefaultPublicKeyFunc = func(string, string) (*rsa.PublicKey, error) {
 		key, err := rsa.GenerateKey(rand.Reader, 1024)
 		if err != nil {
 			t.Fatalf("failed to generate a private RSA key: %s", err)

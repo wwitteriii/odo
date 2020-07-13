@@ -203,7 +203,7 @@ func TestSeal(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			result, err := seal(&tc.secret, makeTestCertFunc("test-ns"), "test-ns")
+			result, err := seal(&tc.secret, makeTestCertFunc("test-ns"), "test-ns", "controller")
 			if err != nil {
 				if diff := cmp.Diff(tc.errMessage, err.Error()); diff != "" {
 					t.Errorf("Unexpected error \n%s", diff)
@@ -241,7 +241,7 @@ func TestSeal(t *testing.T) {
 }
 
 func makeTestCertFunc(testNS string) PublicKeyFunc {
-	return func(ns string) (*rsa.PublicKey, error) {
+	return func(ns, controller string) (*rsa.PublicKey, error) {
 		if ns != testNS {
 			return nil, fmt.Errorf("failed to generate secret from controller in incorrect namespace, got %#v, want %#v", ns, testNS)
 		}
