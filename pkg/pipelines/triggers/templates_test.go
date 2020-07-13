@@ -22,7 +22,7 @@ func TestCreateDevCDDeployTemplate(t *testing.T) {
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				{
-					Name:        "gitsha",
+					Name:        "io.openshift.build.commit.id",
 					Description: "The specific commit SHA.",
 				},
 				{
@@ -55,11 +55,11 @@ func TestCreateDevCIBuildPRTemplate(t *testing.T) {
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				{
-					Name:        "gitref",
+					Name:        "io.openshift.build.commit.ref",
 					Description: "The git branch for this PR.",
 				},
 				{
-					Name:        "gitsha",
+					Name:        "io.openshift.build.commit.id",
 					Description: "the specific commit SHA.",
 				},
 				{
@@ -101,13 +101,25 @@ func TestCreateCDPushTemplate(t *testing.T) {
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				{
-					Name:        "gitref",
+					Name:        "io.openshift.build.commit.ref",
 					Description: "The git revision",
 					Default:     strPtr("master"),
 				},
 				{
 					Name:        "gitrepositoryurl",
 					Description: "The git repository url",
+				},
+				{
+					Name:        "io.openshift.build.commit.date",
+					Description: "The date at which the commit was made",
+				},
+				{
+					Name:        "io.openshift.build.commit.author",
+					Description: "The name of the github user handle that made the commit",
+				},
+				{
+					Name:        "io.openshift.build.commit.message",
+					Description: "The commit message",
 				},
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
@@ -134,7 +146,7 @@ func TestCreateCIDryRunTemplate(t *testing.T) {
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				{
-					Name:        "gitref",
+					Name:        "io.openshift.build.commit.ref",
 					Description: "The git revision",
 					Default:     strPtr("master"),
 				},

@@ -11,13 +11,13 @@ import (
 
 func TestCreateBindingParam(t *testing.T) {
 	validParam := pipelinev1.Param{
-		Name: "gitref",
+		Name: "io.openshift.build.commit.ref",
 		Value: pipelinev1.ArrayOrString{
 			StringVal: "$(body.ref)",
 			Type:      pipelinev1.ParamTypeString,
 		},
 	}
-	bindingParam := createPipelineBindingParam("gitref", "$(body.ref)")
+	bindingParam := createPipelineBindingParam("io.openshift.build.commit.ref", "$(body.ref)")
 	if diff := cmp.Diff(validParam, bindingParam); diff != "" {
 		t.Fatalf("createPipelineBindingParam() failed\n%s", diff)
 	}

@@ -31,7 +31,7 @@ func CreateDevCDDeployTemplate(ns, saName string) triggersv1.TriggerTemplate {
 		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, "app-cd-template")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
-				createTemplateParamSpec("gitsha", "The specific commit SHA."),
+				createTemplateParamSpec("io.openshift.build.commit.id", "The specific commit SHA."),
 				createTemplateParamSpec("gitrepositoryurl", "The git repository url"),
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
@@ -54,8 +54,8 @@ func CreateDevCIBuildPRTemplate(ns, saName string) triggersv1.TriggerTemplate {
 			statusTrackerAnnotations("dev-ci-build-from-pr", "Dev CI Build")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
-				createTemplateParamSpec("gitref", "The git branch for this PR."),
-				createTemplateParamSpec("gitsha", "the specific commit SHA."),
+				createTemplateParamSpec("io.openshift.build.commit.ref", "The git branch for this PR."),
+				createTemplateParamSpec("io.openshift.build.commit.id", "the specific commit SHA."),
 				createTemplateParamSpec("gitrepositoryurl", "The git repository URL."),
 				createTemplateParamSpec("fullname", "The GitHub repository for this PullRequest."),
 				createTemplateParamSpec("imageRepo", "The repository to push built images to."),
@@ -106,7 +106,7 @@ func CreateCIDryRunTemplate(ns, saName string) triggersv1.TriggerTemplate {
 			statusTrackerAnnotations("ci-dryrun-from-push-pipeline", "CI dry run on push event")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
-				createTemplateParamSpecDefault("gitref", "The git revision", "master"),
+				createTemplateParamSpecDefault("io.openshift.build.commit.ref", "The git revision", "master"),
 				createTemplateParamSpec("gitrepositoryurl", "The git repository url"),
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
