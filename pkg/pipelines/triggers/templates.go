@@ -60,6 +60,9 @@ func CreateDevCIBuildPRTemplate(ns, saName string) triggersv1.TriggerTemplate {
 				createTemplateParamSpec("fullname", "The GitHub repository for this PullRequest."),
 				createTemplateParamSpec("imageRepo", "The repository to push built images to."),
 				createTemplateParamSpec("tlsVerify", "Enable image repostiory TLS certification verification."),
+				createTemplateParamSpec("io.openshift.build.commit.date", "The date at which the commit was made"),
+				createTemplateParamSpec("io.openshift.build.commit.author", "The name of the github user handle that made the commit"),
+				createTemplateParamSpec("io.openshift.build.commit.message", "The commit message"),
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{

@@ -21,6 +21,13 @@ func CreateAppCIPipeline(name types.NamespacedName) *pipelinev1.Pipeline {
 				createParamSpec("REPO", "string"),
 				createParamSpec("COMMIT_SHA", "string"),
 				createParamSpec("TLSVERIFY", "string"),
+				createParamSpec("BUILD_EXTRA_ARGS", "string"),
+
+				createParamSpec("GIT_REF", "string"),
+				createParamSpec("COMMIT_DATE", "string"),
+				createParamSpec("COMMIT_AUTHOR", "string"),
+				createParamSpec("COMMIT_MESSAGE", "string"),
+				createParamSpec("GIT_REPO", "string"),
 			},
 			Resources: []pipelinev1.PipelineDeclaredResource{
 				createPipelineDeclaredResource("source-repo", "git"),
@@ -48,6 +55,7 @@ func createBuildImageTask(name string) pipelinev1.PipelineTask {
 		},
 		Params: []pipelinev1.Param{
 			createTaskParam("TLSVERIFY", "$(params.TLSVERIFY)"),
+			createTaskParam("BUILD_EXTRA_ARGS", "--label=io.openshift.build.commit.id=$(params.COMMIT_SHA) --label=io.openshift.build.commit.ref=$(params.GIT_REF) --label=io.openshift.build.commit.date=$(params.COMMIT_DATE) --label=io.openshift.build.commit.author=$(params.COMMIT_AUTHOR) --label=io.openshift.build.commit.message=$(params.COMMIT_MESSAGE)"),
 		},
 	}
 
