@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/triggers"
 	"github.com/openshift/odo/pkg/pipelines/yaml"
 	"github.com/spf13/afero"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // AddServiceOptions control how new services are added to the configuration.
@@ -28,7 +29,7 @@ type AddServiceOptions struct {
 	PipelinesFilePath        string
 	ServiceName              string
 	WebhookSecret            string
-	SealedSecretsNamespace   string // Where do we find the SealedSecrets service?
+	SealedSecretsService     types.NamespacedName // SealedSecrets service name
 }
 
 func AddService(p *AddServiceOptions, fs afero.Fs) error {
@@ -83,8 +84,8 @@ func serviceResources(m *config.Manifest, fs afero.Fs, o *AddServiceOptions) (re
 	if cfg != nil {
 		secretName := secrets.MakeServiceWebhookSecretName(o.EnvName, svc.Name)
 		hookSecret, err := secrets.CreateSealedSecret(
-			meta.NamespacedName(cfg.Name, secretName), o.WebhookSecret,
-			eventlisteners.WebhookSecretKey, o.SealedSecretsNamespace)
+			meta.NamespacedName(cfg.Name, secretName), o.SealedSecretsService, o.WebhookSecret,
+			eventlisteners.WebhookSecretKey)
 		if err != nil {
 			return nil, err
 		}

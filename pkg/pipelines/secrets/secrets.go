@@ -28,7 +28,8 @@ var (
 // DefaultPublicKeyFunc is the func used to get the key from Bitnami.
 var DefaultPublicKeyFunc = getClusterPublicKey
 
-type PublicKeyFunc func(string) (*rsa.PublicKey, error)
+// PublicKeyFunc retruns a public key  give a service namedspaced name
+type PublicKeyFunc func(service types.NamespacedName) (*rsa.PublicKey, error)
 
 // MakeServiceWebhookSecretName common method to create service webhook secret name
 func MakeServiceWebhookSecretName(envName, serviceName string) string {
@@ -36,27 +37,27 @@ func MakeServiceWebhookSecretName(envName, serviceName string) string {
 }
 
 // CreateSealedDockerConfigSecret creates a SealedSecret with the given name and reader
-func CreateSealedDockerConfigSecret(name types.NamespacedName, in io.Reader, controllerNS string) (*ssv1alpha1.SealedSecret, error) {
+func CreateSealedDockerConfigSecret(name, service types.NamespacedName, in io.Reader) (*ssv1alpha1.SealedSecret, error) {
 	secret, err := createDockerConfigSecret(name, in)
 	if err != nil {
 		return nil, err
 	}
 
-	return seal(secret, DefaultPublicKeyFunc, controllerNS)
+	return seal(secret, DefaultPublicKeyFunc, service)
 }
 
 // CreateSealedSecret creates a SealedSecret with the provided name and body/data and type
-func CreateSealedSecret(name types.NamespacedName, data, secretKey, controllerNS string) (*ssv1alpha1.SealedSecret, error) {
+func CreateSealedSecret(name, service types.NamespacedName, data, secretKey string) (*ssv1alpha1.SealedSecret, error) {
 	secret, err := createOpaqueSecret(name, data, secretKey)
 	if err != nil {
 		return nil, err
 	}
 
-	return seal(secret, DefaultPublicKeyFunc, controllerNS)
+	return seal(secret, DefaultPublicKeyFunc, service)
 }
 
 // Returns a sealed secret
-func seal(secret *corev1.Secret, pubKey PublicKeyFunc, controllerNS string) (*ssv1alpha1.SealedSecret, error) {
+func seal(secret *corev1.Secret, pubKey PublicKeyFunc, service types.NamespacedName) (*ssv1alpha1.SealedSecret, error) {
 	// Strip read-only server-side ObjectMeta (if present)
 	secret.SetSelfLink("")
 	secret.SetUID("")
@@ -66,7 +67,7 @@ func seal(secret *corev1.Secret, pubKey PublicKeyFunc, controllerNS string) (*ss
 	secret.SetDeletionTimestamp(nil)
 	secret.DeletionGracePeriodSeconds = nil
 
-	key, err := pubKey(controllerNS)
+	key, err := pubKey(service)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get public key from cluster (is sealed-secrets installed?): %v", err)
 	}
@@ -81,15 +82,15 @@ func seal(secret *corev1.Secret, pubKey PublicKeyFunc, controllerNS string) (*ss
 	return sealedSecret, err
 }
 
-// Retrieves a public key from sealed-secrets-controller, by finding the
-// controller in the provided namespace and fetching its key.
-func getClusterPublicKey(ns string) (*rsa.PublicKey, error) {
+// Retrieves a public key from sealed-secrets-service, by finding the
+// service in the provided namespaced name and fetching its key.
+func getClusterPublicKey(service types.NamespacedName) (*rsa.PublicKey, error) {
 	client, err := getRESTClient()
 	if err != nil {
 		return nil, err
 	}
 
-	f, err := openCertCluster(client, ns)
+	f, err := openCertCluster(client, service)
 	if err != nil {
 		return nil, err
 	}
@@ -97,11 +98,11 @@ func getClusterPublicKey(ns string) (*rsa.PublicKey, error) {
 	return parseKey(f)
 }
 
-// Returns a reader of public key from sealed-secrets-controller
-func openCertCluster(c clientv1.CoreV1Interface, ns string) (io.ReadCloser, error) {
+// Returns a reader of public key from sealed-secrets-service
+func openCertCluster(c clientv1.CoreV1Interface, service types.NamespacedName) (io.ReadCloser, error) {
 	f, err := c.
-		Services(ns).
-		ProxyGet("http", "sealedsecretcontroller-sealed-secrets", "", "/v1/cert.pem", nil).
+		Services(service.Namespace).
+		ProxyGet("http", service.Name, "", "/v1/cert.pem", nil).
 		Stream()
 	if err != nil {
 		return nil, fmt.Errorf("cannot fetch certificate: %v", err)

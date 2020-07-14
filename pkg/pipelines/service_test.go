@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
 	"github.com/spf13/afero"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/odo/pkg/pipelines/ioutils"
@@ -30,8 +31,9 @@ func TestServiceResourcesWithCICD(t *testing.T) {
 	hookSecret, err := secrets.CreateSealedSecret(
 		meta.NamespacedName(
 			"cicd", "webhook-secret-test-dev-test"),
+		meta.NamespacedName("test-ns", "service"),
 		"123",
-		eventlisteners.WebhookSecretKey, "test-ns")
+		eventlisteners.WebhookSecretKey)
 	assertNoError(t, err)
 
 	want := res.Resources{
@@ -477,7 +479,7 @@ func TestCreateSvcImageBinding(t *testing.T) {
 
 func stubDefaultPublicKeyFunc(t *testing.T) func() {
 	origDefaultPublicKeyFunc := secrets.DefaultPublicKeyFunc
-	secrets.DefaultPublicKeyFunc = func(string) (*rsa.PublicKey, error) {
+	secrets.DefaultPublicKeyFunc = func(types.NamespacedName) (*rsa.PublicKey, error) {
 		key, err := rsa.GenerateKey(rand.Reader, 1024)
 		if err != nil {
 			t.Fatalf("failed to generate a private RSA key: %s", err)
