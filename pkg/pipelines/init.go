@@ -73,7 +73,7 @@ var (
 		},
 		{
 			APIGroups: []string{"argoproj.io"},
-			Resources: []string{"applications"},
+			Resources: []string{"applications", "argocds"},
 			Verbs:     []string{"get", "create", "patch"},
 		},
 	}
@@ -219,11 +219,9 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 	outputs[gitopsTasksPath] = tasks.CreateDeployFromSourceTask(cicdNamespace, script)
 	outputs[appTaskPath] = tasks.CreateDeployUsingKubectlTask(cicdNamespace)
 	outputs[ciPipelinesPath] = pipelines.CreateCIPipeline(meta.NamespacedName(cicdNamespace, "ci-dryrun-from-pr-pipeline"), cicdNamespace)
-	outputs[cdPipelinesPath] = pipelines.CreateCDPipeline(meta.NamespacedName(cicdNamespace, "cd-deploy-from-push-pipeline"), cicdNamespace)
 	outputs[appCiPipelinesPath] = pipelines.CreateAppCIPipeline(meta.NamespacedName(cicdNamespace, "app-ci-pipeline"))
 	createTriggerBindings(repo, outputs, cicdNamespace)
 	outputs[prTemplatePath] = triggers.CreateCIDryRunTemplate(cicdNamespace, saName)
-	outputs[pushTemplatePath] = triggers.CreateCDPushTemplate(cicdNamespace, saName)
 	outputs[appCIBuildPRTemplatePath] = triggers.CreateDevCIBuildPRTemplate(cicdNamespace, saName)
 	outputs[eventListenerPath] = eventlisteners.Generate(repo, cicdNamespace, saName, eventlisteners.GitOpsWebhookSecret)
 	route, err := routes.Generate(cicdNamespace)
@@ -238,8 +236,6 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 func createTriggerBindings(r scm.Repository, outputs res.Resources, ns string) {
 	prBinding, prBindingName := r.CreatePRBinding(ns)
 	outputs[filepath.Join("06-bindings", prBindingName+".yaml")] = prBinding
-	pushBinding, pushBindingName := r.CreatePushBinding(ns)
-	outputs[filepath.Join("06-bindings", pushBindingName+".yaml")] = pushBinding
 }
 
 func createManifest(gitOpsRepoURL string, configEnv *config.Config, envs ...*config.Environment) *config.Manifest {

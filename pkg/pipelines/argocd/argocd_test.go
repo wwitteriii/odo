@@ -9,6 +9,7 @@ import (
 
 	// This is a hack because ArgoCD doesn't support a compatible (code-wise)
 	// version of k8s in common with odo.
+	argov1 "github.com/openshift/odo/pkg/pipelines/argocd/operator/v1alpha1"
 	argoappv1 "github.com/openshift/odo/pkg/pipelines/argocd/v1alpha1"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
 )
@@ -65,7 +66,9 @@ func TestBuildCreatesArgoCD(t *testing.T) {
 				SyncPolicy: syncPolicy,
 			},
 		},
-		"config/argocd/kustomization.yaml": &res.Kustomization{Resources: []string{"test-dev-http-api-app.yaml"}},
+		"config/argocd/argo-app.yaml":      fakeArgoApplication(),
+		"config/argocd/argocd.yaml":        fakeArgoCDResource(t, ArgoCDNamespace),
+		"config/argocd/kustomization.yaml": &res.Kustomization{Resources: []string{"argo-app.yaml", "argocd.yaml", "test-dev-http-api-app.yaml"}},
 	}
 
 	if diff := cmp.Diff(want, files); diff != "" {
@@ -94,11 +97,10 @@ func TestBuildCreatesArgoCDWithMultipleApps(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	if len(files) != 3 {
+	if len(files) != 5 {
 		t.Fatalf("got %d files, want 3\n", len(files))
 	}
-	want := &res.Kustomization{Resources: []string{"test-dev-http-api-app.yaml", "test-production-http-api-app.yaml"}}
+	want := &res.Kustomization{Resources: []string{"argo-app.yaml", "argocd.yaml", "test-dev-http-api-app.yaml", "test-production-http-api-app.yaml"}}
 	if diff := cmp.Diff(want, files["config/argocd/kustomization.yaml"]); diff != "" {
 		t.Fatalf("files didn't match: %s\n", diff)
 	}
@@ -177,7 +179,9 @@ func TestBuildWithRepoConfig(t *testing.T) {
 				SyncPolicy: syncPolicy,
 			},
 		},
-		"config/argocd/kustomization.yaml": &res.Kustomization{Resources: []string{"test-production-prod-api-app.yaml"}},
+		"config/argocd/argo-app.yaml":      fakeArgoApplication(),
+		"config/argocd/argocd.yaml":        fakeArgoCDResource(t, ArgoCDNamespace),
+		"config/argocd/kustomization.yaml": &res.Kustomization{Resources: []string{"argo-app.yaml", "argocd.yaml", "test-production-prod-api-app.yaml"}},
 	}
 
 	if diff := cmp.Diff(want, files); diff != "" {
@@ -222,10 +226,51 @@ func TestBuildAddsClusterToApp(t *testing.T) {
 				SyncPolicy: syncPolicy,
 			},
 		},
-		"config/argocd/kustomization.yaml": &res.Kustomization{Resources: []string{"test-dev-http-api-app.yaml"}},
+		"config/argocd/argo-app.yaml":      fakeArgoApplication(),
+		"config/argocd/argocd.yaml":        fakeArgoCDResource(t, ArgoCDNamespace),
+		"config/argocd/kustomization.yaml": &res.Kustomization{Resources: []string{"argo-app.yaml", "argocd.yaml", "test-dev-http-api-app.yaml"}},
 	}
 
 	if diff := cmp.Diff(want, files); diff != "" {
 		t.Fatalf("files didn't match: %s\n", diff)
 	}
+}
+
+func TestIgnoreDifferences(t *testing.T) {
+	want := &argoappv1.Application{
+		TypeMeta:   applicationTypeMeta,
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ArgoCDNamespace, "argo-app")),
+		Spec: argoappv1.ApplicationSpec{
+			Source:      argoappv1.ApplicationSource{Path: "config/argocd"},
+			Destination: argoappv1.ApplicationDestination{Server: "https://kubernetes.default.svc", Namespace: "argocd"},
+			Project:     "default",
+		},
+	}
+	got := ignoreDifferences(want)
+	want.Spec.IgnoreDifferences = ignoreDifferencesFields
+	if diff := cmp.Diff(got, want); diff != "" {
+		t.Fatalf("ignoreDifferences() failed: %s", diff)
+	}
+}
+
+func fakeArgoApplication() *argoappv1.Application {
+	return &argoappv1.Application{
+		TypeMeta:   applicationTypeMeta,
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ArgoCDNamespace, "argo-app")),
+		Spec: argoappv1.ApplicationSpec{
+			Source:            argoappv1.ApplicationSource{Path: "config/argocd"},
+			Destination:       argoappv1.ApplicationDestination{Server: "https://kubernetes.default.svc", Namespace: "argocd"},
+			Project:           "default",
+			SyncPolicy:        &argoappv1.SyncPolicy{Automated: &argoappv1.SyncPolicyAutomated{Prune: true, SelfHeal: true}},
+			IgnoreDifferences: ignoreDifferencesFields,
+		},
+	}
+}
+
+func fakeArgoCDResource(t *testing.T, ns string) *argov1.ArgoCD {
+	res, err := argoCDResource(ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return res
 }
