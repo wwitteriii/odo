@@ -22,11 +22,11 @@ func TestCreatePushBindingForGithub(t *testing.T) {
 		Spec: triggersv1.TriggerBindingSpec{
 			Params: []triggersv1.Param{
 				{
-					Name:  "io.openshift.build.commit.ref",
+					Name:  triggers.GitRef,
 					Value: "$(body.ref)",
 				},
 				{
-					Name:  "io.openshift.build.commit.id",
+					Name:  triggers.GitCommitID,
 					Value: "$(body.head_commit.id)",
 				},
 				{
@@ -34,15 +34,15 @@ func TestCreatePushBindingForGithub(t *testing.T) {
 					Value: "$(body.repository.clone_url)",
 				},
 				{
-					Name:  "io.openshift.build.commit.date",
+					Name:  triggers.GitCommitDate,
 					Value: "$(body.head_commit.timestamp)",
 				},
 				{
-					Name:  "io.openshift.build.commit.message",
+					Name:  triggers.GitCommitMessage,
 					Value: "$(body.head_commit.message",
 				},
 				{
-					Name:  "io.openshift.build.commit.author",
+					Name:  triggers.GitCommitAuthor,
 					Value: "$(body.head_commit.author.name)",
 				},
 			},

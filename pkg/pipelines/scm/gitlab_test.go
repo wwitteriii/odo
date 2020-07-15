@@ -22,11 +22,11 @@ func TestCreatePushBindingForGitlab(t *testing.T) {
 		Spec: triggersv1.TriggerBindingSpec{
 			Params: []triggersv1.Param{
 				{
-					Name:  "io.openshift.build.commit.ref",
+					Name:  triggers.GitRef,
 					Value: "$(body.ref)",
 				},
 				{
-					Name:  "io.openshift.build.commit.id",
+					Name:  triggers.GitCommitID,
 					Value: "$(body.after)",
 				},
 				{
@@ -34,16 +34,16 @@ func TestCreatePushBindingForGitlab(t *testing.T) {
 					Value: "$(body.project.git_http_url)",
 				},
 				{
-					Name:  "io.openshift.build.commit.date",
+					Name:  triggers.GitCommitDate,
 					Value: "$(body.commits[body.commits.length-1].timestamp)",
 				},
 
 				{
-					Name:  "io.openshift.build.commit.message",
+					Name:  triggers.GitCommitMessage,
 					Value: "(body.commits[body.commits.length-1].message)",
 				},
 				{
-					Name:  "io.openshift.build.commit.author",
+					Name:  triggers.GitCommitAuthor,
 					Value: "$(body.commits[body.commits.length-1].author.name)",
 				},
 			},

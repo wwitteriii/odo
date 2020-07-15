@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/openshift/odo/pkg/pipelines/triggers"
 	triggersv1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 )
 
@@ -47,13 +48,13 @@ func (r *githubSpec) pushBindingName() string {
 
 func (r *githubSpec) pushBindingParams() []triggersv1.Param {
 	return []triggersv1.Param{
-		createBindingParam("io.openshift.build.commit.ref", "$(body.ref)"),
-		createBindingParam("io.openshift.build.commit.id", "$(body.head_commit.id)"),
+		createBindingParam(triggers.GitRef, "$(body.ref)"),
+		createBindingParam(triggers.GitCommitID, "$(body.head_commit.id)"),
 		createBindingParam("gitrepositoryurl", "$(body.repository.clone_url)"),
 		createBindingParam("fullname", "$(body.repository.full_name)"),
-		createBindingParam("commitdate", "$(body.head_commit.timestamp)"),
-		createBindingParam("commitmessage", "$(body.head_commit.message"),
-		createBindingParam("commitauthor", "$(body.head_commit.author.name)"),
+		createBindingParam(triggers.GitCommitDate, "$(body.head_commit.timestamp)"),
+		createBindingParam(triggers.GitCommitMessage, "$(body.head_commit.message"),
+		createBindingParam(triggers.GitCommitAuthor, "$(body.head_commit.author.name)"),
 	}
 }
 

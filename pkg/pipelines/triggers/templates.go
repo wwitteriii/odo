@@ -14,6 +14,14 @@ var (
 	triggerTemplateTypeMeta = meta.TypeMeta("TriggerTemplate", "triggers.tekton.dev/v1alpha1")
 )
 
+const (
+	GitRef           = "io.openshift.build.commit.ref"
+	GitCommitID      = "io.openshift.build.commit.id"
+	GitCommitAuthor  = "io.openshift.build.commit.author"
+	GitCommitMessage = "io.openshift.build.commit.message"
+	GitCommitDate    = "io.openshift.build.commit.date"
+)
+
 // GenerateTemplates will return a slice of trigger templates
 func GenerateTemplates(ns, saName string) []triggersv1.TriggerTemplate {
 	return []triggersv1.TriggerTemplate{
@@ -31,7 +39,7 @@ func CreateDevCDDeployTemplate(ns, saName string) triggersv1.TriggerTemplate {
 		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, "app-cd-template")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
-				createTemplateParamSpec("io.openshift.build.commit.id", "The specific commit SHA."),
+				createTemplateParamSpec(GitCommitID, "The specific commit SHA."),
 				createTemplateParamSpec("gitrepositoryurl", "The git repository url"),
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
@@ -54,15 +62,15 @@ func CreateDevCIBuildPRTemplate(ns, saName string) triggersv1.TriggerTemplate {
 			statusTrackerAnnotations("dev-ci-build-from-pr", "Dev CI Build")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
-				createTemplateParamSpec("io.openshift.build.commit.ref", "The git branch for this PR."),
-				createTemplateParamSpec("io.openshift.build.commit.id", "the specific commit SHA."),
+				createTemplateParamSpec(GitRef, "The git branch for this PR."),
+				createTemplateParamSpec(GitCommitID, "the specific commit SHA."),
 				createTemplateParamSpec("gitrepositoryurl", "The git repository URL."),
 				createTemplateParamSpec("fullname", "The GitHub repository for this PullRequest."),
 				createTemplateParamSpec("imageRepo", "The repository to push built images to."),
 				createTemplateParamSpec("tlsVerify", "Enable image repostiory TLS certification verification."),
-				createTemplateParamSpec("io.openshift.build.commit.date", "The date at which the commit was made"),
-				createTemplateParamSpec("io.openshift.build.commit.author", "The name of the github user handle that made the commit"),
-				createTemplateParamSpec("io.openshift.build.commit.message", "The commit message"),
+				createTemplateParamSpec(GitCommitDate, "The date at which the commit was made"),
+				createTemplateParamSpec(GitCommitAuthor, "The name of the github user handle that made the commit"),
+				createTemplateParamSpec(GitCommitMessage, "The commit message"),
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{
@@ -84,11 +92,11 @@ func CreateCDPushTemplate(ns, saName string) triggersv1.TriggerTemplate {
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 
-				createTemplateParamSpecDefault("io.openshift.build.commit.ref", "The git revision", "master"),
+				createTemplateParamSpecDefault(GitRef, "The git revision", "master"),
 				createTemplateParamSpec("gitrepositoryurl", "The git repository url"),
-				createTemplateParamSpec("io.openshift.build.commit.date", "The date at which the commit was made"),
-				createTemplateParamSpec("io.openshift.build.commit.author", "The name of the github user handle that made the commit"),
-				createTemplateParamSpec("io.openshift.build.commit.message", "The commit message"),
+				createTemplateParamSpec(GitCommitDate, "The date at which the commit was made"),
+				createTemplateParamSpec(GitCommitAuthor, "The name of the github user handle that made the commit"),
+				createTemplateParamSpec(GitCommitMessage, "The commit message"),
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{
@@ -109,7 +117,7 @@ func CreateCIDryRunTemplate(ns, saName string) triggersv1.TriggerTemplate {
 			statusTrackerAnnotations("ci-dryrun-from-push-pipeline", "CI dry run on push event")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
-				createTemplateParamSpecDefault("io.openshift.build.commit.ref", "The git revision", "master"),
+				createTemplateParamSpecDefault(GitRef, "The git revision", "master"),
 				createTemplateParamSpec("gitrepositoryurl", "The git repository url"),
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{

@@ -22,7 +22,7 @@ func TestCreateDevCDDeployTemplate(t *testing.T) {
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				{
-					Name:        "io.openshift.build.commit.id",
+					Name:        GitCommitID,
 					Description: "The specific commit SHA.",
 				},
 				{
@@ -55,11 +55,11 @@ func TestCreateDevCIBuildPRTemplate(t *testing.T) {
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				{
-					Name:        "io.openshift.build.commit.ref",
+					Name:        GitRef,
 					Description: "The git branch for this PR.",
 				},
 				{
-					Name:        "io.openshift.build.commit.id",
+					Name:        GitCommitID,
 					Description: "the specific commit SHA.",
 				},
 				{
@@ -79,15 +79,15 @@ func TestCreateDevCIBuildPRTemplate(t *testing.T) {
 					Description: "Enable image repostiory TLS certification verification.",
 				},
 				{
-					Name:        "io.openshift.build.commit.date",
+					Name:        GitCommitDate,
 					Description: "The date at which the commit was made",
 				},
 				{
-					Name:        "io.openshift.build.commit.author",
+					Name:        GitCommitAuthor,
 					Description: "The name of the github user handle that made the commit",
 				},
 				{
-					Name:        "io.openshift.build.commit.message",
+					Name:        GitCommitMessage,
 					Description: "The commit message",
 				},
 			},
@@ -113,7 +113,7 @@ func TestCreateCDPushTemplate(t *testing.T) {
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				{
-					Name:        "io.openshift.build.commit.ref",
+					Name:        GitRef,
 					Description: "The git revision",
 					Default:     strPtr("master"),
 				},
@@ -122,15 +122,15 @@ func TestCreateCDPushTemplate(t *testing.T) {
 					Description: "The git repository url",
 				},
 				{
-					Name:        "io.openshift.build.commit.date",
+					Name:        GitCommitDate,
 					Description: "The date at which the commit was made",
 				},
 				{
-					Name:        "io.openshift.build.commit.author",
+					Name:        GitCommitAuthor,
 					Description: "The name of the github user handle that made the commit",
 				},
 				{
-					Name:        "io.openshift.build.commit.message",
+					Name:        GitCommitMessage,
 					Description: "The commit message",
 				},
 			},
@@ -158,7 +158,7 @@ func TestCreateCIDryRunTemplate(t *testing.T) {
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				{
-					Name:        "io.openshift.build.commit.ref",
+					Name:        GitRef,
 					Description: "The git revision",
 					Default:     strPtr("master"),
 				},
