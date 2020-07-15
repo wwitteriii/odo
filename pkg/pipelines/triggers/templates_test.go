@@ -78,6 +78,18 @@ func TestCreateDevCIBuildPRTemplate(t *testing.T) {
 					Name:        "tlsVerify",
 					Description: "Enable image repostiory TLS certification verification.",
 				},
+				{
+					Name:        "io.openshift.build.commit.date",
+					Description: "The date at which the commit was made",
+				},
+				{
+					Name:        "io.openshift.build.commit.author",
+					Description: "The name of the github user handle that made the commit",
+				},
+				{
+					Name:        "io.openshift.build.commit.message",
+					Description: "The commit message",
+				},
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{
