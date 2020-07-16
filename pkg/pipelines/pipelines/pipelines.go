@@ -5,6 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/openshift/odo/pkg/pipelines/meta"
+	"github.com/openshift/odo/pkg/pipelines/triggers"
 )
 
 var (
@@ -55,7 +56,7 @@ func createBuildImageTask(name string) pipelinev1.PipelineTask {
 		},
 		Params: []pipelinev1.Param{
 			createTaskParam("TLSVERIFY", "$(params.TLSVERIFY)"),
-			createTaskParam("BUILD_EXTRA_ARGS", "--label=io.openshift.build.commit.id=$(params.COMMIT_SHA) --label=io.openshift.build.commit.ref=$(params.GIT_REF) --label=io.openshift.build.commit.date=$(params.COMMIT_DATE) --label=io.openshift.build.commit.author=$(params.COMMIT_AUTHOR) --label=io.openshift.build.commit.message=$(params.COMMIT_MESSAGE)"),
+			createTaskParam("BUILD_EXTRA_ARGS", "--label="+triggers.GitCommitID+"='$(params.COMMIT_SHA)' --label="+triggers.GitRef+"='$(params.GIT_REF)' --label="+triggers.GitCommitDate+"='$(params.COMMIT_DATE)' --label="+triggers.GitCommitAuthor+"='$(params.COMMIT_AUTHOR)' --label="+triggers.GitCommitMessage+"='$(params.COMMIT_MESSAGE)'"),
 		},
 	}
 
