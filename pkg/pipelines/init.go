@@ -42,6 +42,7 @@ type InitOptions struct {
 	OutputPath               string               // Where to write the bootstrapped files to?
 	SealedSecretsService     types.NamespacedName // SealedSecrets Services name
 	StatusTrackerAccessToken string               // The auth token to use to send commit-status notifications.
+	Overwrite                bool                 //This allows to overwrite if there is an exixting gitops repository
 }
 
 // PolicyRules to be bound to service account
@@ -110,7 +111,7 @@ const (
 // Init bootstraps a GitOps pipelines and repository structure.
 func Init(o *InitOptions, fs afero.Fs) error {
 	exists, err := ioutils.IsExisting(fs, o.OutputPath)
-	if exists {
+	if exists && !o.Overwrite {
 		return err
 	}
 	if o.GitOpsWebhookSecret == "" {

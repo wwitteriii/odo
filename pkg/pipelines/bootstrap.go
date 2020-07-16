@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/deployment"
 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
 	"github.com/openshift/odo/pkg/pipelines/imagerepo"
+	"github.com/openshift/odo/pkg/pipelines/ioutils"
 	"github.com/openshift/odo/pkg/pipelines/meta"
 	"github.com/openshift/odo/pkg/pipelines/namespaces"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
@@ -40,6 +41,10 @@ type BootstrapOptions struct {
 
 // Bootstrap bootstraps a GitOps pipelines and repository structure.
 func Bootstrap(o *BootstrapOptions, appFs afero.Fs) error {
+	exists, err := ioutils.IsExisting(appFs, o.OutputPath)
+	if exists && !o.Overwrite {
+		return err
+	}
 	if o.GitOpsWebhookSecret == "" {
 		gitopsSecret, err := secrets.GenerateString(webhookSecretLength)
 		if err != nil {
