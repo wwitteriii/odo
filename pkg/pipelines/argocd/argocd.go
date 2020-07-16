@@ -6,7 +6,10 @@ import (
 
 	// This is a hack because ArgoCD doesn't support a compatible (code-wise)
 	// version of k8s in common with odo.
+
+	argov1 "github.com/openshift/odo/pkg/pipelines/argocd/operator/v1alpha1"
 	argoappv1 "github.com/openshift/odo/pkg/pipelines/argocd/v1alpha1"
+	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/meta"
@@ -25,12 +28,42 @@ var (
 			SelfHeal: true,
 		},
 	}
+
+	ignoreDifferencesFields = []argoappv1.ResourceIgnoreDifferences{
+		{Group: "argoproj.io", Kind: "Application", JSONPointers: []string{"/status"}},
+		{Group: "triggers.tekton.dev", Kind: "EventListener", JSONPointers: []string{"/status"}},
+		{Group: "triggers.tekton.dev", Kind: "TriggerTemplate", JSONPointers: []string{"/status"}},
+		{Group: "triggers.tekton.dev", Kind: "TriggerBinding", JSONPointers: []string{"/status"}},
+		{Group: "route.openshift.io", Kind: "Route", JSONPointers: []string{"/spec/host"}},
+	}
+
+	resourceExclusions = excludeResources{
+		[]resource{
+			{
+				APIGroups: []string{"tekton.dev"},
+				Kinds:     []string{"TaskRun", "PipelineRun"},
+				Clusters:  []string{"*"},
+			},
+		},
+	}
 )
 
+type excludeResources struct {
+	Resources []resource
+}
+
+type resource struct {
+	APIGroups []string `json:"apiGroups"`
+	Kinds     []string `json:"kinds"`
+	Clusters  []string `json:"clusters"`
+}
+
 const (
-	defaultServer   = "https://kubernetes.default.svc"
-	defaultProject  = "default"
-	ArgoCDNamespace = "argocd"
+	defaultServer      = "https://kubernetes.default.svc"
+	defaultProject     = "default"
+	ArgoCDNamespace    = "argocd"
+	parentAppFile      = "argo-app.yaml"
+	argoCDResourceFile = "argocd.yaml"
 )
 
 func Build(argoNS, repoURL string, m *config.Manifest) (res.Resources, error) {
@@ -49,8 +82,7 @@ func Build(argoNS, repoURL string, m *config.Manifest) (res.Resources, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	err = argoCDConfigResources(eb.argoCDConfig, eb.files)
+	err = argoCDConfigResources(m.Config, m.GitOpsURL, eb.files)
 	if err != nil {
 		return nil, err
 	}
@@ -78,12 +110,22 @@ func (b *argocdBuilder) Application(env *config.Environment, app *config.Applica
 	return nil
 }
 
-func argoCDConfigResources(argoCDConfig *config.ArgoCDConfig, files res.Resources) error {
-	if argoCDConfig.Namespace == "" {
+func argoCDConfigResources(cfg *config.Config, repoURL string, files res.Resources) error {
+	if cfg.ArgoCD.Namespace == "" {
 		return nil
 	}
 	basePath := filepath.Join(config.PathForArgoCD())
 	filename := filepath.Join(basePath, "kustomization.yaml")
+	files[filepath.Join(basePath, "argo-app.yaml")] = ignoreDifferences(makeApplication("argo-app", cfg.ArgoCD.Namespace, defaultProject, cfg.ArgoCD.Namespace, defaultServer, argoappv1.ApplicationSource{RepoURL: repoURL, Path: basePath}))
+	if cfg.Pipelines != nil {
+		files[filepath.Join(basePath, "cicd-app.yaml")] = ignoreDifferences(makeApplication("cicd-app", cfg.ArgoCD.Namespace, defaultProject, cfg.Pipelines.Name, defaultServer,
+			argoappv1.ApplicationSource{RepoURL: repoURL, Path: filepath.Join(config.PathForPipelines(cfg.Pipelines), "overlays")}))
+	}
+	argoResource, err := argoCDResource(cfg.ArgoCD.Namespace)
+	if err != nil {
+		return err
+	}
+	files[filepath.Join(basePath, argoCDResourceFile)] = argoResource
 	resourceNames := []string{}
 	for k := range files {
 		resourceNames = append(resourceNames, filepath.Base(k))
@@ -105,6 +147,28 @@ func makeSource(env *config.Environment, app *config.Application, repoURL string
 		Path:           app.ConfigRepo.Path,
 		TargetRevision: app.ConfigRepo.TargetRevision,
 	}
+}
+
+func ignoreDifferences(app *argoappv1.Application) *argoappv1.Application {
+	app.Spec.IgnoreDifferences = ignoreDifferencesFields
+	return app
+}
+
+func argoCDResource(ns string) (*argov1.ArgoCD, error) {
+	b, err := yaml.Marshal(resourceExclusions.Resources)
+	if err != nil {
+		return nil, err
+	}
+	return &argov1.ArgoCD{
+		TypeMeta:   meta.TypeMeta("ArgoCD", "argoproj.io/v1alpha1"),
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, "argocd")),
+		Spec: argov1.ArgoCDSpec{
+			ResourceExclusions: string(b),
+			Server: argov1.ArgoCDServerSpec{
+				Route: argov1.ArgoCDRouteSpec{Enabled: true},
+			},
+		},
+	}, nil
 }
 
 func makeApplication(appName, argoNS, project, ns, server string, source argoappv1.ApplicationSource) *argoappv1.Application {
