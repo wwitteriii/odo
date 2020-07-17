@@ -26,7 +26,6 @@ func CreateAppCIPipeline(name types.NamespacedName) *pipelinev1.Pipeline {
 				createParamSpec("COMMIT_SHA", "string"),
 				createParamSpec("TLSVERIFY", "string"),
 				createParamSpec("BUILD_EXTRA_ARGS", "string"),
-
 				createParamSpec("GIT_REF", "string"),
 				createParamSpec("COMMIT_DATE", "string"),
 				createParamSpec("COMMIT_AUTHOR", "string"),

@@ -64,13 +64,13 @@ func CreateDevCIBuildPRTemplate(ns, saName string) triggersv1.TriggerTemplate {
 			Params: []triggersv1.ParamSpec{
 				createTemplateParamSpec(GitRef, "The git branch for this PR."),
 				createTemplateParamSpec(GitCommitID, "the specific commit SHA."),
+				createTemplateParamSpec(GitCommitDate, "The date at which the commit was made"),
+				createTemplateParamSpec(GitCommitAuthor, "The name of the github user handle that made the commit"),
+				createTemplateParamSpec(GitCommitMessage, "The commit message"),
 				createTemplateParamSpec("gitrepositoryurl", "The git repository URL."),
 				createTemplateParamSpec("fullname", "The GitHub repository for this PullRequest."),
 				createTemplateParamSpec("imageRepo", "The repository to push built images to."),
 				createTemplateParamSpec("tlsVerify", "Enable image repostiory TLS certification verification."),
-				createTemplateParamSpec(GitCommitDate, "The date at which the commit was made"),
-				createTemplateParamSpec(GitCommitAuthor, "The name of the github user handle that made the commit"),
-				createTemplateParamSpec(GitCommitMessage, "The commit message"),
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{
@@ -93,10 +93,10 @@ func CreateCDPushTemplate(ns, saName string) triggersv1.TriggerTemplate {
 			Params: []triggersv1.ParamSpec{
 
 				createTemplateParamSpecDefault(GitRef, "The git revision", "master"),
-				createTemplateParamSpec("gitrepositoryurl", "The git repository url"),
 				createTemplateParamSpec(GitCommitDate, "The date at which the commit was made"),
 				createTemplateParamSpec(GitCommitAuthor, "The name of the github user handle that made the commit"),
 				createTemplateParamSpec(GitCommitMessage, "The commit message"),
+				createTemplateParamSpec("gitrepositoryurl", "The git repository url"),
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{

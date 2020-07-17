@@ -47,13 +47,13 @@ func (r *gitlabSpec) pushBindingName() string {
 
 func (r *gitlabSpec) pushBindingParams() []triggersv1.Param {
 	return []triggersv1.Param{
-		createBindingParam(triggers.GitRef, "$(body.ref)"),
-		createBindingParam(triggers.GitCommitID, "$(body.after)"),
 		createBindingParam("gitrepositoryurl", "$(body.project.git_http_url)"),
 		createBindingParam("fullname", "$(body.project.path_with_namespace)"),
-		createBindingParam(triggers.GitCommitDate, "$(body.commits[body.commits.length-1].timestamp)"),
-		createBindingParam(triggers.GitCommitMessage, "(body.commits[body.commits.length-1].message)"),
-		createBindingParam(triggers.GitCommitAuthor, "$(body.commits[body.commits.length-1].author.name)"),
+		createBindingParam(triggers.GitRef, "$(body.ref)"),
+		createBindingParam(triggers.GitCommitID, "$(body.after)"),
+		createBindingParam(triggers.GitCommitDate, "$(body.commits[-1:].timestamp)"),
+		createBindingParam(triggers.GitCommitMessage, "$(body.commits[-1:].message)"),
+		createBindingParam(triggers.GitCommitAuthor, "$(body.commits[-1:].author.name)"),
 	}
 }
 

@@ -63,6 +63,18 @@ func TestCreateDevCIBuildPRTemplate(t *testing.T) {
 					Description: "the specific commit SHA.",
 				},
 				{
+					Name:        GitCommitDate,
+					Description: "The date at which the commit was made",
+				},
+				{
+					Name:        GitCommitAuthor,
+					Description: "The name of the github user handle that made the commit",
+				},
+				{
+					Name:        GitCommitMessage,
+					Description: "The commit message",
+				},
+				{
 					Name:        "gitrepositoryurl",
 					Description: "The git repository URL.",
 				},
@@ -77,18 +89,6 @@ func TestCreateDevCIBuildPRTemplate(t *testing.T) {
 				{
 					Name:        "tlsVerify",
 					Description: "Enable image repostiory TLS certification verification.",
-				},
-				{
-					Name:        GitCommitDate,
-					Description: "The date at which the commit was made",
-				},
-				{
-					Name:        GitCommitAuthor,
-					Description: "The name of the github user handle that made the commit",
-				},
-				{
-					Name:        GitCommitMessage,
-					Description: "The commit message",
 				},
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
@@ -118,10 +118,6 @@ func TestCreateCDPushTemplate(t *testing.T) {
 					Default:     strPtr("master"),
 				},
 				{
-					Name:        "gitrepositoryurl",
-					Description: "The git repository url",
-				},
-				{
 					Name:        GitCommitDate,
 					Description: "The date at which the commit was made",
 				},
@@ -132,6 +128,10 @@ func TestCreateCDPushTemplate(t *testing.T) {
 				{
 					Name:        GitCommitMessage,
 					Description: "The commit message",
+				},
+				{
+					Name:        "gitrepositoryurl",
+					Description: "The git repository url",
 				},
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{

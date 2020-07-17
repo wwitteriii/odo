@@ -40,14 +40,13 @@ func TestCreateDevCIPipelineRun(t *testing.T) {
 			PipelineRef:        createPipelineRef("app-ci-pipeline"),
 			Params: []pipelinev1.Param{
 				createPipelineBindingParam("REPO", "$(params.fullname)"),
-				createPipelineBindingParam("COMMIT_SHA", "$(params.io.openshift.build.commit.id)"),
+				createPipelineBindingParam("GIT_REPO", "$(params.gitrepositoryurl)"),
 				createPipelineBindingParam("TLSVERIFY", "$(params.tlsVerify)"),
-
+				createPipelineBindingParam("COMMIT_SHA", "$(params.io.openshift.build.commit.id)"),
 				createPipelineBindingParam("GIT_REF", "$(params.io.openshift.build.commit.ref)"),
 				createPipelineBindingParam("COMMIT_DATE", "$(params.io.openshift.build.commit.date)"),
 				createPipelineBindingParam("COMMIT_AUTHOR", "$(params.io.openshift.build.commit.author)"),
 				createPipelineBindingParam("COMMIT_MESSAGE", "$(params.io.openshift.build.commit.message)"),
-				createPipelineBindingParam("GIT_REPO", "$(params.gitrepositoryurl)"),
 			},
 			Resources: createDevResource("$(params.io.openshift.build.commit.ref)"),
 		},

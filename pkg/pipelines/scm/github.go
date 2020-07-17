@@ -48,10 +48,10 @@ func (r *githubSpec) pushBindingName() string {
 
 func (r *githubSpec) pushBindingParams() []triggersv1.Param {
 	return []triggersv1.Param{
-		createBindingParam(triggers.GitRef, "$(body.ref)"),
-		createBindingParam(triggers.GitCommitID, "$(body.head_commit.id)"),
 		createBindingParam("gitrepositoryurl", "$(body.repository.clone_url)"),
 		createBindingParam("fullname", "$(body.repository.full_name)"),
+		createBindingParam(triggers.GitRef, "$(body.ref)"),
+		createBindingParam(triggers.GitCommitID, "$(body.head_commit.id)"),
 		createBindingParam(triggers.GitCommitDate, "$(body.head_commit.timestamp)"),
 		createBindingParam(triggers.GitCommitMessage, "$(body.head_commit.message)"),
 		createBindingParam(triggers.GitCommitAuthor, "$(body.head_commit.author.name)"),

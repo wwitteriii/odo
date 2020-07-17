@@ -22,6 +22,14 @@ func TestCreatePushBindingForGitlab(t *testing.T) {
 		Spec: triggersv1.TriggerBindingSpec{
 			Params: []triggersv1.Param{
 				{
+					Name:  "gitrepositoryurl",
+					Value: "$(body.project.git_http_url)",
+				},
+				{
+					Name:  "fullname",
+					Value: "$(body.project.path_with_namespace)",
+				},
+				{
 					Name:  triggers.GitRef,
 					Value: "$(body.ref)",
 				},
@@ -30,21 +38,17 @@ func TestCreatePushBindingForGitlab(t *testing.T) {
 					Value: "$(body.after)",
 				},
 				{
-					Name:  "gitrepositoryurl",
-					Value: "$(body.project.git_http_url)",
-				},
-				{
 					Name:  triggers.GitCommitDate,
-					Value: "$(body.commits[body.commits.length-1].timestamp)",
+					Value: "$(body.commits[-1:].timestamp)",
 				},
 
 				{
 					Name:  triggers.GitCommitMessage,
-					Value: "(body.commits[body.commits.length-1].message)",
+					Value: "$(body.commits[-1:].message)",
 				},
 				{
 					Name:  triggers.GitCommitAuthor,
-					Value: "$(body.commits[body.commits.length-1].author.name)",
+					Value: "$(body.commits[-1:].author.name)",
 				},
 			},
 		},

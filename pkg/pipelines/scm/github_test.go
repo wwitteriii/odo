@@ -22,16 +22,20 @@ func TestCreatePushBindingForGithub(t *testing.T) {
 		Spec: triggersv1.TriggerBindingSpec{
 			Params: []triggersv1.Param{
 				{
+					Name:  "gitrepositoryurl",
+					Value: "$(body.repository.clone_url)",
+				},
+				{
+					Name:  "fullname",
+					Value: "$(body.repository.full_name)",
+				},
+				{
 					Name:  triggers.GitRef,
 					Value: "$(body.ref)",
 				},
 				{
 					Name:  triggers.GitCommitID,
 					Value: "$(body.head_commit.id)",
-				},
-				{
-					Name:  "gitrepositoryurl",
-					Value: "$(body.repository.clone_url)",
 				},
 				{
 					Name:  triggers.GitCommitDate,
