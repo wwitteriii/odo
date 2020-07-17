@@ -39,7 +39,7 @@ func TestCreatePushBindingForGithub(t *testing.T) {
 				},
 				{
 					Name:  triggers.GitCommitMessage,
-					Value: "$(body.head_commit.message",
+					Value: "$(body.head_commit.message)",
 				},
 				{
 					Name:  triggers.GitCommitAuthor,
