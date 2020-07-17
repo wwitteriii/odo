@@ -113,7 +113,7 @@ func argoCDConfigResources(cfg *config.Config, repoURL string, files res.Resourc
 	if cfg.ArgoCD.Namespace == "" {
 		return nil
 	}
-	basePath := filepath.Join(config.PathForArgoCD(argoCDConfig.Namespace))
+	basePath := filepath.Join(config.PathForArgoCD(cfg.ArgoCD.Namespace))
 	filename := filepath.Join(basePath, "kustomization.yaml")
 	files[filepath.Join(basePath, "argo-app.yaml")] = ignoreDifferences(makeApplication("argo-app", cfg.ArgoCD.Namespace, defaultProject, cfg.ArgoCD.Namespace, defaultServer, argoappv1.ApplicationSource{RepoURL: repoURL, Path: basePath}))
 	if cfg.Pipelines != nil {
