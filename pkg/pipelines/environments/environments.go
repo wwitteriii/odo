@@ -63,8 +63,8 @@ func (b *envBuilder) Application(env *config.Environment, app *config.Applicatio
 	return nil
 }
 
-func (b *envBuilder) Service(env *config.Environment, svc *config.Service) error {
-	svcPath := config.PathForService(env, svc.Name)
+func (b *envBuilder) Service(app *config.Application, env *config.Environment, svc *config.Service) error {
+	svcPath := config.PathForService(app, env, svc.Name)
 	svcFiles, err := filesForService(svcPath, svc)
 	if err != nil {
 		return err
@@ -138,8 +138,8 @@ func filesForApplication(env *config.Environment, gitOpsRepoURL, appPath string,
 	}
 	baseKustomization := filepath.Join(appPath, "base", kustomization)
 	relServices := []string{}
-	for _, v := range app.ServiceRefs {
-		svcPath := config.PathForService(env, v)
+	for _, v := range app.Services {
+		svcPath := config.PathForService(app, env, v.Name)
 		relService, err := filepath.Rel(filepath.Dir(baseKustomization), svcPath)
 		if err != nil {
 			return nil, err
