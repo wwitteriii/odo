@@ -43,7 +43,7 @@ type BootstrapOptions struct {
 func Bootstrap(o *BootstrapOptions, appFs afero.Fs) error {
 	exists, err := ioutils.IsExisting(appFs, o.OutputPath)
 	if exists && !o.Overwrite {
-		return err
+		return fmt.Errorf("Directory already exists, cannot overwrite ( set --overwrite=true to continue )")
 	}
 	if o.GitOpsWebhookSecret == "" {
 		gitopsSecret, err := secrets.GenerateString(webhookSecretLength)
