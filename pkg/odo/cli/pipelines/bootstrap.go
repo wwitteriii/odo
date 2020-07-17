@@ -97,8 +97,8 @@ func NewCmdBootstrap(name, fullName string) *cobra.Command {
 	}
 	addInitCommands(bootstrapCmd, o.BootstrapOptions.InitOptions)
 
-	bootstrapCmd.Flags().StringVar(&o.ServiceRepoURL, "service-repo-url", "", "Service source e.g. https://github.com/organisation/service")
-	bootstrapCmd.Flags().StringVar(&o.ServiceWebhookSecret, "service-webhook-secret", "", "Provide the GitHub webhook secret for Service repository (if not provided, it will be auto-generated)")
+	bootstrapCmd.Flags().StringVar(&o.ServiceRepoURL, "service-repo-url", "", "provide a Service source(it could be GitHub or GitLab) e.g. https://github.com/organisation/service")
+	bootstrapCmd.Flags().StringVar(&o.ServiceWebhookSecret, "service-webhook-secret", "", "provide a secret that we can use to authenticate incoming hooks from your Git hosting service for service repo.(if not provided, it will be auto-generated)")
 
 	bootstrapCmd.MarkFlagRequired("gitops-repo-url")
 	bootstrapCmd.MarkFlagRequired("service-repo-url")
