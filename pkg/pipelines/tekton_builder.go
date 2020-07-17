@@ -50,7 +50,7 @@ func (tb *tektonBuilder) Service(env *config.Environment, svc *config.Service) e
 		return err
 	}
 	pipelines := getPipelines(env, svc, repo)
-	ciTrigger := repo.CreateCITrigger(triggerName(svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, pipelines.Integration.Template, pipelines.Integration.Bindings)
+	ciTrigger := repo.CreatePushTrigger(triggerName(svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, pipelines.Integration.Template, pipelines.Integration.Bindings)
 	tb.triggers = append(tb.triggers, ciTrigger)
 	return nil
 }
@@ -65,7 +65,7 @@ func createTriggersForCICD(gitOpsRepo string, cfg *config.PipelinesConfig) ([]v1
 	if err != nil {
 		return []v1alpha1.EventListenerTrigger{}, err
 	}
-	ciTrigger := repo.CreateCITrigger("ci-dryrun-from-pr", eventlisteners.GitOpsWebhookSecret, cfg.Name, "ci-dryrun-from-pr-template", []string{repo.PRBindingName()})
+	ciTrigger := repo.CreatePushTrigger("ci-dryrun-from-push", eventlisteners.GitOpsWebhookSecret, cfg.Name, "ci-dryrun-from-push-template", []string{repo.PushBindingName()})
 	triggers = append(triggers, ciTrigger)
 	return triggers, nil
 }
@@ -96,5 +96,5 @@ func clonePipelines(p *config.Pipelines) *config.Pipelines {
 }
 
 func triggerName(svc string) string {
-	return fmt.Sprintf("app-ci-build-from-pr-%s", svc)
+	return fmt.Sprintf("app-ci-build-from-push-%s", svc)
 }

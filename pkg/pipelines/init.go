@@ -83,22 +83,21 @@ const (
 	// Kustomize constants for kustomization.yaml
 	Kustomize = "kustomization.yaml"
 
-	namespacesPath           = "01-namespaces/cicd-environment.yaml"
-	rolesPath                = "02-rolebindings/pipeline-service-role.yaml"
-	rolebindingsPath         = "02-rolebindings/pipeline-service-rolebinding.yaml"
-	serviceAccountPath       = "02-rolebindings/pipeline-service-account.yaml"
-	secretsPath              = "03-secrets/gitops-webhook-secret.yaml"
-	dockerConfigPath         = "03-secrets/docker-config.yaml"
-	gitopsTasksPath          = "04-tasks/deploy-from-source-task.yaml"
-	appTaskPath              = "04-tasks/deploy-using-kubectl-task.yaml"
-	ciPipelinesPath          = "05-pipelines/ci-dryrun-from-pr-pipeline.yaml"
-	appCiPipelinesPath       = "05-pipelines/app-ci-pipeline.yaml"
-	cdPipelinesPath          = "05-pipelines/cd-deploy-from-push-pipeline.yaml"
-	prTemplatePath           = "07-templates/ci-dryrun-from-pr-template.yaml"
-	pushTemplatePath         = "07-templates/cd-deploy-from-push-template.yaml"
-	appCIBuildPRTemplatePath = "07-templates/app-ci-build-pr-template.yaml"
-	eventListenerPath        = "08-eventlisteners/cicd-event-listener.yaml"
-	routePath                = "09-routes/gitops-webhook-event-listener.yaml"
+	namespacesPath        = "01-namespaces/cicd-environment.yaml"
+	rolesPath             = "02-rolebindings/pipeline-service-role.yaml"
+	rolebindingsPath      = "02-rolebindings/pipeline-service-rolebinding.yaml"
+	serviceAccountPath    = "02-rolebindings/pipeline-service-account.yaml"
+	secretsPath           = "03-secrets/gitops-webhook-secret.yaml"
+	dockerConfigPath      = "03-secrets/docker-config.yaml"
+	gitopsTasksPath       = "04-tasks/deploy-from-source-task.yaml"
+	appTaskPath           = "04-tasks/deploy-using-kubectl-task.yaml"
+	ciPipelinesPath       = "05-pipelines/ci-dryrun-from-push-pipeline.yaml"
+	appCiPipelinesPath    = "05-pipelines/app-ci-pipeline.yaml"
+	cdPipelinesPath       = "05-pipelines/cd-deploy-from-push-pipeline.yaml"
+	pushTemplatePath      = "07-templates/ci-dryrun-from-push-template.yaml"
+	appCIPushTemplatePath = "07-templates/app-ci-build-from-push-template.yaml"
+	eventListenerPath     = "08-eventlisteners/cicd-event-listener.yaml"
+	routePath             = "09-routes/gitops-webhook-event-listener.yaml"
 
 	dockerSecretName = "regcred"
 
@@ -218,11 +217,12 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 	}
 	outputs[gitopsTasksPath] = tasks.CreateDeployFromSourceTask(cicdNamespace, script)
 	outputs[appTaskPath] = tasks.CreateDeployUsingKubectlTask(cicdNamespace)
-	outputs[ciPipelinesPath] = pipelines.CreateCIPipeline(meta.NamespacedName(cicdNamespace, "ci-dryrun-from-pr-pipeline"), cicdNamespace)
+	outputs[ciPipelinesPath] = pipelines.CreateCIPipeline(meta.NamespacedName(cicdNamespace, "ci-dryrun-from-push-pipeline"), cicdNamespace)
 	outputs[appCiPipelinesPath] = pipelines.CreateAppCIPipeline(meta.NamespacedName(cicdNamespace, "app-ci-pipeline"))
-	createTriggerBindings(repo, outputs, cicdNamespace)
-	outputs[prTemplatePath] = triggers.CreateCIDryRunTemplate(cicdNamespace, saName)
-	outputs[appCIBuildPRTemplatePath] = triggers.CreateDevCIBuildPRTemplate(cicdNamespace, saName)
+	pushBinding, pushBindingName := repo.CreatePushBinding(cicdNamespace)
+	outputs[filepath.Join("06-bindings", pushBindingName+".yaml")] = pushBinding
+	outputs[pushTemplatePath] = triggers.CreateCIDryRunTemplate(cicdNamespace, saName)
+	outputs[appCIPushTemplatePath] = triggers.CreateDevCIBuildPRTemplate(cicdNamespace, saName)
 	outputs[eventListenerPath] = eventlisteners.Generate(repo, cicdNamespace, saName, eventlisteners.GitOpsWebhookSecret)
 	route, err := routes.Generate(cicdNamespace)
 	if err != nil {
@@ -230,12 +230,6 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 	}
 	outputs[routePath] = route
 	return outputs, nil
-}
-
-// Trigger bindings for repository types will be created during bootstrap
-func createTriggerBindings(r scm.Repository, outputs res.Resources, ns string) {
-	prBinding, prBindingName := r.CreatePRBinding(ns)
-	outputs[filepath.Join("06-bindings", prBindingName+".yaml")] = prBinding
 }
 
 func createManifest(gitOpsRepoURL string, configEnv *config.Config, envs ...*config.Environment) *config.Manifest {

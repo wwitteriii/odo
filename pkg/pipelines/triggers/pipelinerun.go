@@ -56,10 +56,10 @@ func createCDPipelineRun(saName string) pipelinev1.PipelineRun {
 func createCIPipelineRun(saName string) pipelinev1.PipelineRun {
 	return pipelinev1.PipelineRun{
 		TypeMeta:   pipelineRunTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "ci-dryrun-from-pr-pipeline-$(uid)")),
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "ci-dryrun-from-push-pipeline-$(uid)")),
 		Spec: pipelinev1.PipelineRunSpec{
 			ServiceAccountName: saName,
-			PipelineRef:        createPipelineRef("ci-dryrun-from-pr-pipeline"),
+			PipelineRef:        createPipelineRef("ci-dryrun-from-push-pipeline"),
 			Resources:          createResources(),
 		},
 	}

@@ -8,6 +8,12 @@ import (
 	triggersv1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 )
 
+var (
+	branchRefOverlay = []triggersv1.CELOverlay{
+		{Key: "ref", Expression: "split(body.ref,'/')[2]"},
+	}
+)
+
 // GetDriverName gets Driver name from URL
 func GetDriverName(rawURL string) (string, error) {
 	u, err := url.Parse(rawURL)
@@ -39,7 +45,8 @@ func invalidRepoURLError(repoURL, reason string) error {
 func createEventInterceptor(filter string, repoName string) *triggersv1.EventInterceptor {
 	return &triggersv1.EventInterceptor{
 		CEL: &triggersv1.CELInterceptor{
-			Filter: fmt.Sprintf(filter, repoName),
+			Filter:   fmt.Sprintf(filter, repoName),
+			Overlays: branchRefOverlay,
 		},
 	}
 }

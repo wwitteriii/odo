@@ -285,7 +285,7 @@ func defaultPipelines(r scm.Repository) *config.Pipelines {
 	return &config.Pipelines{
 		Integration: &config.TemplateBinding{
 			Template: appCITemplateName,
-			Bindings: []string{r.PRBindingName()},
+			Bindings: []string{r.PushBindingName()},
 		},
 	}
 }

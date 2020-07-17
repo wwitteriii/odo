@@ -32,7 +32,8 @@ func TestCreateListenerTemplate(t *testing.T) {
 func TestCreateEventInterceptor(t *testing.T) {
 	validEventInterceptor := triggersv1.EventInterceptor{
 		CEL: &triggersv1.CELInterceptor{
-			Filter: "sampleFilter sample",
+			Filter:   "sampleFilter sample",
+			Overlays: branchRefOverlay,
 		},
 	}
 	eventInterceptor := createEventInterceptor("sampleFilter %s", "sample")

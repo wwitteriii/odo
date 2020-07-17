@@ -20,13 +20,8 @@ func TestGenerateEventListener(t *testing.T) {
 			ServiceAccountName: "pipeline",
 			Triggers: []triggersv1.EventListenerTrigger{
 				{
-					Name: "ci-dryrun-from-pr",
+					Name: "ci-dryrun-from-push",
 					Interceptors: []*triggersv1.EventInterceptor{
-						{
-							CEL: &triggersv1.CELInterceptor{
-								Filter: "(header.match('X-GitHub-Event', 'pull_request') && body.action == 'opened' || body.action == 'synchronize') && body.pull_request.head.repo.full_name == 'org/test'",
-							},
-						},
 						{
 							GitHub: &triggersv1.GitHubInterceptor{
 								SecretRef: &triggersv1.SecretRef{
@@ -36,30 +31,11 @@ func TestGenerateEventListener(t *testing.T) {
 								},
 							},
 						},
-					},
-					Bindings: []*triggersv1.EventListenerBinding{
-						{
-							Name: "github-pr-binding",
-						},
-					},
-					Template: triggersv1.EventListenerTemplate{
-						Name: "ci-dryrun-from-pr-template",
-					},
-				},
-				{
-					Name: "cd-deploy-from-push",
-					Interceptors: []*triggersv1.EventInterceptor{
 						{
 							CEL: &triggersv1.CELInterceptor{
-								Filter: "(header.match('X-GitHub-Event', 'push') && body.repository.full_name == 'org/test') && body.ref.startsWith('refs/heads/master')",
-							},
-						},
-						{
-							GitHub: &triggersv1.GitHubInterceptor{
-								SecretRef: &triggersv1.SecretRef{
-									SecretName: "test",
-									SecretKey:  WebhookSecretKey,
-									Namespace:  "testing",
+								Filter: "(header.match('X-GitHub-Event', 'push') && body.repository.full_name == 'org/test')",
+								Overlays: []triggersv1.CELOverlay{
+									{Key: "ref", Expression: "split(body.ref,'/')[2]"},
 								},
 							},
 						},
@@ -70,7 +46,7 @@ func TestGenerateEventListener(t *testing.T) {
 						},
 					},
 					Template: triggersv1.EventListenerTemplate{
-						Name: "cd-deploy-from-push-template",
+						Name: "ci-dryrun-from-push-template",
 					},
 				},
 			},

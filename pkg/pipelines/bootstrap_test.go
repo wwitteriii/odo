@@ -66,7 +66,7 @@ func TestBootstrapManifest(t *testing.T) {
 					Pipelines: &config.Pipelines{
 						Integration: &config.TemplateBinding{
 							Template: "app-ci-template",
-							Bindings: []string{"github-pr-binding"},
+							Bindings: []string{"github-push-binding"},
 						},
 					},
 					Name: "tst-dev",
@@ -81,7 +81,7 @@ func TestBootstrapManifest(t *testing.T) {
 								},
 							},
 							Pipelines: &config.Pipelines{
-								Integration: &config.TemplateBinding{Bindings: []string{"tst-dev-http-api-binding", "github-pr-binding"}},
+								Integration: &config.TemplateBinding{Bindings: []string{"tst-dev-http-api-binding", "github-push-binding"}},
 							},
 						},
 					},
@@ -119,11 +119,11 @@ func TestBootstrapManifest(t *testing.T) {
 		"04-tasks/deploy-from-source-task.yaml",
 		"04-tasks/deploy-using-kubectl-task.yaml",
 		"05-pipelines/app-ci-pipeline.yaml",
-		"05-pipelines/ci-dryrun-from-pr-pipeline.yaml",
-		"06-bindings/github-pr-binding.yaml",
+		"05-pipelines/ci-dryrun-from-push-pipeline.yaml",
+		"06-bindings/github-push-binding.yaml",
 		"06-bindings/tst-dev-http-api-binding.yaml",
-		"07-templates/app-ci-build-pr-template.yaml",
-		"07-templates/ci-dryrun-from-pr-template.yaml",
+		"07-templates/app-ci-build-from-push-template.yaml",
+		"07-templates/ci-dryrun-from-push-template.yaml",
 		"08-eventlisteners/cicd-event-listener.yaml",
 		"09-routes/gitops-webhook-event-listener.yaml",
 	}

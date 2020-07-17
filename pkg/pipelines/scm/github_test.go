@@ -10,45 +10,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestCreatePRBindingForGithub(t *testing.T) {
-	repo, err := NewRepository("http://github.com/org/test")
-	assertNoError(t, err)
-	want := triggersv1.TriggerBinding{
-		TypeMeta: triggers.TriggerBindingTypeMeta,
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "github-pr-binding",
-			Namespace: "testns",
-		},
-		Spec: triggersv1.TriggerBindingSpec{
-			Params: []triggersv1.Param{
-				{
-					Name:  "gitref",
-					Value: "$(body.pull_request.head.ref)",
-				},
-				{
-					Name:  "gitsha",
-					Value: "$(body.pull_request.head.sha)",
-				},
-				{
-					Name:  "gitrepositoryurl",
-					Value: "$(body.repository.clone_url)",
-				},
-				{
-					Name:  "fullname",
-					Value: "$(body.repository.full_name)",
-				},
-			},
-		},
-	}
-	got, name := repo.CreatePRBinding("testns")
-	if name != "github-pr-binding" {
-		t.Fatalf("CreatePushBinding() returned a wrong binding: want %v got %v", "github-pr-binding", name)
-	}
-	if diff := cmp.Diff(want, got); diff != "" {
-		t.Fatalf("createPRBinding() failed:\n%s", diff)
-	}
-}
-
 func TestCreatePushBindingForGithub(t *testing.T) {
 	repo, err := NewRepository("http://github.com/org/test")
 	assertNoError(t, err)
@@ -60,18 +21,10 @@ func TestCreatePushBindingForGithub(t *testing.T) {
 		},
 		Spec: triggersv1.TriggerBindingSpec{
 			Params: []triggersv1.Param{
-				{
-					Name:  "gitref",
-					Value: "$(body.ref)",
-				},
-				{
-					Name:  "gitsha",
-					Value: "$(body.head_commit.id)",
-				},
-				{
-					Name:  "gitrepositoryurl",
-					Value: "$(body.repository.clone_url)",
-				},
+				{Name: "gitref", Value: "$(body.ref)"},
+				{Name: "gitsha", Value: "$(body.head_commit.id)"},
+				{Name: "gitrepositoryurl", Value: "$(body.repository.clone_url)"},
+				{Name: "fullname", Value: "$(body.repository.full_name)"},
 			},
 		},
 	}
@@ -81,34 +34,6 @@ func TestCreatePushBindingForGithub(t *testing.T) {
 	}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatalf("CreatePushBinding() failed:\n%s", diff)
-	}
-}
-
-func TestCreateCITriggerForGithub(t *testing.T) {
-	repo, err := NewRepository("http://github.com/org/test")
-	assertNoError(t, err)
-	want := triggersv1.EventListenerTrigger{
-		Name: "test",
-		Bindings: []*triggersv1.EventListenerBinding{
-			{Name: "test-binding"},
-		},
-		Template: triggersv1.EventListenerTemplate{Name: "test-template"},
-		Interceptors: []*triggersv1.EventInterceptor{
-			{
-				CEL: &triggersv1.CELInterceptor{
-					Filter: fmt.Sprintf(githubCIDryRunFilters, "org/test"),
-				},
-			},
-			{
-				GitHub: &triggersv1.GitHubInterceptor{
-					SecretRef: &triggersv1.SecretRef{SecretKey: "webhook-secret-key", SecretName: "secret", Namespace: "ns"},
-				},
-			},
-		},
-	}
-	got := repo.CreateCITrigger("test", "secret", "ns", "test-template", []string{"test-binding"})
-	if diff := cmp.Diff(want, got); diff != "" {
-		t.Fatalf("CreateCITrigger() failed:\n%s", diff)
 	}
 }
 
@@ -123,18 +48,19 @@ func TestCreateCDTriggersForGithub(t *testing.T) {
 		Template: triggersv1.EventListenerTemplate{Name: "test-template"},
 		Interceptors: []*triggersv1.EventInterceptor{
 			{
-				CEL: &triggersv1.CELInterceptor{
-					Filter: fmt.Sprintf(githubCDDeployFilters, "org/test"),
-				},
-			},
-			{
 				GitHub: &triggersv1.GitHubInterceptor{
 					SecretRef: &triggersv1.SecretRef{SecretKey: "webhook-secret-key", SecretName: "secret", Namespace: "ns"},
 				},
 			},
+			{
+				CEL: &triggersv1.CELInterceptor{
+					Filter:   fmt.Sprintf(githubPushEventFilters, "org/test"),
+					Overlays: branchRefOverlay,
+				},
+			},
 		},
 	}
-	got := repo.CreateCDTrigger("test", "secret", "ns", "test-template", []string{"test-binding"})
+	got := repo.CreatePushTrigger("test", "secret", "ns", "test-template", []string{"test-binding"})
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatalf("CreateCDTrigger() failed:\n%s", diff)
 	}

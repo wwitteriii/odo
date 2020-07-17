@@ -119,7 +119,7 @@ func TestGetPipelines(t *testing.T) {
 			&config.Pipelines{
 				Integration: &config.TemplateBinding{
 					Template: "app-ci-template",
-					Bindings: []string{"github-pr-binding"},
+					Bindings: []string{"github-push-binding"},
 				},
 			},
 		},
@@ -195,7 +195,7 @@ func fakeTriggers(t *testing.T, m *config.Manifest, gitOpsRepo string) []trigger
 		repo, err := scm.NewRepository(svc.SourceURL)
 		assertNoError(t, err)
 		pipelines := getPipelines(env, svc, repo)
-		devCITrigger := repo.CreateCITrigger(fmt.Sprintf("app-ci-build-from-pr-%s", svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, pipelines.Integration.Template, pipelines.Integration.Bindings)
+		devCITrigger := repo.CreatePushTrigger(fmt.Sprintf("app-ci-build-from-push-%s", svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, pipelines.Integration.Template, pipelines.Integration.Bindings)
 		triggers = append(triggers, devCITrigger)
 	}
 

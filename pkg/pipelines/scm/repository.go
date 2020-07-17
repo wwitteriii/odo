@@ -21,12 +21,9 @@ type repository struct {
 }
 
 type triggerSpec interface {
-	prBindingParams() []triggersv1.Param
 	pushBindingParams() []triggersv1.Param
-	ciDryRunFilters() string
-	cdDeployFilters() string
+	pushEventFilters() string
 	eventInterceptor(secretNamespace, secretName string) *triggersv1.EventInterceptor
-	prBindingName() string
 	pushBindingName() string
 }
 
@@ -46,16 +43,6 @@ func NewRepository(url string) (Repository, error) {
 	return git(url)
 }
 
-func (r *repository) CreatePRBinding(ns string) (triggersv1.TriggerBinding, string) {
-	return triggersv1.TriggerBinding{
-		TypeMeta:   triggers.TriggerBindingTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, r.spec.prBindingName())),
-		Spec: triggersv1.TriggerBindingSpec{
-			Params: r.spec.prBindingParams(),
-		},
-	}, r.spec.prBindingName()
-}
-
 func (r *repository) CreatePushBinding(ns string) (triggersv1.TriggerBinding, string) {
 	return triggersv1.TriggerBinding{
 		TypeMeta:   triggers.TriggerBindingTypeMeta,
@@ -66,14 +53,8 @@ func (r *repository) CreatePushBinding(ns string) (triggersv1.TriggerBinding, st
 	}, r.spec.pushBindingName()
 }
 
-func (r *repository) CreateCITrigger(name, secretName, secretNS, template string, bindings []string) triggersv1.EventListenerTrigger {
-	return r.createTrigger(name, r.spec.ciDryRunFilters(),
-		template, bindings,
-		r.spec.eventInterceptor(secretNS, secretName))
-}
-
-func (r *repository) CreateCDTrigger(name, secretName, secretNS, template string, bindings []string) triggersv1.EventListenerTrigger {
-	return r.createTrigger(name, r.spec.cdDeployFilters(),
+func (r *repository) CreatePushTrigger(name, secretName, secretNS, template string, bindings []string) triggersv1.EventListenerTrigger {
+	return r.createTrigger(name, r.spec.pushEventFilters(),
 		template, bindings,
 		r.spec.eventInterceptor(secretNS, secretName))
 }
@@ -82,16 +63,12 @@ func (r *repository) createTrigger(name, filters, template string, bindings []st
 	return triggersv1.EventListenerTrigger{
 		Name: name,
 		Interceptors: []*triggersv1.EventInterceptor{
-			createEventInterceptor(filters, r.path),
 			interceptor,
+			createEventInterceptor(filters, r.path),
 		},
 		Bindings: createBindings(bindings),
 		Template: createListenerTemplate(template),
 	}
-}
-
-func (r *repository) PRBindingName() string {
-	return r.spec.prBindingName()
 }
 
 func (r *repository) PushBindingName() string {

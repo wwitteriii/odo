@@ -128,8 +128,8 @@ func TestCreateCDPushTemplate(t *testing.T) {
 func TestCreateCIDryRunTemplate(t *testing.T) {
 	validStageCIDryRunTemplate := triggersv1.TriggerTemplate{
 		TypeMeta: triggerTemplateTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("testns", "ci-dryrun-from-pr-template"),
-			statusTrackerAnnotations("ci-dryrun-from-pr-pipeline", "Stage CI Dry Run")),
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("testns", "ci-dryrun-from-push-template"),
+			statusTrackerAnnotations("ci-dryrun-from-push-pipeline", "CI dry run on push event")),
 
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
