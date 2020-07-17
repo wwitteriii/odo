@@ -40,7 +40,7 @@ func createDevCIPipelineRun(saName string) pipelinev1.PipelineRun {
 				createPipelineBindingParam("COMMIT_AUTHOR", "$(params."+GitCommitAuthor+")"),
 				createPipelineBindingParam("COMMIT_MESSAGE", "$(params."+GitCommitMessage+")"),
 			},
-			Resources: createDevResource("$(params.io.openshift.build.commit.ref)"),
+			Resources: createDevResource("$(params." + GitRef + ")"),
 		},
 	}
 
