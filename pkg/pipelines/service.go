@@ -115,10 +115,10 @@ func serviceResources(m *config.Manifest, fs afero.Fs, o *AddServiceOptions) (re
 		}
 	}
 
-	err = m.AddService(o.EnvName, o.AppName, svc)
-	if err != nil {
-		return nil, err
-	}
+	// err = m.AddService(o.EnvName, o.AppName, svc)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	err = m.Validate()
 	if err != nil {
 		return nil, err

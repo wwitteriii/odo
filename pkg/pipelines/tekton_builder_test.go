@@ -219,12 +219,13 @@ func testEnv(svc *config.Service, name string) *config.Environment {
 	return &config.Environment{
 		Name:      "test-" + name,
 		Pipelines: testPipelines("test"),
-		Services: []*config.Service{
-			svc,
-		},
+
 		Apps: []*config.Application{
 			{
 				Name: "test-" + name + "-app",
+				Services: []*config.Service{
+					svc,
+				},
 			},
 		},
 	}
