@@ -115,10 +115,10 @@ func serviceResources(m *config.Manifest, fs afero.Fs, o *AddServiceOptions) (re
 		}
 	}
 
-	// err = m.AddService(o.EnvName, o.AppName, svc)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	err = m.AddService(o.EnvName, o.AppName, svc)
+	if err != nil {
+		return nil, err
+	}
 	err = m.Validate()
 	if err != nil {
 		return nil, err
@@ -146,7 +146,7 @@ func createImageRepoResources(m *config.Manifest, cfg *config.PipelinesConfig, e
 	resources := res.Resources{}
 	filenames := []string{}
 
-	bindingName, bindingFilename, svcImageBinding := createSvcImageBinding(cfg, env, p.ServiceName, imageRepo, !isInternalRegistry)
+	bindingName, bindingFilename, svcImageBinding := createSvcImageBinding(cfg, env, p.AppName, p.ServiceName, imageRepo, !isInternalRegistry)
 	resources = res.Merge(svcImageBinding, resources)
 	filenames = append(filenames, bindingFilename)
 
@@ -187,8 +187,8 @@ func updateKustomization(fs afero.Fs, base string) error {
 	return err
 }
 
-func makeSvcImageBindingName(envName, svcName string) string {
-	return fmt.Sprintf("%s-%s-binding", envName, svcName)
+func makeSvcImageBindingName(envName, appName, svcName string) string {
+	return fmt.Sprintf("%s-%s-%s-binding", envName, appName, svcName)
 }
 
 func makeSvcImageBindingFilename(bindingName string) string {
@@ -199,8 +199,9 @@ func makeImageBindingPath(cfg *config.PipelinesConfig, imageRepoBindingFilename 
 	return filepath.Join(config.PathForPipelines(cfg), "base", imageRepoBindingFilename)
 }
 
-func createSvcImageBinding(cfg *config.PipelinesConfig, env *config.Environment, svcName, imageRepo string, isTLSVerify bool) (string, string, res.Resources) {
-	name := makeSvcImageBindingName(env.Name, svcName)
+func createSvcImageBinding(cfg *config.PipelinesConfig, env *config.Environment, appName, svcName, imageRepo string, isTLSVerify bool) (string, string, res.Resources) {
+	name := makeSvcImageBindingName(env.Name, appName, svcName)
+	fmt.Printf(name)
 	filename := makeSvcImageBindingFilename(name)
 	resourceFilePath := makeImageBindingPath(cfg, filename)
 	return name, filename, res.Resources{resourceFilePath: triggers.CreateImageRepoBinding(cfg.Name, name, imageRepo, strconv.FormatBool(isTLSVerify))}

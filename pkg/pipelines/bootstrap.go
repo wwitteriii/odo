@@ -142,7 +142,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	secretsPath := filepath.Join(config.PathForPipelines(cfg), "base", secretFilename)
 	bootstrapped[secretsPath] = hookSecret
 
-	bindingName, imageRepoBindingFilename, svcImageBinding := createSvcImageBinding(cfg, devEnv, serviceName, imageRepo, !isInternalRegistry)
+	bindingName, imageRepoBindingFilename, svcImageBinding := createSvcImageBinding(cfg, devEnv, appName, serviceName, imageRepo, !isInternalRegistry)
 	bootstrapped = res.Merge(svcImageBinding, bootstrapped)
 
 	kustomizePath := filepath.Join(config.PathForPipelines(cfg), "base", "kustomization.yaml")
