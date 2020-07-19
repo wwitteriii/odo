@@ -118,7 +118,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		return nil, errors.New("unable to bootstrap without dev environment")
 	}
 
-	app := m.GetApplication("dev", appName)
+	app := m.GetApplication(ns["dev"], appName)
 	if app == nil {
 		return nil, errors.New("unable to bootstrap without application")
 	}
@@ -134,6 +134,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate GitHub Webhook Secret: %v", err)
 	}
+
 	cfg := m.GetPipelinesConfig()
 	if cfg == nil {
 		return nil, errors.New("failed to find a pipeline configuration - unable to continue bootstrap")

@@ -50,37 +50,32 @@ func TestManifestWalk(t *testing.T) {
 			},
 		},
 	}
-
 	v := &testVisitor{paths: []string{}}
 	err := m.Walk(v)
 	if err != nil {
 		t.Fatal(err)
 	}
 	sort.Strings(v.paths)
-
 	want := []string{
-		// "development/apps/my-app-1/app-1-service-http",
-		// "development/apps/my-app-1/app-1-service-test",
-		// "development/apps/my-app-2/app-2-service",
-		"development/my-app-1",
-		"development/my-app-2",
+		"development/apps/my-app-1",
+		"development/apps/my-app-1/services/app-1-service-http",
+		"development/apps/my-app-1/services/app-1-service-test",
+		"development/apps/my-app-2",
+		"development/apps/my-app-2/services/app-2-service",
 		"envs/development",
 		"envs/staging",
-		// "staging/apps/my-app-1/app-1-service-user",
-		"staging/my-app-1",
+		"staging/apps/my-app-1",
+		"staging/apps/my-app-1/services/app-1-service-user",
 	}
-
 	if diff := cmp.Diff(want, v.paths); diff != "" {
 		t.Fatalf("tree files: %s", diff)
 	}
 }
-
 func TestManifestWalkCalls(t *testing.T) {
 	m := &Manifest{
 		Environments: []*Environment{
 			{
 				Name: "development",
-
 				Apps: []*Application{
 					{
 						Name: "my-app-1",
@@ -99,7 +94,6 @@ func TestManifestWalkCalls(t *testing.T) {
 			},
 			{
 				Name: "staging",
-
 				Apps: []*Application{
 					{Name: "my-app-1",
 						Services: []*Service{
@@ -110,37 +104,36 @@ func TestManifestWalkCalls(t *testing.T) {
 			},
 		},
 	}
-
 	v := &testVisitor{paths: []string{}}
 	err := m.Walk(v)
 	if err != nil {
 		t.Fatal(err)
 	}
+	sort.Strings(v.paths)
 
 	want := []string{
-		// "development/app-1-service-http",
-		// "development/app-1-service-test",
-		// "development/app-2-service",
-		"development/my-app-1",
-		"development/my-app-2",
+		"development/apps/my-app-1",
+		"development/apps/my-app-1/services/app-1-service-http",
+		"development/apps/my-app-1/services/app-1-service-test",
+		"development/apps/my-app-2",
+		"development/apps/my-app-2/services/app-2-service",
 		"envs/development",
-		// "staging/app-1-service-user",
-		"staging/my-app-1",
 		"envs/staging",
+		"staging/apps/my-app-1",
+		"staging/apps/my-app-1/services/app-1-service-user",
 	}
 
+	fmt.Println("these are the paths", v.paths)
 	if diff := cmp.Diff(want, v.paths); diff != "" {
 		t.Fatalf("tree files: %s", diff)
 	}
 }
-
 func TestGetPipelinesConfig(t *testing.T) {
 	cfg := &Config{
 		Pipelines: &PipelinesConfig{
 			Name: "cicd",
 		},
 	}
-
 	envTests := []struct {
 		name     string
 		manifest *Manifest
@@ -157,7 +150,6 @@ func TestGetPipelinesConfig(t *testing.T) {
 			want:     nil,
 		},
 	}
-
 	for i, tt := range envTests {
 		t.Run(fmt.Sprintf("test %d", i), func(rt *testing.T) {
 			m := tt.manifest
@@ -174,7 +166,6 @@ func TestGetArgoCDConfig(t *testing.T) {
 			Namespace: "argocd",
 		},
 	}
-
 	envTests := []struct {
 		name     string
 		manifest *Manifest
@@ -191,7 +182,6 @@ func TestGetArgoCDConfig(t *testing.T) {
 			want:     nil,
 		},
 	}
-
 	for i, tt := range envTests {
 		t.Run(fmt.Sprintf("test %d", i), func(rt *testing.T) {
 			m := tt.manifest
@@ -202,49 +192,42 @@ func TestGetArgoCDConfig(t *testing.T) {
 		})
 	}
 }
-
 func TestGetEnvironment(t *testing.T) {
 	m := &Manifest{Environments: makeEnvs([]testEnv{{name: "prod"}, {name: "testing"}})}
 	env := m.GetEnvironment("prod")
 	if env.Name != "prod" {
 		t.Fatalf("got the wrong environment back: %#v", env)
 	}
-
 	unknown := m.GetEnvironment("unknown")
 	if unknown != nil {
 		t.Fatalf("found an unknown env: %#v", unknown)
 	}
 }
-
 func makeEnvs(ns []testEnv) []*Environment {
 	n := make([]*Environment, len(ns))
 	for i, v := range ns {
 		n[i] = &Environment{Name: v.name}
 	}
 	return n
-
 }
 
 type testEnv struct {
 	name string
 }
-
 type testVisitor struct {
 	pipelineServices []string
 	paths            []string
 }
 
 func (v *testVisitor) Service(app *Application, env *Environment, svc *Service) error {
-	v.paths = append(v.paths, filepath.Join(env.Name, app.Name, svc.Name))
+	v.paths = append(v.paths, filepath.Join(env.Name, "apps", app.Name, "services", svc.Name))
 	v.pipelineServices = append(v.pipelineServices, filepath.Join("cicd", env.Name, svc.Name))
 	return nil
 }
-
 func (v *testVisitor) Application(env *Environment, app *Application) error {
-	v.paths = append(v.paths, filepath.Join(env.Name, app.Name))
+	v.paths = append(v.paths, filepath.Join(env.Name, "apps", app.Name))
 	return nil
 }
-
 func (v *testVisitor) Environment(env *Environment) error {
 	if env.Name == "cicd" {
 		v.paths = append(v.paths, v.pipelineServices...)
