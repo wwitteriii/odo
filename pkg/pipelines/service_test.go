@@ -3,6 +3,8 @@ package pipelines
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -14,34 +16,12 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/meta"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
 	"github.com/openshift/odo/pkg/pipelines/secrets"
+	"github.com/spf13/afero"
 	triggersv1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
+	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
-
-// import (
-// 	"crypto/rand"
-// 	"crypto/rsa"
-// 	"fmt"
-// 	"path/filepath"
-// 	"testing"
-
-// 	"github.com/google/go-cmp/cmp"
-// 	"github.com/google/go-cmp/cmp/cmpopts"
-// 	"github.com/openshift/odo/pkg/pipelines/argocd"
-// 	"github.com/openshift/odo/pkg/pipelines/config"
-// 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
-// 	"github.com/spf13/afero"
-// 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-// 	"k8s.io/apimachinery/pkg/types"
-// 	"sigs.k8s.io/yaml"
-
-// 	"github.com/openshift/odo/pkg/pipelines/ioutils"
-// 	"github.com/openshift/odo/pkg/pipelines/meta"
-// 	res "github.com/openshift/odo/pkg/pipelines/resources"
-// 	"github.com/openshift/odo/pkg/pipelines/secrets"
-// 	triggersv1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
-// )
 
 func TestServiceResourcesWithCICD(t *testing.T) {
 	defer stubDefaultPublicKeyFunc(t)()
@@ -279,45 +259,45 @@ func TestAddServiceWithoutApp(t *testing.T) {
 	}
 }
 
-// func TestAddService(t *testing.T) {
-// 	defer stubDefaultPublicKeyFunc(t)()
+func TestAddService(t *testing.T) {
+	defer stubDefaultPublicKeyFunc(t)()
 
-// 	fakeFs := ioutils.NewMapFilesystem()
-// 	outputPath := afero.GetTempDir(fakeFs, "test")
-// 	pipelinesPath := filepath.Join(outputPath, pipelinesFile)
-// 	m := buildManifest(true, true)
-// 	b, err := yaml.Marshal(m)
-// 	assertNoError(t, err)
-// 	err = afero.WriteFile(fakeFs, pipelinesPath, b, 0644)
-// 	assertNoError(t, err)
-// 	wantedPaths := []string{
-// 		"environments/test-dev/apps/new-app/base/kustomization.yaml",
-// 		"environments/test-dev/apps/new-app/overlays/kustomization.yaml",
-// 		"environments/test-dev/apps/new-app/kustomization.yaml",
-// 		"environments/test-dev/apps/new-app/services/test/base/kustomization.yaml",
-// 		"environments/test-dev/apps/new-app/services/test/overlays/kustomization.yaml",
-// 		"environments/test-dev/apps/new-app/services/test/kustomization.yaml",
-// 		"config/cicd/base/03-secrets/webhook-secret-test-dev-test.yaml",
-// 		"config/cicd/base/kustomization.yaml",
-// 		"pipelines.yaml",
-// 		"config/argocd/test-dev-test-app-app.yaml",
-// 		"config/argocd/test-dev-new-app-app.yaml",
-// 	}
-// 	err = AddService(&AddServiceOptions{
-// 		AppName:           "new-app",
-// 		EnvName:           "test-dev",
-// 		GitRepoURL:        "http://github.com/org/test",
-// 		PipelinesFilePath: pipelinesPath,
-// 		WebhookSecret:     "123",
-// 		ServiceName:       "test",
-// 	}, fakeFs)
-// 	assertNoError(t, err)
-// 	for _, path := range wantedPaths {
-// 		t.Run(fmt.Sprintf("checking path %s already exists", path), func(rt *testing.T) {
-// 			assertFileExists(rt, fakeFs, filepath.Join(outputPath, path))
-// 		})
-// 	}
-// }
+	fakeFs := ioutils.NewMapFilesystem()
+	outputPath := afero.GetTempDir(fakeFs, "test")
+	pipelinesPath := filepath.Join(outputPath, pipelinesFile)
+	m := buildManifest(true, true)
+	b, err := yaml.Marshal(m)
+	assertNoError(t, err)
+	err = afero.WriteFile(fakeFs, pipelinesPath, b, 0644)
+	assertNoError(t, err)
+	wantedPaths := []string{
+		"environments/test-dev/apps/new-app/base/kustomization.yaml",
+		"environments/test-dev/apps/new-app/overlays/kustomization.yaml",
+		"environments/test-dev/apps/new-app/kustomization.yaml",
+		"environments/test-dev/apps/new-app/services/test/base/kustomization.yaml",
+		"environments/test-dev/apps/new-app/services/test/overlays/kustomization.yaml",
+		"environments/test-dev/apps/new-app/services/test/kustomization.yaml",
+		"config/cicd/base/03-secrets/webhook-secret-test-dev-test.yaml",
+		"config/cicd/base/kustomization.yaml",
+		"pipelines.yaml",
+		"config/argocd/test-dev-test-app-app.yaml",
+		"config/argocd/test-dev-new-app-app.yaml",
+	}
+	err = AddService(&AddServiceOptions{
+		AppName:           "new-app",
+		EnvName:           "test-dev",
+		GitRepoURL:        "http://github.com/org/test",
+		PipelinesFilePath: pipelinesPath,
+		WebhookSecret:     "123",
+		ServiceName:       "test",
+	}, fakeFs)
+	assertNoError(t, err)
+	for _, path := range wantedPaths {
+		t.Run(fmt.Sprintf("checking path %s already exists", path), func(rt *testing.T) {
+			assertFileExists(rt, fakeFs, filepath.Join(outputPath, path))
+		})
+	}
+}
 
 func TestServiceWithArgoCD(t *testing.T) {
 	defer stubDefaultPublicKeyFunc(t)()

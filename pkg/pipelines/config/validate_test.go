@@ -99,24 +99,6 @@ func TestValidate(t *testing.T) {
 				},
 			),
 		},
-		// {
-		// 	"missing app service reference",
-		// 	"testdata/missing_service_in_application.yaml",
-		// 	multierror.Join(
-		// 		[]error{
-		// 			missingServiceError("my-app-1", []string{"environments.duplicate-service.apps.my-app-1"}),
-		// 		},
-		// 	),
-		// },
-		// // // {
-		// // // 	"missing app service reference",
-		// // // 	"testdata/duplicate_source_url.yaml",
-		// // // 	multierror.Join(
-		// // // 		[]error{
-		// // // 			duplicateSourceError("https://github.com/testing/testing.git", []string{"environments.duplicate-source.services.app-1-service-http", "environments.duplicate-source.services.app-2-service-http"}),
-		// // // 		},
-		// // // 	),
-		// // // },
 		{
 			"service with pipeline with no template",
 			"testdata/service_with_bindings_no_template.yaml",

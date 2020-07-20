@@ -98,11 +98,10 @@ func (m *Manifest) GetArgoCDConfig() *ArgoCDConfig {
 // Environment is a slice of Apps, these are the named apps in the namespace.
 //
 type Environment struct {
-	Name      string     `json:"name,omitempty"`
-	Cluster   string     `json:"cluster,omitempty"`
-	Pipelines *Pipelines `json:"pipelines,omitempty"`
-	//Services  []*Service     `json:"services,omitempty"`
-	Apps []*Application `json:"apps,omitempty"`
+	Name      string         `json:"name,omitempty"`
+	Cluster   string         `json:"cluster,omitempty"`
+	Pipelines *Pipelines     `json:"pipelines,omitempty"`
+	Apps      []*Application `json:"apps,omitempty"`
 }
 
 // Config represents the configuration for non-application environments.
@@ -127,7 +126,6 @@ func (e Environment) GoString() string {
 }
 
 // Application has many services.
-//
 // The ConfigRepo indicates that the configuration for this application lives in
 // another repository.
 type Application struct {
