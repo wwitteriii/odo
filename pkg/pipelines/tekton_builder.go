@@ -32,6 +32,7 @@ func buildEventListenerResources(gitOpsRepo string, m *config.Manifest) (res.Res
 		return nil, err
 	}
 	tb.triggers = append(tb.triggers, triggers...)
+	fmt.Println(tb.triggers)
 	err = m.Walk(tb)
 	if err != nil {
 		return nil, err
@@ -41,7 +42,8 @@ func buildEventListenerResources(gitOpsRepo string, m *config.Manifest) (res.Res
 	return files, nil
 }
 
-func (tb *tektonBuilder) Service(env *config.Environment, svc *config.Service) error {
+func (tb *tektonBuilder) Service(app *config.Application, env *config.Environment, svc *config.Service) error {
+	fmt.Print("test")
 	if svc.SourceURL == "" {
 		return nil
 	}
@@ -52,6 +54,7 @@ func (tb *tektonBuilder) Service(env *config.Environment, svc *config.Service) e
 	pipelines := getPipelines(env, svc, repo)
 	ciTrigger := repo.CreatePushTrigger(triggerName(svc.Name), svc.Webhook.Secret.Name, svc.Webhook.Secret.Namespace, pipelines.Integration.Template, pipelines.Integration.Bindings)
 	tb.triggers = append(tb.triggers, ciTrigger)
+	fmt.Print(tb.triggers)
 	return nil
 }
 

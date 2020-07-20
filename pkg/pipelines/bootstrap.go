@@ -208,6 +208,7 @@ func bootstrapEnvironments(repo scm.Repository, prefix, secretName string, ns ma
 				if err != nil {
 					return nil, nil, err
 				}
+				app.Services = []*config.Service{svc}
 				env.Apps = []*config.Application{app}
 				//env.Services = []*config.Service{svc}
 				env.Pipelines = defaultPipelines(repo)

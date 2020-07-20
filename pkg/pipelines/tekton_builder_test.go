@@ -38,29 +38,29 @@ func TestBuildEventListener(t *testing.T) {
 	}
 }
 
-// func TestBuildEventListenerWithServiceWithNoURL(t *testing.T) {
-// 	m := &config.Manifest{
+func TestBuildEventListenerWithServiceWithNoURL(t *testing.T) {
+	m := &config.Manifest{
 
-// 		Config: &config.Config{
-// 			Pipelines: &config.PipelinesConfig{
-// 				Name: "test-cicd",
-// 			},
-// 		},
-// 		Environments: []*config.Environment{
-// 			testEnv(testService(), "dev"),
-// 		},
-// 	}
-// 	cicdPath := filepath.Join("config", "test-cicd")
-// 	gitOpsRepo := "http://github.com/org/gitops.git"
-// 	got, err := buildEventListenerResources(gitOpsRepo, m)
-// 	assertNoError(t, err)
-// 	want := res.Resources{
-// 		getEventListenerPath(cicdPath): eventlisteners.CreateELFromTriggers("test-cicd", saName, fakeTriggers(t, m, gitOpsRepo)),
-// 	}
-// 	if diff := cmp.Diff(want, got); diff != "" {
-// 		t.Fatalf("resources didn't match:%s\n", diff)
-// 	}
-// }
+		Config: &config.Config{
+			Pipelines: &config.PipelinesConfig{
+				Name: "test-cicd",
+			},
+		},
+		Environments: []*config.Environment{
+			testEnv(testService(), "dev"),
+		},
+	}
+	cicdPath := filepath.Join("config", "test-cicd")
+	gitOpsRepo := "http://github.com/org/gitops.git"
+	got, err := buildEventListenerResources(gitOpsRepo, m)
+	assertNoError(t, err)
+	want := res.Resources{
+		getEventListenerPath(cicdPath): eventlisteners.CreateELFromTriggers("test-cicd", saName, fakeTriggers(t, m, gitOpsRepo)),
+	}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Fatalf("resources didn't match:%s\n", diff)
+	}
+}
 
 func TestBuildEventListenerWithNoGitOpsURL(t *testing.T) {
 	m := &config.Manifest{
