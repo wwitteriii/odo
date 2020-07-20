@@ -18,9 +18,9 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/secrets"
 	"github.com/spf13/afero"
 	triggersv1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
-	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/yaml"
 )
 
 func TestServiceResourcesWithCICD(t *testing.T) {
