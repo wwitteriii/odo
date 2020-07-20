@@ -123,7 +123,6 @@ func TestManifestWalkCalls(t *testing.T) {
 		"staging/apps/my-app-1/services/app-1-service-user",
 	}
 
-	fmt.Println("these are the paths", v.paths)
 	if diff := cmp.Diff(want, v.paths); diff != "" {
 		t.Fatalf("tree files: %s", diff)
 	}

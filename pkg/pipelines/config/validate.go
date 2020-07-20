@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/mkmik/multierror"
@@ -123,6 +124,7 @@ func (vv *validateVisitor) Application(env *Environment, app *Application) error
 
 func (vv *validateVisitor) Service(app *Application, env *Environment, svc *Service) error {
 	svcPath := yamlPath(PathForService(app, env, svc.Name))
+	svcRelativePath := yamlPath(filepath.Join(env.Name, svc.Name))
 	if svc.SourceURL != "" {
 		previous, ok := vv.serviceURLs[svc.SourceURL]
 		if !ok {
@@ -131,7 +133,7 @@ func (vv *validateVisitor) Service(app *Application, env *Environment, svc *Serv
 		previous = append(previous, svcPath)
 		vv.serviceURLs[svc.SourceURL] = previous
 	}
-	if err := checkDuplicate(svc.Name, svcPath, vv.serviceNames); err != nil {
+	if err := checkDuplicateService(svc.Name, svcPath, svcRelativePath, vv.serviceNames); err != nil {
 		vv.errs = append(vv.errs, err)
 	}
 	if err := validateName(svc.Name, svcPath); err != nil {
@@ -301,5 +303,14 @@ func checkDuplicate(field, path string, checkMap map[string]bool) error {
 		return duplicateFieldsError([]string{field}, []string{path})
 	}
 	checkMap[path] = true
+	return nil
+}
+
+func checkDuplicateService(field, path, relativePath string, checkMap map[string]bool) error {
+	_, ok := checkMap[relativePath]
+	if ok {
+		return duplicateFieldsError([]string{field}, []string{path})
+	}
+	checkMap[relativePath] = true
 	return nil
 }

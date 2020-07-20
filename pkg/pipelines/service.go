@@ -201,7 +201,6 @@ func makeImageBindingPath(cfg *config.PipelinesConfig, imageRepoBindingFilename 
 
 func createSvcImageBinding(cfg *config.PipelinesConfig, env *config.Environment, appName, svcName, imageRepo string, isTLSVerify bool) (string, string, res.Resources) {
 	name := makeSvcImageBindingName(env.Name, appName, svcName)
-	fmt.Printf(name)
 	filename := makeSvcImageBindingFilename(name)
 	resourceFilePath := makeImageBindingPath(cfg, filename)
 	return name, filename, res.Resources{resourceFilePath: triggers.CreateImageRepoBinding(cfg.Name, name, imageRepo, strconv.FormatBool(isTLSVerify))}

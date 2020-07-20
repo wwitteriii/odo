@@ -95,7 +95,16 @@ func TestValidate(t *testing.T) {
 			"testdata/duplicate_service.yaml",
 			multierror.Join(
 				[]error{
-					duplicateFieldsError([]string{"app-1-service-http"}, []string{"environments.duplicate-service.apps.my-app-1.services.app-1-service-http"}),
+					duplicateFieldsError([]string{"app-1-service-http"}, []string{"environments.duplicate-service.apps.my-app-2.services.app-1-service-http"}),
+				},
+			),
+		},
+		{
+			"missing app service reference",
+			"testdata/duplicate_source_url.yaml",
+			multierror.Join(
+				[]error{
+					duplicateSourceError("https://github.com/testing/testing.git", []string{"environments.duplicate-source.apps.my-app-1.services.app-1-service-http", "environments.duplicate-source.apps.my-app-2.services.app-2-service-http"}),
 				},
 			),
 		},
