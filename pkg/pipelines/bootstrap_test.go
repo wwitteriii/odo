@@ -3,6 +3,7 @@ package pipelines
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -164,4 +165,39 @@ func TestApplicationFromRepo(t *testing.T) {
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatalf("bootstrapped resources:\n%s", diff)
 	}
+}
+
+func TestOverwriteFlag(t *testing.T) {
+	defer func(f secrets.PublicKeyFunc) {
+		secrets.DefaultPublicKeyFunc = f
+	}(secrets.DefaultPublicKeyFunc)
+
+	secrets.DefaultPublicKeyFunc = func(service types.NamespacedName) (*rsa.PublicKey, error) {
+		key, err := rsa.GenerateKey(rand.Reader, 1024)
+		if err != nil {
+			t.Fatalf("failed to generate a private RSA key: %s", err)
+		}
+		return &key.PublicKey, nil
+	}
+	fakeFs := ioutils.NewMapFilesystem()
+	params := &BootstrapOptions{
+		InitOptions: &InitOptions{
+			Prefix:              "tst-",
+			GitOpsRepoURL:       testGitOpsRepo,
+			ImageRepo:           "image/repo",
+			GitOpsWebhookSecret: "123",
+		},
+		ServiceRepoURL:       testSvcRepo,
+		ServiceWebhookSecret: "456",
+	}
+	err := Bootstrap(params, fakeFs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := Bootstrap(params, fakeFs)
+	want := fmt.Errorf("Directory already exists, cannot overwrite ( set --overwrite=true to continue )")
+	if got.Error() != want.Error() {
+		t.Fatalf("Got %s want %s", got, want)
+	}
+
 }

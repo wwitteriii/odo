@@ -41,7 +41,8 @@ type BootstrapOptions struct {
 
 // Bootstrap bootstraps a GitOps pipelines and repository structure.
 func Bootstrap(o *BootstrapOptions, appFs afero.Fs) error {
-	exists, err := ioutils.IsExisting(appFs, o.OutputPath)
+	exists, err := ioutils.IsExisting(appFs, filepath.Join(o.OutputPath, pipelinesFile))
+	fmt.Println("This is the path", exists)
 	if exists && !o.Overwrite {
 		return fmt.Errorf("Directory already exists, cannot overwrite ( set --overwrite=true to continue )")
 	}
