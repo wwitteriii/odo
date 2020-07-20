@@ -11,13 +11,13 @@ import (
 
 func TestCreateBindingParam(t *testing.T) {
 	validParam := pipelinev1.Param{
-		Name: "gitref",
+		Name: GitRef,
 		Value: pipelinev1.ArrayOrString{
 			StringVal: "$(body.ref)",
 			Type:      pipelinev1.ParamTypeString,
 		},
 	}
-	bindingParam := createPipelineBindingParam("gitref", "$(body.ref)")
+	bindingParam := createPipelineBindingParam(GitRef, "$(body.ref)")
 	if diff := cmp.Diff(validParam, bindingParam); diff != "" {
 		t.Fatalf("createPipelineBindingParam() failed\n%s", diff)
 	}

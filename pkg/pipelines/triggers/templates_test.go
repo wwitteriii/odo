@@ -22,7 +22,7 @@ func TestCreateDevCDDeployTemplate(t *testing.T) {
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				{
-					Name:        "gitsha",
+					Name:        GitCommitID,
 					Description: "The specific commit SHA.",
 				},
 				{
@@ -55,12 +55,24 @@ func TestCreateDevCIBuildPRTemplate(t *testing.T) {
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				{
-					Name:        "gitref",
+					Name:        GitRef,
 					Description: "The git branch for this PR.",
 				},
 				{
-					Name:        "gitsha",
+					Name:        GitCommitID,
 					Description: "the specific commit SHA.",
+				},
+				{
+					Name:        GitCommitDate,
+					Description: "The date at which the commit was made",
+				},
+				{
+					Name:        GitCommitAuthor,
+					Description: "The name of the github user handle that made the commit",
+				},
+				{
+					Name:        GitCommitMessage,
+					Description: "The commit message",
 				},
 				{
 					Name:        "gitrepositoryurl",
@@ -101,9 +113,21 @@ func TestCreateCDPushTemplate(t *testing.T) {
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				{
-					Name:        "gitref",
+					Name:        GitRef,
 					Description: "The git revision",
 					Default:     strPtr("master"),
+				},
+				{
+					Name:        GitCommitDate,
+					Description: "The date at which the commit was made",
+				},
+				{
+					Name:        GitCommitAuthor,
+					Description: "The name of the github user handle that made the commit",
+				},
+				{
+					Name:        GitCommitMessage,
+					Description: "The commit message",
 				},
 				{
 					Name:        "gitrepositoryurl",
@@ -134,7 +158,7 @@ func TestCreateCIDryRunTemplate(t *testing.T) {
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				{
-					Name:        "gitref",
+					Name:        GitRef,
 					Description: "The git revision",
 					Default:     strPtr("master"),
 				},

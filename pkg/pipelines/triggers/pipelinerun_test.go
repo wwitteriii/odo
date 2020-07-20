@@ -21,7 +21,7 @@ func TestCreateDevCDPipelineRun(t *testing.T) {
 		Spec: pipelinev1.PipelineRunSpec{
 			ServiceAccountName: sName,
 			PipelineRef:        createPipelineRef("app-cd-pipeline"),
-			Resources:          createDevResource("$(params.gitsha)"),
+			Resources:          createDevResource("$(params.io.openshift.build.commit.id)"),
 		},
 	}
 	template := createDevCDPipelineRun(sName)
@@ -40,10 +40,15 @@ func TestCreateDevCIPipelineRun(t *testing.T) {
 			PipelineRef:        createPipelineRef("app-ci-pipeline"),
 			Params: []pipelinev1.Param{
 				createPipelineBindingParam("REPO", "$(params.fullname)"),
-				createPipelineBindingParam("COMMIT_SHA", "$(params.gitsha)"),
+				createPipelineBindingParam("GIT_REPO", "$(params.gitrepositoryurl)"),
 				createPipelineBindingParam("TLSVERIFY", "$(params.tlsVerify)"),
+				createPipelineBindingParam("COMMIT_SHA", "$(params.io.openshift.build.commit.id)"),
+				createPipelineBindingParam("GIT_REF", "$(params.io.openshift.build.commit.ref)"),
+				createPipelineBindingParam("COMMIT_DATE", "$(params.io.openshift.build.commit.date)"),
+				createPipelineBindingParam("COMMIT_AUTHOR", "$(params.io.openshift.build.commit.author)"),
+				createPipelineBindingParam("COMMIT_MESSAGE", "$(params.io.openshift.build.commit.message)"),
 			},
-			Resources: createDevResource("$(params.gitref)"),
+			Resources: createDevResource("$(params.io.openshift.build.commit.ref)"),
 		},
 	}
 	template := createDevCIPipelineRun(sName)
@@ -101,7 +106,7 @@ func TestCreateDevResource(t *testing.T) {
 			ResourceSpec: &pipelinev1alpha1.PipelineResourceSpec{
 				Type: "image",
 				Params: []pipelinev1.ResourceParam{
-					createResourceParams("url", "$(params.imageRepo):$(params.gitref)-$(params.gitsha)"),
+					createResourceParams("url", "$(params.imageRepo):$(params.io.openshift.build.commit.ref)-$(params.io.openshift.build.commit.id)"),
 				},
 			},
 		},

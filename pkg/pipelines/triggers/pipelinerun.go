@@ -18,7 +18,7 @@ func createDevCDPipelineRun(saName string) pipelinev1.PipelineRun {
 		Spec: pipelinev1.PipelineRunSpec{
 			ServiceAccountName: saName,
 			PipelineRef:        createPipelineRef("app-cd-pipeline"),
-			Resources:          createDevResource("$(params.gitsha)"),
+			Resources:          createDevResource("$(params." + GitCommitID + ")"),
 		},
 	}
 }
@@ -32,10 +32,15 @@ func createDevCIPipelineRun(saName string) pipelinev1.PipelineRun {
 			PipelineRef:        createPipelineRef("app-ci-pipeline"),
 			Params: []pipelinev1.Param{
 				createPipelineBindingParam("REPO", "$(params.fullname)"),
-				createPipelineBindingParam("COMMIT_SHA", "$(params.gitsha)"),
+				createPipelineBindingParam("GIT_REPO", "$(params.gitrepositoryurl)"),
 				createPipelineBindingParam("TLSVERIFY", "$(params.tlsVerify)"),
+				createPipelineBindingParam("COMMIT_SHA", "$(params."+GitCommitID+")"),
+				createPipelineBindingParam("GIT_REF", "$(params."+GitRef+")"),
+				createPipelineBindingParam("COMMIT_DATE", "$(params."+GitCommitDate+")"),
+				createPipelineBindingParam("COMMIT_AUTHOR", "$(params."+GitCommitAuthor+")"),
+				createPipelineBindingParam("COMMIT_MESSAGE", "$(params."+GitCommitMessage+")"),
 			},
-			Resources: createDevResource("$(params.gitref)"),
+			Resources: createDevResource("$(params." + GitRef + ")"),
 		},
 	}
 
@@ -83,7 +88,7 @@ func createDevResource(revision string) []pipelinev1.PipelineResourceBinding {
 			ResourceSpec: &pipelinev1alpha1.PipelineResourceSpec{
 				Type: "image",
 				Params: []pipelinev1.ResourceParam{
-					createResourceParams("url", "$(params.imageRepo):$(params.gitref)-$(params.gitsha)"),
+					createResourceParams("url", "$(params.imageRepo):$(params."+GitRef+")-$(params."+GitCommitID+")"),
 				},
 			},
 		},
@@ -97,7 +102,7 @@ func createResources() []pipelinev1.PipelineResourceBinding {
 			ResourceSpec: &pipelinev1alpha1.PipelineResourceSpec{
 				Type: "git",
 				Params: []pipelinev1.ResourceParam{
-					createResourceParams("revision", "$(params.gitref)"),
+					createResourceParams("revision", "$(params."+GitRef+")"),
 					createResourceParams("url", "$(params.gitrepositoryurl)"),
 				},
 			},

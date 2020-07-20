@@ -1,10 +1,14 @@
 package pipelines
 
 import (
+	"fmt"
+	"strings"
+
 	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/openshift/odo/pkg/pipelines/meta"
+	"github.com/openshift/odo/pkg/pipelines/triggers"
 )
 
 var (
@@ -21,6 +25,12 @@ func CreateAppCIPipeline(name types.NamespacedName) *pipelinev1.Pipeline {
 				createParamSpec("REPO", "string"),
 				createParamSpec("COMMIT_SHA", "string"),
 				createParamSpec("TLSVERIFY", "string"),
+				createParamSpec("BUILD_EXTRA_ARGS", "string"),
+				createParamSpec("GIT_REF", "string"),
+				createParamSpec("COMMIT_DATE", "string"),
+				createParamSpec("COMMIT_AUTHOR", "string"),
+				createParamSpec("COMMIT_MESSAGE", "string"),
+				createParamSpec("GIT_REPO", "string"),
 			},
 			Resources: []pipelinev1.PipelineDeclaredResource{
 				createPipelineDeclaredResource("source-repo", "git"),
@@ -39,6 +49,18 @@ func createParamSpec(name string, paramType pipelinev1.ParamType) pipelinev1.Par
 }
 
 func createBuildImageTask(name string) pipelinev1.PipelineTask {
+	labels := map[string]string{
+		triggers.GitCommitID:      "$(params.COMMIT_SHA)",
+		triggers.GitRef:           "$(params.GIT_REF)",
+		triggers.GitCommitDate:    "$(params.COMMIT_DATE)",
+		triggers.GitCommitAuthor:  "$(params.COMMIT_AUTHOR)",
+		triggers.GitCommitMessage: "$(params.COMMIT_MESSAGE)",
+	}
+	labelArgs := []string{}
+	for k, v := range labels {
+		labelArgs = append(labelArgs, fmt.Sprintf("--label=%s='%s'", k, v))
+	}
+
 	return pipelinev1.PipelineTask{
 		Name:    name,
 		TaskRef: createTaskRef("buildah", pipelinev1.ClusterTaskKind),
@@ -48,6 +70,7 @@ func createBuildImageTask(name string) pipelinev1.PipelineTask {
 		},
 		Params: []pipelinev1.Param{
 			createTaskParam("TLSVERIFY", "$(params.TLSVERIFY)"),
+			createTaskParam("BUILD_EXTRA_ARGS", strings.Join(labelArgs, " ")),
 		},
 	}
 
