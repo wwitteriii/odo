@@ -3,7 +3,7 @@ package pipelines
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"fmt"
+	"errors"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -195,7 +195,7 @@ func TestOverwriteFlag(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := Bootstrap(params, fakeFs)
-	want := fmt.Errorf("Directory already exists, cannot overwrite ( set --overwrite=true to continue )")
+	want := errors.New("Directory already exists, cannot overwrite ( set --overwrite=true to continue )")
 	if got.Error() != want.Error() {
 		t.Fatalf("Got %s want %s", got, want)
 	}

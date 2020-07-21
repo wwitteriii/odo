@@ -41,9 +41,9 @@ type BootstrapOptions struct {
 
 // Bootstrap bootstraps a GitOps pipelines and repository structure.
 func Bootstrap(o *BootstrapOptions, appFs afero.Fs) error {
-	exists, err := ioutils.IsExisting(appFs, filepath.Join(o.OutputPath, pipelinesFile))
-	if exists && !o.Overwrite {
-		return fmt.Errorf("Directory already exists, cannot overwrite ( set --overwrite=true to continue )")
+	err := checkPipelinesFileExists(appFs, o.OutputPath, o.Overwrite)
+	if err != nil {
+		return err
 	}
 	if o.GitOpsWebhookSecret == "" {
 		gitopsSecret, err := secrets.GenerateString(webhookSecretLength)
@@ -294,4 +294,13 @@ func defaultPipelines(r scm.Repository) *config.Pipelines {
 			Bindings: []string{r.PushBindingName()},
 		},
 	}
+}
+
+// Checks whether the pipelines.yaml is present in the output path specified.
+func checkPipelinesFileExists(appFs afero.Fs, outputPath string, overWrite bool) error {
+	exists, _ := ioutils.IsExisting(appFs, filepath.Join(outputPath, pipelinesFile))
+	if exists && !overWrite {
+		return fmt.Errorf("Pipelines.yaml in output path already exists.To overwrite, please set --overwrite flag and re-run command")
+	}
+	return nil
 }
