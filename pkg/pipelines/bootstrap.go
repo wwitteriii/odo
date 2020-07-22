@@ -300,7 +300,7 @@ func defaultPipelines(r scm.Repository) *config.Pipelines {
 func checkPipelinesFileExists(appFs afero.Fs, outputPath string, overWrite bool) error {
 	exists, _ := ioutils.IsExisting(appFs, filepath.Join(outputPath, pipelinesFile))
 	if exists && !overWrite {
-		return fmt.Errorf("Pipelines.yaml in output path already exists.To overwrite, please set --overwrite flag and re-run command")
+		return fmt.Errorf("pipelines.yaml in output path already exists. If you want replace your existing files, please rerun with --overwrite.")
 	}
 	return nil
 }
