@@ -37,10 +37,11 @@ func TestBootstrapManifest(t *testing.T) {
 
 	params := &BootstrapOptions{
 		InitOptions: &InitOptions{
-			Prefix:              "tst-",
-			GitOpsRepoURL:       testGitOpsRepo,
-			ImageRepo:           "image/repo",
-			GitOpsWebhookSecret: "123",
+			Prefix:                   "tst-",
+			GitOpsRepoURL:            testGitOpsRepo,
+			ImageRepo:                "image/repo",
+			GitOpsWebhookSecret:      "123",
+			StatusTrackerAccessToken: "test-token",
 		},
 		ServiceRepoURL:       testSvcRepo,
 		ServiceWebhookSecret: "456",
@@ -109,11 +110,16 @@ func TestBootstrapManifest(t *testing.T) {
 		t.Fatalf("bootstrapped resources:\n%s", diff)
 	}
 
-	wantResources := []string{"01-namespaces/cicd-environment.yaml",
+	wantResources := []string{
+		"01-namespaces/cicd-environment.yaml",
 		"01-namespaces/image.yaml",
+		"02-rolebindings/commit-status-tracker-role.yaml",
+		"02-rolebindings/commit-status-tracker-rolebinding.yaml",
+		"02-rolebindings/commit-status-tracker-service-account.yaml",
 		"02-rolebindings/internal-registry-image-binding.yaml",
 		"02-rolebindings/pipeline-service-role.yaml",
 		"02-rolebindings/pipeline-service-rolebinding.yaml",
+		"03-secrets/commit-status-tracker.yaml",
 		"03-secrets/gitops-webhook-secret.yaml",
 		"03-secrets/webhook-secret-tst-dev-http-api.yaml",
 		"04-tasks/deploy-from-source-task.yaml",
@@ -126,6 +132,7 @@ func TestBootstrapManifest(t *testing.T) {
 		"07-templates/ci-dryrun-from-push-template.yaml",
 		"08-eventlisteners/cicd-event-listener.yaml",
 		"09-routes/gitops-webhook-event-listener.yaml",
+		"10-commit-status-tracker/operator.yaml",
 	}
 	k := r["config/tst-cicd/base/kustomization.yaml"].(res.Kustomization)
 	if diff := cmp.Diff(wantResources, k.Resources); diff != "" {

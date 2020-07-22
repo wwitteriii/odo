@@ -11,13 +11,14 @@ import (
 
 	"github.com/openshift/odo/pkg/pipelines/deployment"
 	"github.com/openshift/odo/pkg/pipelines/meta"
+	res "github.com/openshift/odo/pkg/pipelines/resources"
 	"github.com/openshift/odo/pkg/pipelines/roles"
 	"github.com/openshift/odo/pkg/pipelines/secrets"
 )
 
 const (
 	operatorName         = "commit-status-tracker"
-	containerImage       = "quay.io/redhat-developer/commit-status-tracker:v0.0.1"
+	containerImage       = "quay.io/redhat-developer/commit-status-tracker:v0.0.2"
 	commitStatusAppLabel = "commit-status-tracker-operator"
 )
 
@@ -98,7 +99,7 @@ func createStatusTrackerDeployment(ns string) *appsv1.Deployment {
 
 // Resources returns a list of newly created resources that are required start
 // the status-tracker service.
-func Resources(ns, token string, sealedSecretsservice types.NamespacedName) ([]interface{}, error) {
+func Resources(ns, token string, sealedSecretsservice types.NamespacedName) (res.Resources, error) {
 	name := meta.NamespacedName(ns, operatorName)
 	sa := roles.CreateServiceAccount(name)
 
@@ -106,12 +107,12 @@ func Resources(ns, token string, sealedSecretsservice types.NamespacedName) ([]i
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate Status Tracker Secret: %v", err)
 	}
-	return []interface{}{
-		sa,
-		githubAuth,
-		roles.CreateRole(name, roleRules),
-		roles.CreateRoleBinding(name, sa, "Role", operatorName),
-		createStatusTrackerDeployment(ns),
+	return res.Resources{
+		"02-rolebindings/commit-status-tracker-role.yaml":            roles.CreateRole(name, roleRules),
+		"02-rolebindings/commit-status-tracker-rolebinding.yaml":     roles.CreateRoleBinding(name, sa, "Role", operatorName),
+		"02-rolebindings/commit-status-tracker-service-account.yaml": sa,
+		"03-secrets/commit-status-tracker.yaml":                      githubAuth,
+		"10-commit-status-tracker/operator.yaml":                     createStatusTrackerDeployment(ns),
 	}, nil
 }
 

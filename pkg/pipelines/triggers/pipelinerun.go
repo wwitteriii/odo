@@ -26,7 +26,7 @@ func createDevCDPipelineRun(saName string) pipelinev1.PipelineRun {
 func createDevCIPipelineRun(saName string) pipelinev1.PipelineRun {
 	return pipelinev1.PipelineRun{
 		TypeMeta:   pipelineRunTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "app-ci-pipeline-run-$(uid)")),
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "app-ci-pipeline-run-$(uid)"), statusTrackerAnnotations("dev-ci-build-from-pr", "CI build on push event")),
 		Spec: pipelinev1.PipelineRunSpec{
 			ServiceAccountName: saName,
 			PipelineRef:        createPipelineRef("app-ci-pipeline"),
@@ -40,7 +40,7 @@ func createDevCIPipelineRun(saName string) pipelinev1.PipelineRun {
 				createPipelineBindingParam("COMMIT_AUTHOR", "$(params."+GitCommitAuthor+")"),
 				createPipelineBindingParam("COMMIT_MESSAGE", "$(params."+GitCommitMessage+")"),
 			},
-			Resources: createDevResource("$(params." + GitRef + ")"),
+			Resources: createDevResource("$(params." + GitCommitID + ")"),
 		},
 	}
 
@@ -61,7 +61,7 @@ func createCDPipelineRun(saName string) pipelinev1.PipelineRun {
 func createCIPipelineRun(saName string) pipelinev1.PipelineRun {
 	return pipelinev1.PipelineRun{
 		TypeMeta:   pipelineRunTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "ci-dryrun-from-push-pipeline-$(uid)")),
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "ci-dryrun-from-push-pipeline-$(uid)"), statusTrackerAnnotations("ci-dryrun-from-push-pipeline", "CI dry run on push event")),
 		Spec: pipelinev1.PipelineRunSpec{
 			ServiceAccountName: saName,
 			PipelineRef:        createPipelineRef("ci-dryrun-from-push-pipeline"),
@@ -102,7 +102,7 @@ func createResources() []pipelinev1.PipelineResourceBinding {
 			ResourceSpec: &pipelinev1alpha1.PipelineResourceSpec{
 				Type: "git",
 				Params: []pipelinev1.ResourceParam{
-					createResourceParams("revision", "$(params."+GitRef+")"),
+					createResourceParams("revision", "$(params."+GitCommitID+")"),
 					createResourceParams("url", "$(params.gitrepositoryurl)"),
 				},
 			},

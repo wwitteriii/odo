@@ -14,12 +14,12 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/meta"
 	"github.com/openshift/odo/pkg/pipelines/namespaces"
 	"github.com/openshift/odo/pkg/pipelines/pipelines"
-	"github.com/openshift/odo/pkg/pipelines/resources"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
 	"github.com/openshift/odo/pkg/pipelines/roles"
 	"github.com/openshift/odo/pkg/pipelines/routes"
 	"github.com/openshift/odo/pkg/pipelines/scm"
 	"github.com/openshift/odo/pkg/pipelines/secrets"
+	"github.com/openshift/odo/pkg/pipelines/statustracker"
 	"github.com/openshift/odo/pkg/pipelines/tasks"
 	"github.com/openshift/odo/pkg/pipelines/triggers"
 	"github.com/openshift/odo/pkg/pipelines/yaml"
@@ -37,10 +37,11 @@ type InitOptions struct {
 	GitOpsWebhookSecret      string // This is the secret for authenticating hooks from your GitOps repo.
 	Prefix                   string
 	DockerConfigJSONFilename string
-	InternalRegistryHostname string               // This is the internal registry hostname used for pushing images.
 	ImageRepo                string               // This is where built images are pushed to.
+	InternalRegistryHostname string               // This is the internal registry hostname used for pushing images.
 	OutputPath               string               // Where to write the bootstrapped files to?
 	SealedSecretsService     types.NamespacedName // SealedSecrets Services name
+	StatusTrackerAccessToken string               // The auth token to use to send commit-status notifications.
 }
 
 // PolicyRules to be bound to service account
@@ -53,8 +54,8 @@ var (
 		},
 		{
 			APIGroups: []string{"rbac.authorization.k8s.io"},
-			Resources: []string{"clusterroles"},
-			Verbs:     []string{"bind", "patch"},
+			Resources: []string{"clusterroles", "roles"},
+			Verbs:     []string{"bind", "patch", "get"},
 		},
 		{
 			APIGroups: []string{"rbac.authorization.k8s.io"},
@@ -189,7 +190,7 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 	githubSecret, err := secrets.CreateSealedSecret(meta.NamespacedName(cicdNamespace, eventlisteners.GitOpsWebhookSecret),
 		o.SealedSecretsService, o.GitOpsWebhookSecret, eventlisteners.WebhookSecretKey)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate GitHub Webhook Secret: %v", err)
+		return nil, fmt.Errorf("failed to generate GitHub Webhook Secret: %w", err)
 	}
 
 	outputs[secretsPath] = githubSecret
@@ -208,6 +209,14 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 
 		// add secret and sa to outputs
 		outputs[serviceAccountPath] = roles.AddSecretToSA(sa, dockerSecretName)
+	}
+
+	if o.StatusTrackerAccessToken != "" {
+		trackerResources, err := statustracker.Resources(cicdNamespace, o.StatusTrackerAccessToken, o.SealedSecretsService)
+		if err != nil {
+			return nil, err
+		}
+		outputs = res.Merge(outputs, trackerResources)
 	}
 
 	outputs[rolebindingsPath] = roles.CreateClusterRoleBinding(meta.NamespacedName("", roleBindingName), sa, "ClusterRole", roles.ClusterRoleName)
@@ -242,10 +251,10 @@ func createManifest(gitOpsRepoURL string, configEnv *config.Config, envs ...*con
 
 func getCICDKustomization(files []string) res.Resources {
 	return res.Resources{
-		"overlays/kustomization.yaml": resources.Kustomization{
+		"overlays/kustomization.yaml": res.Kustomization{
 			Bases: []string{"../base"},
 		},
-		"base/kustomization.yaml": resources.Kustomization{
+		"base/kustomization.yaml": res.Kustomization{
 			Resources: files,
 		},
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/openshift/odo/pkg/pipelines/deployment"
 	"github.com/openshift/odo/pkg/pipelines/meta"
+	res "github.com/openshift/odo/pkg/pipelines/resources"
 	"github.com/openshift/odo/pkg/pipelines/roles"
 )
 
@@ -83,21 +84,21 @@ func TestResource(t *testing.T) {
 	}
 
 	ns := "my-test-ns"
-	res, err := Resources(ns, "test-token", meta.NamespacedName("sealed-secrets-ns", "sealed-secrets-svc"))
+	generated, err := Resources(ns, "test-token", meta.NamespacedName("sealed-secrets-ns", "sealed-secrets-svc"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	name := meta.NamespacedName(ns, operatorName)
 	sa := roles.CreateServiceAccount(name)
-	want := []interface{}{
-		sa,
-		testSecret,
-		roles.CreateRole(name, roleRules),
-		roles.CreateRoleBinding(name, sa, "Role", operatorName),
-		createStatusTrackerDeployment(ns),
+	want := res.Resources{
+		"02-rolebindings/commit-status-tracker-service-account.yaml": sa,
+		"03-secrets/commit-status-tracker.yaml":                      testSecret,
+		"02-rolebindings/commit-status-tracker-role.yaml":            roles.CreateRole(name, roleRules),
+		"02-rolebindings/commit-status-tracker-rolebinding.yaml":     roles.CreateRoleBinding(name, sa, "Role", operatorName),
+		"10-commit-status-tracker/operator.yaml":                     createStatusTrackerDeployment(ns),
 	}
 
-	if diff := cmp.Diff(want, res); diff != "" {
+	if diff := cmp.Diff(want, generated); diff != "" {
 		t.Fatalf("deployment diff: %s", diff)
 	}
 }

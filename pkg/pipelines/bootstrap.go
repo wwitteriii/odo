@@ -92,7 +92,8 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 		return nil, fmt.Errorf("invalid app repo URL: %v", err)
 	}
 
-	bootstrapped, err := createInitialFiles(appFs, gitOpsRepo, o.InitOptions)
+	bootstrapped, err := createInitialFiles(
+		appFs, gitOpsRepo, o.InitOptions)
 	if err != nil {
 		return nil, err
 	}

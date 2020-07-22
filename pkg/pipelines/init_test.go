@@ -8,6 +8,7 @@ import (
 
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/ioutils"
+	"github.com/openshift/odo/pkg/pipelines/meta"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
 	"github.com/openshift/odo/pkg/pipelines/scm"
 )
@@ -32,20 +33,19 @@ func TestInitialFiles(t *testing.T) {
 	prefix := "tst-"
 	gitOpsURL := "https://github.com/foo/test-repo"
 	gitOpsWebhook := "123"
-	o := &InitOptions{Prefix: prefix, GitOpsRepoURL: gitOpsURL, GitOpsWebhookSecret: gitOpsWebhook}
+	o := InitOptions{Prefix: prefix, GitOpsWebhookSecret: gitOpsWebhook, DockerConfigJSONFilename: "", SealedSecretsService: meta.NamespacedName("", "")}
 
 	defer stubDefaultPublicKeyFunc(t)()
 	fakeFs := ioutils.NewMapFilesystem()
 	repo, err := scm.NewRepository(gitOpsURL)
 	assertNoError(t, err)
-
-	got, err := createInitialFiles(fakeFs, repo, o)
+	got, err := createInitialFiles(fakeFs, repo, &o)
 	assertNoError(t, err)
 
 	want := res.Resources{
 		pipelinesFile: createManifest(gitOpsURL, &config.Config{Pipelines: testpipelineConfig}),
 	}
-	resources, err := createCICDResources(fakeFs, repo, testpipelineConfig, o)
+	resources, err := createCICDResources(fakeFs, repo, testpipelineConfig, &o)
 	if err != nil {
 		t.Fatalf("CreatePipelineResources() failed due to :%s\n", err)
 	}
