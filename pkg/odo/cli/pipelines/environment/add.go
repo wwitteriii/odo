@@ -84,9 +84,9 @@ func NewCmdAddEnv(name, fullName string) *cobra.Command {
 		},
 	}
 
-	addEnvCmd.Flags().StringVar(&o.envName, "env-name", "", "name of the environment/namespace")
+	addEnvCmd.Flags().StringVar(&o.envName, "env-name", "", "Name of the environment/namespace")
 	addEnvCmd.MarkFlagRequired("env-name")
-	addEnvCmd.Flags().StringVar(&o.pipelinesFile, "pipelines-file", "pipelines.yaml", "path to pipelines file")
-	addEnvCmd.Flags().StringVar(&o.cluster, "cluster", "", "deployment cluster e.g. https://kubernetes.local.svc")
+	addEnvCmd.Flags().StringVar(&o.pipelinesFile, "pipelines-file", "pipelines.yaml", "Path to pipelines file")
+	addEnvCmd.Flags().StringVar(&o.cluster, "cluster", "", "Deployment cluster e.g. https://kubernetes.local.svc")
 	return addEnvCmd
 }

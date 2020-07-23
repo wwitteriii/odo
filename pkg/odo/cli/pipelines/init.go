@@ -107,5 +107,7 @@ func addInitCommands(cmd *cobra.Command, o *pipelines.InitOptions) {
 	cmd.Flags().StringVar(&o.SealedSecretsService.Namespace, "sealed-secrets-ns", "sealed-secrets", "namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
 	cmd.Flags().StringVar(&o.SealedSecretsService.Name, "sealed-secrets-svc", "sealedsecretcontroller-sealed-secrets", "name of the Sealed Secrets Services that encrypts secrets")
 	cmd.Flags().StringVar(&o.StatusTrackerAccessToken, "status-tracker-access-token", "", "used to authenticate requests to push commit-statuses to your Git hosting service")
+	cmd.Flags().BoolVar(&o.Overwrite, "overwrite", false, "Overwrite an existing GitOps configuration")
+
 	cmd.MarkFlagRequired("gitops-repo-url")
 }

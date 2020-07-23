@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/deployment"
 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
 	"github.com/openshift/odo/pkg/pipelines/imagerepo"
+	"github.com/openshift/odo/pkg/pipelines/ioutils"
 	"github.com/openshift/odo/pkg/pipelines/meta"
 	"github.com/openshift/odo/pkg/pipelines/namespaces"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
@@ -40,6 +41,10 @@ type BootstrapOptions struct {
 
 // Bootstrap bootstraps a GitOps pipelines and repository structure.
 func Bootstrap(o *BootstrapOptions, appFs afero.Fs) error {
+	err := checkPipelinesFileExists(appFs, o.OutputPath, o.Overwrite)
+	if err != nil {
+		return err
+	}
 	if o.GitOpsWebhookSecret == "" {
 		gitopsSecret, err := secrets.GenerateString(webhookSecretLength)
 		if err != nil {
@@ -289,4 +294,13 @@ func defaultPipelines(r scm.Repository) *config.Pipelines {
 			Bindings: []string{r.PushBindingName()},
 		},
 	}
+}
+
+// Checks whether the pipelines.yaml is present in the output path specified.
+func checkPipelinesFileExists(appFs afero.Fs, outputPath string, overWrite bool) error {
+	exists, _ := ioutils.IsExisting(appFs, filepath.Join(outputPath, pipelinesFile))
+	if exists && !overWrite {
+		return fmt.Errorf("pipelines.yaml in output path already exists. If you want replace your existing files, please rerun with --overwrite.")
+	}
+	return nil
 }

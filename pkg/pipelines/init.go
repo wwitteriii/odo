@@ -10,7 +10,6 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/dryrun"
 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
-	"github.com/openshift/odo/pkg/pipelines/ioutils"
 	"github.com/openshift/odo/pkg/pipelines/meta"
 	"github.com/openshift/odo/pkg/pipelines/namespaces"
 	"github.com/openshift/odo/pkg/pipelines/pipelines"
@@ -42,6 +41,7 @@ type InitOptions struct {
 	OutputPath               string               // Where to write the bootstrapped files to?
 	SealedSecretsService     types.NamespacedName // SealedSecrets Services name
 	StatusTrackerAccessToken string               // The auth token to use to send commit-status notifications.
+	Overwrite                bool                 //This allows to overwrite if there is an exixting gitops repository
 }
 
 // PolicyRules to be bound to service account
@@ -109,8 +109,8 @@ const (
 
 // Init bootstraps a GitOps pipelines and repository structure.
 func Init(o *InitOptions, fs afero.Fs) error {
-	exists, err := ioutils.IsExisting(fs, o.OutputPath)
-	if exists {
+	err := checkPipelinesFileExists(fs, o.OutputPath, o.Overwrite)
+	if err != nil {
 		return err
 	}
 	if o.GitOpsWebhookSecret == "" {
