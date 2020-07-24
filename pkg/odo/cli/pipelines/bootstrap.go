@@ -104,9 +104,9 @@ func NewCmdBootstrap(name, fullName string) *cobra.Command {
 	bootstrapCmd.Flags().StringVar(&o.ServiceWebhookSecret, "service-webhook-secret", "", "Provide the GitHub webhook secret for Service repository (if not provided, it will be auto-generated)")
 	bootstrapCmd.Flags().StringVar(&o.DockerConfigJSONFilename, "dockercfgjson", "~/.docker/config.json", "Authenticates the image push to the desired image registry, path to config.json")
 	bootstrapCmd.Flags().StringVar(&o.InternalRegistryHostname, "internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "Internal image registry hostname")
-	bootstrapCmd.Flags().StringVar(&o.OutputPath, "output", ".", "Folder path to add Gitops resources")
+	bootstrapCmd.Flags().StringVar(&o.OutputPath, "output", ".", "Folder path to add Gitops resources to save output")
 	bootstrapCmd.Flags().StringVarP(&o.Prefix, "prefix", "p", "", "Add a prefix to the environment names to distinguish and identify individual environments")
-	bootstrapCmd.Flags().StringVarP(&o.ImageRepo, "image-repo", "", "", "Push built images to a single repository")
+	bootstrapCmd.Flags().StringVarP(&o.ImageRepo, "image-repo", "", "", "Image repository in this form <registry>/<username>/<repository> or <project>/<app> for internal registry to push built images at sigle repository")
 
 	bootstrapCmd.Flags().StringVar(&o.SealedSecretsService.Namespace, "sealed-secrets-ns", "sealed-secrets", "Namespace in which the Sealed Secrets operator is installed to automatically generate encrypted secrets")
 	bootstrapCmd.Flags().StringVar(&o.SealedSecretsService.Name, "sealed-secrets-svc", "sealedsecretcontroller-sealed-secrets", "Name of the Sealed Secrets services that encrypts secrets")
