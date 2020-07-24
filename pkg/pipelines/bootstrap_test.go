@@ -202,7 +202,7 @@ func TestOverwriteFlag(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := Bootstrap(params, fakeFs)
-	want := errors.New("Directory already exists, cannot overwrite ( set --overwrite=true to continue )")
+	want := errors.New("pipelines.yaml in output path already exists. If you want replace your existing files, please rerun with --overwrite.")
 	if got.Error() != want.Error() {
 		t.Fatalf("Got %s want %s", got, want)
 	}
