@@ -92,20 +92,7 @@ func NewCmdInit(name, fullName string) *cobra.Command {
 		},
 	}
 
-<<<<<<< HEAD
-	initCmd.Flags().StringVar(&o.GitOpsRepoURL, "gitops-repo-url", "", "GitOps repository e.g. https://github.com/organisation/repository")
-	initCmd.Flags().StringVar(&o.GitOpsWebhookSecret, "gitops-webhook-secret", "", "provide the GitHub webhook secret for GitOps repository (if not provided, it will be auto-generated)")
-	initCmd.Flags().StringVar(&o.OutputPath, "output", ".", "Folder path to add Gitops resources to save output")
-	initCmd.Flags().StringVarP(&o.Prefix, "prefix", "p", "", "Add a prefix to the environment names to distinguish and identify individual environments")
-	initCmd.Flags().StringVar(&o.DockerConfigJSONFilename, "dockercfgjson", "~/.docker/config.json", "Authenticates the image push to the desired image registry, path to config.json")
-	initCmd.Flags().StringVar(&o.InternalRegistryHostname, "internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "Internal image registry hostname")
-	initCmd.Flags().StringVar(&o.ImageRepo, "image-repo", "", "Image repository in this form <registry>/<username>/<repository> or <project>/<app> for internal registry to push built images at sigle repository")
-
-	initCmd.Flags().StringVar(&o.SealedSecretsService.Namespace, "sealed-secrets-ns", "sealed-secrets", "Namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
-	initCmd.Flags().StringVar(&o.SealedSecretsService.Name, "sealed-secrets-svc", "sealedsecretcontroller-sealed-secrets", "Name of the Sealed Secrets Services that encrypts secrets")
-=======
 	addInitCommands(initCmd, o.InitOptions)
->>>>>>> e14b245cedc2a51d08d6393fa8b67970aaafcccf
 
 	initCmd.MarkFlagRequired("gitops-repo-url")
 	return initCmd
@@ -114,14 +101,14 @@ func NewCmdInit(name, fullName string) *cobra.Command {
 func addInitCommands(cmd *cobra.Command, o *pipelines.InitOptions) {
 	cmd.Flags().StringVar(&o.GitOpsRepoURL, "gitops-repo-url", "", "Provide the URL for your GitOps repository e.g. https://github.com/organisation/repository.git")
 	cmd.Flags().StringVar(&o.GitOpsWebhookSecret, "gitops-webhook-secret", "", "Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the GitOps repository. (if not provided, it will be auto-generated)")
-	cmd.Flags().StringVar(&o.OutputPath, "output", ".", "Folder path to add GitOps resources")
-	cmd.Flags().StringVarP(&o.Prefix, "prefix", "p", "", "Add a prefix to the environment names")
+	cmd.Flags().StringVar(&o.OutputPath, "output", ".", "Folder path to add GitOps resources to save output")
+	cmd.Flags().StringVarP(&o.Prefix, "prefix", "p", "", "Add a prefix to the environment names to distinguish and identify individual environments")
 	cmd.Flags().StringVar(&o.DockerConfigJSONFilename, "dockercfgjson", "~/.docker/config.json", "Authenticates the image push to the desired image registry, path to config.json")
-	cmd.Flags().StringVar(&o.InternalRegistryHostname, "internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "internal image registry hostname")
-	cmd.Flags().StringVar(&o.ImageRepo, "image-repo", "", "image repository in this form <registry>/<username>/<repository> or <project>/<app> for internal registry")
-	cmd.Flags().StringVar(&o.SealedSecretsService.Namespace, "sealed-secrets-ns", "sealed-secrets", "namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
-	cmd.Flags().StringVar(&o.SealedSecretsService.Name, "sealed-secrets-svc", "sealedsecretcontroller-sealed-secrets", "name of the Sealed Secrets Services that encrypts secrets")
-	cmd.Flags().StringVar(&o.StatusTrackerAccessToken, "status-tracker-access-token", "", "used to authenticate requests to push commit-statuses to your Git hosting service")
+	cmd.Flags().StringVar(&o.InternalRegistryHostname, "internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "Internal image registry hostname")
+	cmd.Flags().StringVar(&o.ImageRepo, "image-repo", "", "Image repository in this form <registry>/<username>/<repository> or <project>/<app> for  for internal registry to push built images at sigle repository")
+	cmd.Flags().StringVar(&o.SealedSecretsService.Namespace, "sealed-secrets-ns", "sealed-secrets", "Namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
+	cmd.Flags().StringVar(&o.SealedSecretsService.Name, "sealed-secrets-svc", "sealedsecretcontroller-sealed-secrets", "Name of the Sealed Secrets Services that encrypts secrets")
+	cmd.Flags().StringVar(&o.StatusTrackerAccessToken, "status-tracker-access-token", "", "To authenticate requests to push commit-statuses to your Git hosting service")
 	cmd.Flags().BoolVar(&o.Overwrite, "overwrite", false, "Overwrite an existing GitOps configuration")
 
 	cmd.MarkFlagRequired("gitops-repo-url")
