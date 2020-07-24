@@ -67,6 +67,7 @@ func newCmdAdd(name, fullName string) *cobra.Command {
 		},
 	}
 
+<<<<<<< HEAD
 	cmd.Flags().StringVar(&o.GitRepoURL, "git-repo-url", "", "GitOps repository e.g. https://github.com/organisation/repository")
 	cmd.Flags().StringVar(&o.WebhookSecret, "webhook-secret", "", "Source Git repository webhook secret (if not provided, it will be auto-generated)")
 	cmd.Flags().StringVar(&o.AppName, "app-name", "", "Name of the application where the service will be added")
@@ -78,6 +79,20 @@ func newCmdAdd(name, fullName string) *cobra.Command {
 
 	cmd.Flags().StringVar(&o.SealedSecretsService.Namespace, "sealed-secrets-ns", "sealed-secrets", "Namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
 	cmd.Flags().StringVar(&o.SealedSecretsService.Name, "sealed-secrets-svc", "sealedsecretcontroller-sealed-secrets", "Name of the Sealed Secrets services that encrypts secrets")
+=======
+	cmd.Flags().StringVar(&o.GitRepoURL, "git-repo-url", "", "Provide the URL for your Service repository e.g. https://github.com/organisation/service.git")
+	cmd.Flags().StringVar(&o.WebhookSecret, "webhook-secret", "", "Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the Service repository. (if not provided, it will be auto-generated)")
+	cmd.Flags().StringVar(&o.AppName, "app-name", "", "the name of the application where the service will be added")
+	cmd.Flags().StringVar(&o.ServiceName, "service-name", "", "the name of the service to be added")
+	cmd.Flags().StringVar(&o.EnvName, "env-name", "", "the name of the environment where the service will be added")
+	cmd.Flags().StringVar(&o.ImageRepo, "image-repo", "", "used to push built images")
+	cmd.Flags().StringVar(&o.InternalRegistryHostname, "internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "internal image registry hostname")
+	cmd.Flags().StringVar(&o.PipelinesFilePath, "pipelines-file", "pipelines.yaml", "path to pipelines file")
+
+	cmd.Flags().StringVar(&o.SealedSecretsService.Namespace, "sealed-secrets-ns", "sealed-secrets", "namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
+	cmd.Flags().StringVar(&o.SealedSecretsService.Name, "sealed-secrets-svc", "sealedsecretcontroller-sealed-secrets", "name of the Sealed Secrets services that encrypts secrets")
+>>>>>>> e14b245cedc2a51d08d6393fa8b67970aaafcccf
+
 
 	// required flags
 	_ = cmd.MarkFlagRequired("service-name")

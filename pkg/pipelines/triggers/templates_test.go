@@ -49,9 +49,8 @@ func TestCreateDevCDDeployTemplate(t *testing.T) {
 
 func TestCreateDevCIBuildPRTemplate(t *testing.T) {
 	validdevCIPRTemplate := triggersv1.TriggerTemplate{
-		TypeMeta: triggerTemplateTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("testns", "app-ci-template"),
-			statusTrackerAnnotations("dev-ci-build-from-pr", "Dev CI Build")),
+		TypeMeta:   triggerTemplateTypeMeta,
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("testns", "app-ci-template")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				{
@@ -151,21 +150,14 @@ func TestCreateCDPushTemplate(t *testing.T) {
 
 func TestCreateCIDryRunTemplate(t *testing.T) {
 	validStageCIDryRunTemplate := triggersv1.TriggerTemplate{
-		TypeMeta: triggerTemplateTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("testns", "ci-dryrun-from-push-template"),
-			statusTrackerAnnotations("ci-dryrun-from-push-pipeline", "CI dry run on push event")),
+		TypeMeta:   triggerTemplateTypeMeta,
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("testns", "ci-dryrun-from-push-template")),
 
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
-				{
-					Name:        GitRef,
-					Description: "The git revision",
-					Default:     strPtr("master"),
-				},
-				{
-					Name:        "gitrepositoryurl",
-					Description: "The git repository url",
-				},
+				{Name: GitRef, Description: "The git revision", Default: strPtr("master")},
+				{Name: "io.openshift.build.commit.id", Description: "The specific commit SHA"},
+				{Name: "gitrepositoryurl", Description: "The git repository url"},
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{
 				{

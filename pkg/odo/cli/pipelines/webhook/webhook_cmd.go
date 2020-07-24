@@ -44,18 +44,18 @@ func (o *options) Validate() (err error) {
 func (o *options) setFlags(command *cobra.Command) {
 
 	// pipeline option
-	command.Flags().StringVar(&o.pipelinesFilePath, "pipelines-file", "pipelines.yaml", "path to pipelines file")
+	command.Flags().StringVar(&o.pipelinesFilePath, "pipelines-file", "pipelines.yaml", "Path to pipelines file")
 
 	// access-token option
-	command.Flags().StringVar(&o.accessToken, "access-token", "", "access token to be used to create Git repository webhook")
+	command.Flags().StringVar(&o.accessToken, "access-token", "", "Access token to be used to create Git repository webhook")
 	_ = command.MarkFlagRequired("access-token")
 
 	// cicd option
-	command.Flags().BoolVar(&o.isCICD, "cicd", false, "provide this flag if the target Git repository is a CI/CD configuration repository")
+	command.Flags().BoolVar(&o.isCICD, "cicd", false, "Provide this flag if the target Git repository is a CI/CD configuration repository")
 
 	// service option
-	command.Flags().StringVar(&o.serviceName, "service-name", "", "provide service name if the target Git repository is a service's source repository.")
-	command.Flags().StringVar(&o.envName, "env-name", "", "provide environment name if the target Git repository is a service's source repository.")
+	command.Flags().StringVar(&o.serviceName, "service-name", "", "Provide service name if the target Git repository is a service's source repository.")
+	command.Flags().StringVar(&o.envName, "env-name", "", "Provide environment name if the target Git repository is a service's source repository.")
 
 }
 

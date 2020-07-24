@@ -2,6 +2,7 @@ package pipelines
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	pipelinev1 "github.com/tektoncd/pipeline/pkg/apis/pipeline/v1beta1"
@@ -60,6 +61,7 @@ func createBuildImageTask(name string) pipelinev1.PipelineTask {
 	for k, v := range labels {
 		labelArgs = append(labelArgs, fmt.Sprintf("--label=%s='%s'", k, v))
 	}
+	sort.Strings(labelArgs)
 
 	return pipelinev1.PipelineTask{
 		Name:    name,

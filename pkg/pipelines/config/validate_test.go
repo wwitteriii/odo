@@ -26,7 +26,7 @@ func TestValidate(t *testing.T) {
 			"testdata/svc_git_type_mismatch.yaml",
 			multierror.Join(
 				[]error{
-					inconsistentGitTypeError("github", "https://gitlab.com/myproject/myservice.git", []string{"environments.test-dev.services.bus-svc"}),
+					inconsistentGitTypeError("github", "https://gitlab.com/myproject/myservice.git", []string{"environments.test-dev.apps.bus.services.bus-svc"}),
 				},
 			),
 		},
@@ -47,9 +47,9 @@ func TestValidate(t *testing.T) {
 				[]error{
 					invalidNameError("argo.cd", DNS1035Error, []string{"config.argocd"}),
 					invalidNameError("tst!cicd", DNS1035Error, []string{"config.tst!cicd"}),
-					invalidNameError("", DNS1035Error, []string{"environments.develo.pment.services"}),
-					invalidNameError("", DNS1035Error, []string{"environments.develo.pment.services.pipelines.integration.binding"}),
-					invalidNameError("app-1$.", DNS1035Error, []string{"environments.develo.pment.apps.app-1$."}),
+					invalidNameError("", DNS1035Error, []string{"environments.develo.pment.apps.app-1$.services"}),
+					invalidNameError("", DNS1035Error, []string{"environments.develo.pment.apps.app-1$.services.pipelines.integration.binding"}),
+					invalidNameError("app-1$", DNS1035Error, []string{"environments.develo.pment.apps.app-1$"}),
 					invalidNameError("develo.pment", DNS1035Error, []string{"environments.develo.pment"}),
 				},
 			),
@@ -58,8 +58,8 @@ func TestValidate(t *testing.T) {
 			"Missing field error",
 			"testdata/missing_fields_error.yaml",
 			multierror.Join([]error{
-				missingFieldsError([]string{"secret"}, []string{"environments.development.services.service-1.webhook"}),
-				missingFieldsError([]string{"integration"}, []string{"environments.development.services.service-1.pipelines"}),
+				missingFieldsError([]string{"secret"}, []string{"environments.development.apps.app-1.services.service-1.webhook"}),
+				missingFieldsError([]string{"integration"}, []string{"environments.development.apps.app-1.services.service-1.pipelines"}),
 			}),
 		},
 		{
@@ -95,16 +95,7 @@ func TestValidate(t *testing.T) {
 			"testdata/duplicate_service.yaml",
 			multierror.Join(
 				[]error{
-					duplicateFieldsError([]string{"app-1-service-http"}, []string{"environments.duplicate-service.services.app-1-service-http"}),
-				},
-			),
-		},
-		{
-			"missing app service reference",
-			"testdata/missing_service_in_application.yaml",
-			multierror.Join(
-				[]error{
-					missingServiceRefError("app-1-svc-http", "my-app-1", []string{"environments.duplicate-service.apps.my-app-1"}),
+					duplicateFieldsError([]string{"app-1-service-http"}, []string{"environments.duplicate-service.apps.my-app-2.services.app-1-service-http"}),
 				},
 			),
 		},
@@ -113,7 +104,7 @@ func TestValidate(t *testing.T) {
 			"testdata/duplicate_source_url.yaml",
 			multierror.Join(
 				[]error{
-					duplicateSourceError("https://github.com/testing/testing.git", []string{"environments.duplicate-source.services.app-1-service-http", "environments.duplicate-source.services.app-2-service-http"}),
+					duplicateSourceError("https://github.com/testing/testing.git", []string{"environments.duplicate-source.apps.my-app-1.services.app-1-service-http", "environments.duplicate-source.apps.my-app-2.services.app-2-service-http"}),
 				},
 			),
 		},

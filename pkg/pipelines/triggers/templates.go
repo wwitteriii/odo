@@ -58,8 +58,7 @@ func CreateDevCIBuildPRTemplate(ns, saName string) triggersv1.TriggerTemplate {
 	return triggersv1.TriggerTemplate{
 		TypeMeta: triggerTemplateTypeMeta,
 		ObjectMeta: meta.ObjectMeta(
-			meta.NamespacedName(ns, "app-ci-template"),
-			statusTrackerAnnotations("dev-ci-build-from-pr", "Dev CI Build")),
+			meta.NamespacedName(ns, "app-ci-template")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				createTemplateParamSpec(GitRef, "The git branch for this PR."),
@@ -112,12 +111,12 @@ func CreateCDPushTemplate(ns, saName string) triggersv1.TriggerTemplate {
 // CreateCIDryRunTemplate returns TriggerTemplate for CI Dry Try
 func CreateCIDryRunTemplate(ns, saName string) triggersv1.TriggerTemplate {
 	return triggersv1.TriggerTemplate{
-		TypeMeta: triggerTemplateTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, "ci-dryrun-from-push-template"),
-			statusTrackerAnnotations("ci-dryrun-from-push-pipeline", "CI dry run on push event")),
+		TypeMeta:   triggerTemplateTypeMeta,
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName(ns, "ci-dryrun-from-push-template")),
 		Spec: triggersv1.TriggerTemplateSpec{
 			Params: []triggersv1.ParamSpec{
 				createTemplateParamSpecDefault(GitRef, "The git revision", "master"),
+				createTemplateParamSpec(GitCommitID, "The specific commit SHA"),
 				createTemplateParamSpec("gitrepositoryurl", "The git repository url"),
 			},
 			ResourceTemplates: []triggersv1.TriggerResourceTemplate{

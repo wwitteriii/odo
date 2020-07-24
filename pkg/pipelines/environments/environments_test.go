@@ -25,22 +25,22 @@ func TestBuildEnvironmentFilesWithAppsToEnvironment(t *testing.T) {
 	}
 	want := res.Resources{
 		"environments/test-dev/apps/my-app-1/base/kustomization.yaml": &res.Kustomization{Bases: []string{
-			"../../../services/service-http",
-			"../../../services/service-metrics",
+			"../services/service-http",
+			"../services/service-metrics",
 			"../../../env/base"},
 		},
-		"environments/test-dev/apps/my-app-1/kustomization.yaml":                     &res.Kustomization{Bases: []string{"overlays"}},
-		"environments/test-dev/apps/my-app-1/overlays/kustomization.yaml":            &res.Kustomization{Bases: []string{"../base"}},
-		"environments/test-dev/env/base/test-dev-environment.yaml":                   namespaces.Create("test-dev", testGitOpsRepoURL),
-		"environments/test-dev/env/base/test-dev-rolebinding.yaml":                   createRoleBinding(m.Environments[0], "environments/test-dev/env/base", "cicd", "pipelines"),
-		"environments/test-dev/env/base/kustomization.yaml":                          &res.Kustomization{Resources: []string{"test-dev-environment.yaml", "test-dev-rolebinding.yaml"}},
-		"environments/test-dev/env/overlays/kustomization.yaml":                      &res.Kustomization{Bases: []string{"../base"}},
-		"environments/test-dev/services/service-http/kustomization.yaml":             &res.Kustomization{Bases: []string{"overlays"}},
-		"environments/test-dev/services/service-http/base/kustomization.yaml":        &res.Kustomization{Bases: []string{"./config"}},
-		"environments/test-dev/services/service-http/overlays/kustomization.yaml":    &res.Kustomization{Bases: []string{"../base"}},
-		"environments/test-dev/services/service-metrics/kustomization.yaml":          &res.Kustomization{Bases: []string{"overlays"}},
-		"environments/test-dev/services/service-metrics/base/kustomization.yaml":     &res.Kustomization{Bases: []string{"./config"}},
-		"environments/test-dev/services/service-metrics/overlays/kustomization.yaml": &res.Kustomization{Bases: []string{"../base"}},
+		"environments/test-dev/apps/my-app-1/kustomization.yaml":                                   &res.Kustomization{Bases: []string{"overlays"}},
+		"environments/test-dev/apps/my-app-1/overlays/kustomization.yaml":                          &res.Kustomization{Bases: []string{"../base"}},
+		"environments/test-dev/env/base/test-dev-environment.yaml":                                 namespaces.Create("test-dev", testGitOpsRepoURL),
+		"environments/test-dev/env/base/test-dev-rolebinding.yaml":                                 createRoleBinding(m.Environments[0], "environments/test-dev/env/base", "cicd", "pipelines"),
+		"environments/test-dev/env/base/kustomization.yaml":                                        &res.Kustomization{Resources: []string{"test-dev-environment.yaml", "test-dev-rolebinding.yaml"}},
+		"environments/test-dev/env/overlays/kustomization.yaml":                                    &res.Kustomization{Bases: []string{"../base"}},
+		"environments/test-dev/apps/my-app-1/services/service-http/kustomization.yaml":             &res.Kustomization{Bases: []string{"overlays"}},
+		"environments/test-dev/apps/my-app-1/services/service-http/base/kustomization.yaml":        &res.Kustomization{Bases: []string{"./config"}},
+		"environments/test-dev/apps/my-app-1/services/service-http/overlays/kustomization.yaml":    &res.Kustomization{Bases: []string{"../base"}},
+		"environments/test-dev/apps/my-app-1/services/service-metrics/kustomization.yaml":          &res.Kustomization{Bases: []string{"overlays"}},
+		"environments/test-dev/apps/my-app-1/services/service-metrics/base/kustomization.yaml":     &res.Kustomization{Bases: []string{"./config"}},
+		"environments/test-dev/apps/my-app-1/services/service-metrics/overlays/kustomization.yaml": &res.Kustomization{Bases: []string{"../base"}},
 	}
 
 	if diff := cmp.Diff(want, files); diff != "" {
@@ -59,8 +59,8 @@ func TestBuildEnvironmentFilesWithEnvironmentsToApps(t *testing.T) {
 	want := res.Resources{
 		"environments/test-dev/apps/my-app-1/base/kustomization.yaml": &res.Kustomization{
 			Bases: []string{
-				"../../../services/service-http",
-				"../../../services/service-metrics",
+				"../services/service-http",
+				"../services/service-metrics",
 			},
 		},
 		"environments/test-dev/apps/my-app-1/kustomization.yaml":          &res.Kustomization{Bases: []string{"overlays"}},
@@ -71,13 +71,13 @@ func TestBuildEnvironmentFilesWithEnvironmentsToApps(t *testing.T) {
 			Resources: []string{"test-dev-environment.yaml", "test-dev-rolebinding.yaml"},
 			Bases:     []string{"../../apps/my-app-1/overlays"},
 		},
-		"environments/test-dev/env/overlays/kustomization.yaml":                      &res.Kustomization{Bases: []string{"../base"}},
-		"environments/test-dev/services/service-http/kustomization.yaml":             &res.Kustomization{Bases: []string{"overlays"}},
-		"environments/test-dev/services/service-http/base/kustomization.yaml":        &res.Kustomization{Bases: []string{"./config"}},
-		"environments/test-dev/services/service-http/overlays/kustomization.yaml":    &res.Kustomization{Bases: []string{"../base"}},
-		"environments/test-dev/services/service-metrics/kustomization.yaml":          &res.Kustomization{Bases: []string{"overlays"}},
-		"environments/test-dev/services/service-metrics/base/kustomization.yaml":     &res.Kustomization{Bases: []string{"./config"}},
-		"environments/test-dev/services/service-metrics/overlays/kustomization.yaml": &res.Kustomization{Bases: []string{"../base"}},
+		"environments/test-dev/env/overlays/kustomization.yaml":                                    &res.Kustomization{Bases: []string{"../base"}},
+		"environments/test-dev/apps/my-app-1/services/service-http/kustomization.yaml":             &res.Kustomization{Bases: []string{"overlays"}},
+		"environments/test-dev/apps/my-app-1/services/service-http/base/kustomization.yaml":        &res.Kustomization{Bases: []string{"./config"}},
+		"environments/test-dev/apps/my-app-1/services/service-http/overlays/kustomization.yaml":    &res.Kustomization{Bases: []string{"../base"}},
+		"environments/test-dev/apps/my-app-1/services/service-metrics/kustomization.yaml":          &res.Kustomization{Bases: []string{"overlays"}},
+		"environments/test-dev/apps/my-app-1/services/service-metrics/base/kustomization.yaml":     &res.Kustomization{Bases: []string{"./config"}},
+		"environments/test-dev/apps/my-app-1/services/service-metrics/overlays/kustomization.yaml": &res.Kustomization{Bases: []string{"../base"}},
 	}
 
 	if diff := cmp.Diff(want, files); diff != "" {
@@ -167,21 +167,21 @@ func TestBuildEnvironmentFilesWithNoCICDEnv(t *testing.T) {
 	want := res.Resources{
 		"environments/test-dev/apps/my-app-1/base/kustomization.yaml": &res.Kustomization{
 			Bases: []string{
-				"../../../services/service-http",
-				"../../../services/service-metrics",
+				"../services/service-http",
+				"../services/service-metrics",
 				"../../../env/base"},
 		},
-		"environments/test-dev/apps/my-app-1/kustomization.yaml":                     &res.Kustomization{Bases: []string{"overlays"}},
-		"environments/test-dev/apps/my-app-1/overlays/kustomization.yaml":            &res.Kustomization{Bases: []string{"../base"}},
-		"environments/test-dev/env/base/test-dev-environment.yaml":                   namespaces.Create("test-dev", testGitOpsRepoURL),
-		"environments/test-dev/env/base/kustomization.yaml":                          &res.Kustomization{Resources: []string{"test-dev-environment.yaml"}},
-		"environments/test-dev/env/overlays/kustomization.yaml":                      &res.Kustomization{Bases: []string{"../base"}},
-		"environments/test-dev/services/service-http/kustomization.yaml":             &res.Kustomization{Bases: []string{"overlays"}},
-		"environments/test-dev/services/service-http/base/kustomization.yaml":        &res.Kustomization{Bases: []string{"./config"}},
-		"environments/test-dev/services/service-http/overlays/kustomization.yaml":    &res.Kustomization{Bases: []string{"../base"}},
-		"environments/test-dev/services/service-metrics/kustomization.yaml":          &res.Kustomization{Bases: []string{"overlays"}},
-		"environments/test-dev/services/service-metrics/base/kustomization.yaml":     &res.Kustomization{Bases: []string{"./config"}},
-		"environments/test-dev/services/service-metrics/overlays/kustomization.yaml": &res.Kustomization{Bases: []string{"../base"}},
+		"environments/test-dev/apps/my-app-1/kustomization.yaml":                                   &res.Kustomization{Bases: []string{"overlays"}},
+		"environments/test-dev/apps/my-app-1/overlays/kustomization.yaml":                          &res.Kustomization{Bases: []string{"../base"}},
+		"environments/test-dev/env/base/test-dev-environment.yaml":                                 namespaces.Create("test-dev", testGitOpsRepoURL),
+		"environments/test-dev/env/base/kustomization.yaml":                                        &res.Kustomization{Resources: []string{"test-dev-environment.yaml"}},
+		"environments/test-dev/env/overlays/kustomization.yaml":                                    &res.Kustomization{Bases: []string{"../base"}},
+		"environments/test-dev/apps/my-app-1/services/service-http/kustomization.yaml":             &res.Kustomization{Bases: []string{"overlays"}},
+		"environments/test-dev/apps/my-app-1/services/service-http/base/kustomization.yaml":        &res.Kustomization{Bases: []string{"./config"}},
+		"environments/test-dev/apps/my-app-1/services/service-http/overlays/kustomization.yaml":    &res.Kustomization{Bases: []string{"../base"}},
+		"environments/test-dev/apps/my-app-1/services/service-metrics/kustomization.yaml":          &res.Kustomization{Bases: []string{"overlays"}},
+		"environments/test-dev/apps/my-app-1/services/service-metrics/base/kustomization.yaml":     &res.Kustomization{Bases: []string{"./config"}},
+		"environments/test-dev/apps/my-app-1/services/service-metrics/overlays/kustomization.yaml": &res.Kustomization{Bases: []string{"../base"}},
 	}
 
 	if diff := cmp.Diff(want, files); diff != "" {
@@ -223,19 +223,15 @@ func createEnvironment() []*config.Environment {
 			Apps: []*config.Application{
 				{
 					Name: "my-app-1",
-					ServiceRefs: []string{
-						"service-http",
-						"service-metrics",
+					Services: []*config.Service{
+						{
+							Name:      "service-http",
+							SourceURL: "https://github.com/myproject/myservice.git",
+						},
+						{
+							Name: "service-metrics",
+						},
 					},
-				},
-			},
-			Services: []*config.Service{
-				{
-					Name:      "service-http",
-					SourceURL: "https://github.com/myproject/myservice.git",
-				},
-				{
-					Name: "service-metrics",
 				},
 			},
 		},

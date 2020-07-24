@@ -34,7 +34,7 @@ func TestCreateDevCDPipelineRun(t *testing.T) {
 func TestCreateDevCIPipelineRun(t *testing.T) {
 	validDevCIPipelineRun := pipelinev1.PipelineRun{
 		TypeMeta:   pipelineRunTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "app-ci-pipeline-run-$(uid)")),
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "app-ci-pipeline-run-$(uid)"), statusTrackerAnnotations("dev-ci-build-from-pr", "CI build on push event")),
 		Spec: pipelinev1.PipelineRunSpec{
 			ServiceAccountName: sName,
 			PipelineRef:        createPipelineRef("app-ci-pipeline"),
@@ -48,7 +48,7 @@ func TestCreateDevCIPipelineRun(t *testing.T) {
 				createPipelineBindingParam("COMMIT_AUTHOR", "$(params.io.openshift.build.commit.author)"),
 				createPipelineBindingParam("COMMIT_MESSAGE", "$(params.io.openshift.build.commit.message)"),
 			},
-			Resources: createDevResource("$(params.io.openshift.build.commit.ref)"),
+			Resources: createDevResource("$(params.io.openshift.build.commit.id)"),
 		},
 	}
 	template := createDevCIPipelineRun(sName)
@@ -76,7 +76,7 @@ func TestCreateCDPipelineRun(t *testing.T) {
 func TestCreateStageCIPipelineRun(t *testing.T) {
 	validStageCIPipeline := pipelinev1.PipelineRun{
 		TypeMeta:   pipelineRunTypeMeta,
-		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "ci-dryrun-from-push-pipeline-$(uid)")),
+		ObjectMeta: meta.ObjectMeta(meta.NamespacedName("", "ci-dryrun-from-push-pipeline-$(uid)"), statusTrackerAnnotations("ci-dryrun-from-push-pipeline", "CI dry run on push event")),
 		Spec: pipelinev1.PipelineRunSpec{
 			ServiceAccountName: sName,
 			PipelineRef:        createPipelineRef("ci-dryrun-from-push-pipeline"),

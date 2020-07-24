@@ -7,8 +7,8 @@ import (
 )
 
 // PathForService gives a repo-rooted path within a repository.
-func PathForService(env *Environment, serviceName string) string {
-	return filepath.Join(PathForEnvironment(env), "services", serviceName)
+func PathForService(app *Application, env *Environment, serviceName string) string {
+	return filepath.Join(PathForApplication(env, app), "services", serviceName)
 }
 
 // PathForApplication generates a repo-rooted path within a repository.
@@ -70,18 +70,12 @@ func (m *Manifest) AddService(envName, appName string, svc *Service) error {
 	if env == nil {
 		return fmt.Errorf("environment %s does not exist", envName)
 	}
-	for _, service := range env.Services {
-		if service.Name == svc.Name {
-			return fmt.Errorf("service %s already exists at %s", svc.Name, env.Name)
-		}
-	}
 	app := m.GetApplication(envName, appName)
 	if app == nil {
 		app = &Application{Name: appName}
 		env.Apps = append(env.Apps, app)
 	}
-	env.Services = append(env.Services, svc)
-	app.ServiceRefs = append(app.ServiceRefs, svc.Name)
+	app.Services = append(app.Services, svc)
 	return nil
 }
 
@@ -107,7 +101,6 @@ type Environment struct {
 	Name      string         `json:"name,omitempty"`
 	Cluster   string         `json:"cluster,omitempty"`
 	Pipelines *Pipelines     `json:"pipelines,omitempty"`
-	Services  []*Service     `json:"services,omitempty"`
 	Apps      []*Application `json:"apps,omitempty"`
 }
 
@@ -133,13 +126,12 @@ func (e Environment) GoString() string {
 }
 
 // Application has many services.
-//
 // The ConfigRepo indicates that the configuration for this application lives in
 // another repository.
 type Application struct {
-	Name        string      `json:"name,omitempty"`
-	ServiceRefs []string    `json:"services,omitempty"`
-	ConfigRepo  *Repository `json:"config_repo,omitempty"`
+	Name       string      `json:"name,omitempty"`
+	Services   []*Service  `json:"services,omitempty"`
+	ConfigRepo *Repository `json:"config_repo,omitempty"`
 }
 
 // Service has an upstream source.
@@ -195,16 +187,15 @@ type TemplateBinding struct {
 func (m Manifest) Walk(visitor interface{}) error {
 	sort.Sort(ByName(m.Environments))
 	for _, env := range m.Environments {
-		for _, svc := range env.Services {
-			if v, ok := visitor.(ServiceVisitor); ok {
-				err := v.Service(env, svc)
-				if err != nil {
-					return err
+		for _, app := range env.Apps {
+			for _, svc := range app.Services {
+				if v, ok := visitor.(ServiceVisitor); ok {
+					err := v.Service(app, env, svc)
+					if err != nil {
+						return err
+					}
 				}
 			}
-		}
-
-		for _, app := range env.Apps {
 			if v, ok := visitor.(ApplicationVisitor); ok {
 				err := v.Application(env, app)
 				if err != nil {

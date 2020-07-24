@@ -12,16 +12,15 @@ import (
 	"github.com/openshift/odo/pkg/pipelines/argocd"
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
-	"github.com/spf13/afero"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/yaml"
-
 	"github.com/openshift/odo/pkg/pipelines/ioutils"
 	"github.com/openshift/odo/pkg/pipelines/meta"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
 	"github.com/openshift/odo/pkg/pipelines/secrets"
+	"github.com/spf13/afero"
 	triggersv1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/yaml"
 )
 
 func TestServiceResourcesWithCICD(t *testing.T) {
@@ -38,7 +37,7 @@ func TestServiceResourcesWithCICD(t *testing.T) {
 
 	want := res.Resources{
 		"config/cicd/base/03-secrets/webhook-secret-test-dev-test.yaml":   hookSecret,
-		"environments/test-dev/apps/test-app/base/kustomization.yaml":     &res.Kustomization{Bases: []string{"../../../services/test-svc", "../../../services/test"}},
+		"environments/test-dev/apps/test-app/base/kustomization.yaml":     &res.Kustomization{Bases: []string{"../services/test-svc", "../services/test"}},
 		"environments/test-dev/apps/test-app/kustomization.yaml":          &res.Kustomization{Bases: []string{"overlays"}},
 		"environments/test-dev/apps/test-app/overlays/kustomization.yaml": &res.Kustomization{Bases: []string{"../base"}},
 		"pipelines.yaml": &config.Manifest{
@@ -54,30 +53,26 @@ func TestServiceResourcesWithCICD(t *testing.T) {
 					Apps: []*config.Application{
 						{
 							Name: "test-app",
-							ServiceRefs: []string{
-								"test-svc",
-								"test",
-							},
-						},
-					},
-					Services: []*config.Service{
-						{
-							Name:      "test-svc",
-							SourceURL: "https://github.com/myproject/test-svc",
-							Webhook: &config.Webhook{
-								Secret: &config.Secret{
-									Name:      "webhook-secret-test-dev-test-svc",
-									Namespace: "cicd",
+							Services: []*config.Service{
+								{
+									Name:      "test-svc",
+									SourceURL: "https://github.com/myproject/test-svc",
+									Webhook: &config.Webhook{
+										Secret: &config.Secret{
+											Name:      "webhook-secret-test-dev-test-svc",
+											Namespace: "cicd",
+										},
+									},
 								},
-							},
-						},
-						{
-							Name:      "test",
-							SourceURL: "http://github.com/org/test",
-							Webhook: &config.Webhook{
-								Secret: &config.Secret{
-									Name:      "webhook-secret-test-dev-test",
-									Namespace: "cicd",
+								{
+									Name:      "test",
+									SourceURL: "http://github.com/org/test",
+									Webhook: &config.Webhook{
+										Secret: &config.Secret{
+											Name:      "webhook-secret-test-dev-test",
+											Namespace: "cicd",
+										},
+									},
 								},
 							},
 						},
@@ -110,7 +105,7 @@ func TestServiceResourcesWithArgoCD(t *testing.T) {
 	m := buildManifest(false, true)
 
 	want := res.Resources{
-		"environments/test-dev/apps/test-app/base/kustomization.yaml":     &res.Kustomization{Bases: []string{"../../../services/test-svc", "../../../services/test", "../../../env/base"}},
+		"environments/test-dev/apps/test-app/base/kustomization.yaml":     &res.Kustomization{Bases: []string{"../services/test-svc", "../services/test", "../../../env/base"}},
 		"environments/test-dev/apps/test-app/kustomization.yaml":          &res.Kustomization{Bases: []string{"overlays"}},
 		"environments/test-dev/apps/test-app/overlays/kustomization.yaml": &res.Kustomization{Bases: []string{"../base"}},
 		"pipelines.yaml": &config.Manifest{
@@ -126,20 +121,16 @@ func TestServiceResourcesWithArgoCD(t *testing.T) {
 					Apps: []*config.Application{
 						{
 							Name: "test-app",
-							ServiceRefs: []string{
-								"test-svc",
-								"test",
+							Services: []*config.Service{
+								{
+									Name:      "test-svc",
+									SourceURL: "https://github.com/myproject/test-svc",
+								},
+								{
+									Name:      "test",
+									SourceURL: "http://github.com/org/test",
+								},
 							},
-						},
-					},
-					Services: []*config.Service{
-						{
-							Name:      "test-svc",
-							SourceURL: "https://github.com/myproject/test-svc",
-						},
-						{
-							Name:      "test",
-							SourceURL: "http://github.com/org/test",
 						},
 					},
 				},
@@ -168,7 +159,7 @@ func TestServiceResourcesWithoutArgoCD(t *testing.T) {
 	fakeFs := ioutils.NewMapFilesystem()
 	m := buildManifest(false, false)
 	want := res.Resources{
-		"environments/test-dev/apps/test-app/base/kustomization.yaml":     &res.Kustomization{Bases: []string{"../../../services/test-svc", "../../../services/test"}},
+		"environments/test-dev/apps/test-app/base/kustomization.yaml":     &res.Kustomization{Bases: []string{"../services/test-svc", "../services/test"}},
 		"environments/test-dev/apps/test-app/kustomization.yaml":          &res.Kustomization{Bases: []string{"overlays"}},
 		"environments/test-dev/apps/test-app/overlays/kustomization.yaml": &res.Kustomization{Bases: []string{"../base"}},
 		"environments/test-dev/env/base/kustomization.yaml":               &res.Kustomization{Resources: []string{"test-dev-environment.yaml"}, Bases: []string{"../../apps/test-app/overlays"}},
@@ -180,20 +171,16 @@ func TestServiceResourcesWithoutArgoCD(t *testing.T) {
 					Apps: []*config.Application{
 						{
 							Name: "test-app",
-							ServiceRefs: []string{
-								"test-svc",
-								"test",
+							Services: []*config.Service{
+								{
+									Name:      "test-svc",
+									SourceURL: "https://github.com/myproject/test-svc",
+								},
+								{
+									Name:      "test",
+									SourceURL: "http://github.com/org/test",
+								},
 							},
-						},
-					},
-					Services: []*config.Service{
-						{
-							Name:      "test-svc",
-							SourceURL: "https://github.com/myproject/test-svc",
-						},
-						{
-							Name:      "test",
-							SourceURL: "http://github.com/org/test",
 						},
 					},
 				},
@@ -222,12 +209,12 @@ func TestAddServiceWithoutApp(t *testing.T) {
 	fakeFs := ioutils.NewMapFilesystem()
 	m := buildManifest(false, false)
 	want := res.Resources{
-		"environments/test-dev/apps/new-app/base/kustomization.yaml":                        &res.Kustomization{Bases: []string{"../../../services/test"}},
+		"environments/test-dev/apps/new-app/base/kustomization.yaml":                        &res.Kustomization{Bases: []string{"../services/test"}},
 		"environments/test-dev/apps/new-app/overlays/kustomization.yaml":                    &res.Kustomization{Bases: []string{"../base"}},
 		"environments/test-dev/apps/new-app/kustomization.yaml":                             &res.Kustomization{Bases: []string{"overlays"}},
-		"environments/test-dev/services/test/base/kustomization.yaml":                       &res.Kustomization{Bases: []string{"./config"}},
-		"environments/test-dev/services/test/kustomization.yaml":                            &res.Kustomization{Bases: []string{"overlays"}},
-		"environments/test-dev/services/test/overlays/kustomization.yaml":                   &res.Kustomization{Bases: []string{"../base"}},
+		"environments/test-dev/apps/new-app/services/test/base/kustomization.yaml":          &res.Kustomization{Bases: []string{"./config"}},
+		"environments/test-dev/apps/new-app/services/test/kustomization.yaml":               &res.Kustomization{Bases: []string{"overlays"}},
+		"environments/test-dev/apps/new-app/services/test/overlays/kustomization.yaml":      &res.Kustomization{Bases: []string{"../base"}},
 		"environments/cicd/base/pipelines/03-secrets/webhook-secret-test-dev-test-svc.yaml": nil,
 		"pipelines.yaml": &config.Manifest{
 			GitOpsURL: "http://github.com/org/test",
@@ -236,20 +223,20 @@ func TestAddServiceWithoutApp(t *testing.T) {
 					Name: "test-dev",
 					Apps: []*config.Application{
 						{
-							Name:        "test-app",
-							ServiceRefs: []string{"test-svc"},
+							Name: "test-app",
+							Services: []*config.Service{
+								{
+									Name:      "test-svc",
+									SourceURL: "https://github.com/myproject/test-svc",
+								},
+							},
 						},
 						{
-							Name:        "new-app",
-							ServiceRefs: []string{"test"},
+							Name: "new-app",
+							Services: []*config.Service{
+								{Name: "test", SourceURL: "http://github.com/org/test"},
+							},
 						},
-					},
-					Services: []*config.Service{
-						{
-							Name:      "test-svc",
-							SourceURL: "https://github.com/myproject/test-svc",
-						},
-						{Name: "test", SourceURL: "http://github.com/org/test"},
 					},
 				},
 			},
@@ -287,9 +274,9 @@ func TestAddService(t *testing.T) {
 		"environments/test-dev/apps/new-app/base/kustomization.yaml",
 		"environments/test-dev/apps/new-app/overlays/kustomization.yaml",
 		"environments/test-dev/apps/new-app/kustomization.yaml",
-		"environments/test-dev/services/test/base/kustomization.yaml",
-		"environments/test-dev/services/test/overlays/kustomization.yaml",
-		"environments/test-dev/services/test/kustomization.yaml",
+		"environments/test-dev/apps/new-app/services/test/base/kustomization.yaml",
+		"environments/test-dev/apps/new-app/services/test/overlays/kustomization.yaml",
+		"environments/test-dev/apps/new-app/services/test/kustomization.yaml",
 		"config/cicd/base/03-secrets/webhook-secret-test-dev-test.yaml",
 		"config/cicd/base/kustomization.yaml",
 		"pipelines.yaml",
@@ -332,28 +319,27 @@ func TestServiceWithArgoCD(t *testing.T) {
 					Name: "test-dev",
 					Apps: []*config.Application{
 						{
-							Name:        "test-app",
-							ServiceRefs: []string{"test-svc", "test"},
-						},
-					},
-					Services: []*config.Service{
-						{
-							Name:      "test-svc",
-							SourceURL: "https://github.com/myproject/test-svc",
-							Webhook: &config.Webhook{
-								Secret: &config.Secret{
-									Name:      "webhook-secret-test-dev-test-svc",
-									Namespace: "cicd",
+							Name: "test-app",
+							Services: []*config.Service{
+								{
+									Name:      "test-svc",
+									SourceURL: "https://github.com/myproject/test-svc",
+									Webhook: &config.Webhook{
+										Secret: &config.Secret{
+											Name:      "webhook-secret-test-dev-test-svc",
+											Namespace: "cicd",
+										},
+									},
 								},
-							},
-						},
-						{
-							Name:      "test",
-							SourceURL: "http://github.com/org/test",
-							Webhook: &config.Webhook{
-								Secret: &config.Secret{
-									Name:      "webhook-secret-test-dev-test",
-									Namespace: "cicd",
+								{
+									Name:      "test",
+									SourceURL: "http://github.com/org/test",
+									Webhook: &config.Webhook{
+										Secret: &config.Secret{
+											Name:      "webhook-secret-test-dev-test",
+											Namespace: "cicd",
+										},
+									},
 								},
 							},
 						},
@@ -413,22 +399,19 @@ func environment(withPipelinesConfig bool) []*config.Environment {
 			Apps: []*config.Application{
 				{
 					Name: "test-app",
-					ServiceRefs: []string{
-						"test-svc",
+					Services: []*config.Service{
+						{
+							Name:      "test-svc",
+							SourceURL: "https://github.com/myproject/test-svc",
+						},
 					},
-				},
-			},
-			Services: []*config.Service{
-				{
-					Name:      "test-svc",
-					SourceURL: "https://github.com/myproject/test-svc",
 				},
 			},
 		},
 	}
 
 	if withPipelinesConfig {
-		env[0].Services[0].Webhook = &config.Webhook{
+		env[0].Apps[0].Services[0].Webhook = &config.Webhook{
 			Secret: &config.Secret{
 				Name:      "webhook-secret-test-dev-test-svc",
 				Namespace: "cicd",
@@ -446,17 +429,17 @@ func TestCreateSvcImageBinding(t *testing.T) {
 	env := &config.Environment{
 		Name: "new-env",
 	}
-	bindingName, bindingFilename, resources := createSvcImageBinding(cfg, env, "new-svc", "quay.io/user/app", false)
-	if diff := cmp.Diff(bindingName, "new-env-new-svc-binding"); diff != "" {
+	bindingName, bindingFilename, resources := createSvcImageBinding(cfg, env, "newapp", "new-svc", "quay.io/user/app", false)
+	if diff := cmp.Diff(bindingName, "new-env-newapp-new-svc-binding"); diff != "" {
 		t.Errorf("bindingName failed: %v", diff)
 	}
-	if diff := cmp.Diff(bindingFilename, "06-bindings/new-env-new-svc-binding.yaml"); diff != "" {
+	if diff := cmp.Diff(bindingFilename, "06-bindings/new-env-newapp-new-svc-binding.yaml"); diff != "" {
 		t.Errorf("bindingFilename failed: %v", diff)
 	}
 
 	triggerBinding := triggersv1.TriggerBinding{
 		TypeMeta:   v1.TypeMeta{Kind: "TriggerBinding", APIVersion: "triggers.tekton.dev/v1alpha1"},
-		ObjectMeta: v1.ObjectMeta{Name: "new-env-new-svc-binding", Namespace: "cicd"},
+		ObjectMeta: v1.ObjectMeta{Name: "new-env-newapp-new-svc-binding", Namespace: "cicd"},
 		Spec: triggersv1.TriggerBindingSpec{
 			Params: []triggersv1.Param{
 				{
@@ -471,7 +454,7 @@ func TestCreateSvcImageBinding(t *testing.T) {
 		},
 	}
 
-	wantResources := res.Resources{"config/cicd/base/06-bindings/new-env-new-svc-binding.yaml": triggerBinding}
+	wantResources := res.Resources{"config/cicd/base/06-bindings/new-env-newapp-new-svc-binding.yaml": triggerBinding}
 	if diff := cmp.Diff(resources, wantResources); diff != "" {
 		t.Errorf("resources failed: %v", diff)
 	}

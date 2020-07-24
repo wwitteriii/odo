@@ -159,9 +159,11 @@ func getRepoURL(manifest *config.Manifest, isCICD bool, serviceName *QualifiedSe
 func getSourceRepoURL(manifest *config.Manifest, service *QualifiedServiceName) string {
 	for _, env := range manifest.Environments {
 		if env.Name == service.EnvironmentName {
-			for _, svc := range env.Services {
-				if svc.Name == service.ServiceName {
-					return svc.SourceURL
+			for _, app := range env.Apps {
+				for _, svc := range app.Services {
+					if svc.Name == service.ServiceName {
+						return svc.SourceURL
+					}
 				}
 			}
 		}
