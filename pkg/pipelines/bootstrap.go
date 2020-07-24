@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/openshift/odo/pkg/log"
 	"github.com/spf13/afero"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -45,6 +46,7 @@ func Bootstrap(o *BootstrapOptions, appFs afero.Fs) error {
 	if err != nil {
 		return err
 	}
+	logBootstrapStatus("Building CICD resources")
 	if o.GitOpsWebhookSecret == "" {
 		gitopsSecret, err := secrets.GenerateString(webhookSecretLength)
 		if err != nil {
@@ -70,6 +72,8 @@ func Bootstrap(o *BootstrapOptions, appFs afero.Fs) error {
 	}
 
 	m := bootstrapped[pipelinesFile].(*config.Manifest)
+	logBootstrapStatus("Resources bootstrapped sucessfully")
+	logBootstrapStatus("Running build")
 	built, err := buildResources(appFs, buildParams, m)
 	if err != nil {
 		return fmt.Errorf("failed to build resources: %v", err)
@@ -107,6 +111,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	appName := repoToAppName(repoName)
 	serviceName := repoName
 	secretName := secrets.MakeServiceWebhookSecretName(ns["dev"], serviceName)
+	logBootstrapStatus("Bootstrapping dev and stage environment resources")
 	envs, configEnv, err := bootstrapEnvironments(appRepo, o.Prefix, secretName, ns)
 	if err != nil {
 		return nil, err
@@ -126,6 +131,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	if err != nil {
 		return nil, err
 	}
+	logBootstrapStatus("Service/Deployment files for dev environment configured")
 	hookSecret, err := secrets.CreateSealedSecret(
 		meta.NamespacedName(ns["cicd"], secretName),
 		o.SealedSecretsService,
@@ -141,6 +147,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	}
 	secretFilename := filepath.Join("03-secrets", secretName+".yaml")
 	secretsPath := filepath.Join(config.PathForPipelines(cfg), "base", secretFilename)
+	logBootstrapStatus("Service webhook secret created sucessfully")
 	bootstrapped[secretsPath] = hookSecret
 
 	bindingName, imageRepoBindingFilename, svcImageBinding := createSvcImageBinding(cfg, devEnv, appName, serviceName, imageRepo, !isInternalRegistry)
@@ -310,4 +317,9 @@ func checkPipelinesFileExists(appFs afero.Fs, outputPath string, overWrite bool)
 		return fmt.Errorf("pipelines.yaml in output path already exists. If you want replace your existing files, please rerun with --overwrite.")
 	}
 	return nil
+}
+
+//logs Success message to the outputs
+func logBootstrapStatus(message string) {
+	log.Success(message)
 }

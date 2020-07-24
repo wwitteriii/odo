@@ -196,6 +196,7 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 	outputs[secretsPath] = githubSecret
 	outputs[namespacesPath] = namespaces.Create(cicdNamespace, o.GitOpsRepoURL)
 	outputs[rolesPath] = roles.CreateClusterRole(meta.NamespacedName("", roles.ClusterRoleName), Rules)
+	logBootstrapStatus("Gitops webhook secret created sucessfully")
 
 	sa := roles.CreateServiceAccount(meta.NamespacedName(cicdNamespace, saName))
 
@@ -209,6 +210,8 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 
 		// add secret and sa to outputs
 		outputs[serviceAccountPath] = roles.AddSecretToSA(sa, dockerSecretName)
+		logBootstrapStatus("Authentication to push to image repo configured")
+
 	}
 
 	if o.StatusTrackerAccessToken != "" {
@@ -217,6 +220,8 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 			return nil, err
 		}
 		outputs = res.Merge(outputs, trackerResources)
+		logBootstrapStatus("The commit status tracker is configured")
+
 	}
 
 	outputs[rolebindingsPath] = roles.CreateClusterRoleBinding(meta.NamespacedName("", roleBindingName), sa, "ClusterRole", roles.ClusterRoleName)
@@ -228,11 +233,13 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 	outputs[appTaskPath] = tasks.CreateDeployUsingKubectlTask(cicdNamespace)
 	outputs[ciPipelinesPath] = pipelines.CreateCIPipeline(meta.NamespacedName(cicdNamespace, "ci-dryrun-from-push-pipeline"), cicdNamespace)
 	outputs[appCiPipelinesPath] = pipelines.CreateAppCIPipeline(meta.NamespacedName(cicdNamespace, "app-ci-pipeline"))
+	logBootstrapStatus("The pipelines resources added sucessfully")
 	pushBinding, pushBindingName := repo.CreatePushBinding(cicdNamespace)
 	outputs[filepath.Join("06-bindings", pushBindingName+".yaml")] = pushBinding
 	outputs[pushTemplatePath] = triggers.CreateCIDryRunTemplate(cicdNamespace, saName)
 	outputs[appCIPushTemplatePath] = triggers.CreateDevCIBuildPRTemplate(cicdNamespace, saName)
 	outputs[eventListenerPath] = eventlisteners.Generate(repo, cicdNamespace, saName, eventlisteners.GitOpsWebhookSecret)
+	logBootstrapStatus("The eventlisteners to trigger the pipelines configured")
 	route, err := routes.Generate(cicdNamespace)
 	if err != nil {
 		return nil, err
