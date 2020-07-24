@@ -93,6 +93,7 @@ func NewCmdInit(name, fullName string) *cobra.Command {
 	}
 
 	addInitCommands(initCmd, o.InitOptions)
+
 	return initCmd
 }
 
