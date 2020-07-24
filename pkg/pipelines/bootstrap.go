@@ -117,7 +117,12 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	if devEnv == nil {
 		return nil, errors.New("unable to bootstrap without dev environment")
 	}
-	svcFiles, err := bootstrapServiceDeployment(devEnv, appName)
+
+	app := m.GetApplication(ns["dev"], appName)
+	if app == nil {
+		return nil, errors.New("unable to bootstrap without application")
+	}
+	svcFiles, err := bootstrapServiceDeployment(devEnv, app)
 	if err != nil {
 		return nil, err
 	}
@@ -129,6 +134,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate GitHub Webhook Secret: %v", err)
 	}
+
 	cfg := m.GetPipelinesConfig()
 	if cfg == nil {
 		return nil, errors.New("failed to find a pipeline configuration - unable to continue bootstrap")
@@ -137,7 +143,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	secretsPath := filepath.Join(config.PathForPipelines(cfg), "base", secretFilename)
 	bootstrapped[secretsPath] = hookSecret
 
-	bindingName, imageRepoBindingFilename, svcImageBinding := createSvcImageBinding(cfg, devEnv, serviceName, imageRepo, !isInternalRegistry)
+	bindingName, imageRepoBindingFilename, svcImageBinding := createSvcImageBinding(cfg, devEnv, appName, serviceName, imageRepo, !isInternalRegistry)
 	bootstrapped = res.Merge(svcImageBinding, bootstrapped)
 
 	kustomizePath := filepath.Join(config.PathForPipelines(cfg), "base", "kustomization.yaml")
@@ -157,7 +163,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	}
 
 	// This is specific to bootstrap, because there's only one service.
-	devEnv.Services[0].Pipelines = &config.Pipelines{
+	devEnv.Apps[0].Services[0].Pipelines = &config.Pipelines{
 		Integration: &config.TemplateBinding{
 			Bindings: append([]string{bindingName}, devEnv.Pipelines.Integration.Bindings[:]...),
 		},
@@ -172,14 +178,14 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	return bootstrapped, nil
 }
 
-func bootstrapServiceDeployment(dev *config.Environment, appName string) (res.Resources, error) {
-	svc := dev.Services[0]
-	svcBase := filepath.Join(config.PathForService(dev, svc.Name), "base", "config")
+func bootstrapServiceDeployment(dev *config.Environment, app *config.Application) (res.Resources, error) {
+	svc := dev.Apps[0].Services[0]
+	svcBase := filepath.Join(config.PathForService(app, dev, svc.Name), "base", "config")
 	resources := res.Resources{}
 	// TODO: This should change if we add Namespace to Environment.
 	// We'd need to create the resources in the namespace _of_ the Environment.
-	resources[filepath.Join(svcBase, "100-deployment.yaml")] = deployment.Create(appName, dev.Name, svc.Name, bootstrapImage, deployment.ContainerPort(8080))
-	resources[filepath.Join(svcBase, "200-service.yaml")] = createBootstrapService(appName, dev.Name, svc.Name)
+	resources[filepath.Join(svcBase, "100-deployment.yaml")] = deployment.Create(app.Name, dev.Name, svc.Name, bootstrapImage, deployment.ContainerPort(8080))
+	resources[filepath.Join(svcBase, "200-service.yaml")] = createBootstrapService(app.Name, dev.Name, svc.Name)
 	resources[filepath.Join(svcBase, "kustomization.yaml")] = &res.Kustomization{Resources: []string{"100-deployment.yaml", "200-service.yaml"}}
 	return resources, nil
 }
@@ -198,12 +204,13 @@ func bootstrapEnvironments(repo scm.Repository, prefix, secretName string, ns ma
 				if err != nil {
 					return nil, nil, err
 				}
-				app, err := applicationFromRepo(repo.URL(), svc.Name)
+				app, err := applicationFromRepo(repo.URL(), svc)
 				if err != nil {
 					return nil, nil, err
 				}
+				app.Services = []*config.Service{svc}
 				env.Apps = []*config.Application{app}
-				env.Services = []*config.Service{svc}
+				//env.Services = []*config.Service{svc}
 				env.Pipelines = defaultPipelines(repo)
 			}
 			envs = append(envs, env)
@@ -230,14 +237,14 @@ func serviceFromRepo(repoURL, secretName, secretNS string) (*config.Service, err
 	}, nil
 }
 
-func applicationFromRepo(repoURL, serviceName string) (*config.Application, error) {
+func applicationFromRepo(repoURL string, service *config.Service) (*config.Application, error) {
 	repo, err := repoFromURL(repoURL)
 	if err != nil {
 		return nil, err
 	}
 	return &config.Application{
-		Name:        repoToAppName(repo),
-		ServiceRefs: []string{serviceName},
+		Name:     repoToAppName(repo),
+		Services: []*config.Service{service},
 	}, nil
 }
 

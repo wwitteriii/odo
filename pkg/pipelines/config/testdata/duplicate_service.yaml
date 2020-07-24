@@ -4,10 +4,10 @@ environments:
       integration:
         template: dev-ci-template
         binding: dev-ci-binding
-    services:
-      - name: app-1-service-http # Service Name
-      - name: app-1-service-http # Duplicate Service Name (invalid)
     apps:
       - name: my-app-1
         services:
-          - app-1-service-http
+          - name: app-1-service-http # Service Name
+      - name: my-app-2
+        services:
+          - name: app-1-service-http #duplicate-service-name

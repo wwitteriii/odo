@@ -9,22 +9,19 @@ environments:
       integration:
         template: dev-ci-template
         binding: dev-ci-binding
-    services:
-      - name: testing
-        source_url: https://github.com/myproject/myservice1.git
-      - name:           # invalid name
-        source_url: https://github.com/myproject/myservice2.git
-        webhook:
-          secret:
-            name: webhook-secret
-            namespace: webhook-secret-key
-        pipelines:
-              integration:
-                template: dev-ci-template
-                bindings:  
-                -  # invalid name
     apps:
-      - name: app-1$.       # invalid name
+      - name: app-1$  # invalid name
         services:
-          - testing
- 
+        - name: testing
+          source_url: https://github.com/myproject/myservice1.git
+        - name:         # invalid name
+          source_url: https://github.com/myproject/myservice2.git
+          webhook:
+            secret:
+              name: webhook-secret
+              namespace: webhook-secret-key
+          pipelines:
+                integration:
+                  template: dev-ci-template
+                  bindings:  
+                  -  # invalid name

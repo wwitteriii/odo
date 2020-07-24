@@ -57,10 +57,10 @@ func TestBootstrapManifest(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := res.Resources{
-		"config/tst-cicd/base/03-secrets/webhook-secret-tst-dev-http-api.yaml":   hookSecret,
-		"environments/tst-dev/services/http-api/base/config/100-deployment.yaml": deployment.Create("app-taxi", "tst-dev", "http-api", bootstrapImage, deployment.ContainerPort(8080)),
-		"environments/tst-dev/services/http-api/base/config/200-service.yaml":    createBootstrapService("app-taxi", "tst-dev", "http-api"),
-		"environments/tst-dev/services/http-api/base/config/kustomization.yaml":  &res.Kustomization{Resources: []string{"100-deployment.yaml", "200-service.yaml"}},
+		"config/tst-cicd/base/03-secrets/webhook-secret-tst-dev-http-api.yaml":                     hookSecret,
+		"environments/tst-dev/apps/app-http-api/services/http-api/base/config/100-deployment.yaml": deployment.Create("app-http-api", "tst-dev", "http-api", bootstrapImage, deployment.ContainerPort(8080)),
+		"environments/tst-dev/apps/app-http-api/services/http-api/base/config/200-service.yaml":    createBootstrapService("app-http-api", "tst-dev", "http-api"),
+		"environments/tst-dev/apps/app-http-api/services/http-api/base/config/kustomization.yaml":  &res.Kustomization{Resources: []string{"100-deployment.yaml", "200-service.yaml"}},
 		pipelinesFile: &config.Manifest{
 			GitOpsURL: "https://github.com/my-org/gitops.git",
 			Environments: []*config.Environment{
@@ -72,26 +72,25 @@ func TestBootstrapManifest(t *testing.T) {
 						},
 					},
 					Name: "tst-dev",
-					Services: []*config.Service{
-						{
-							Name:      "http-api",
-							SourceURL: testSvcRepo,
-							Webhook: &config.Webhook{
-								Secret: &config.Secret{
-									Name:      "webhook-secret-tst-dev-http-api",
-									Namespace: "tst-cicd",
-								},
-							},
-							Pipelines: &config.Pipelines{
-								Integration: &config.TemplateBinding{Bindings: []string{"tst-dev-http-api-binding", "github-push-binding"}},
-							},
-						},
-					},
 
 					Apps: []*config.Application{
 						{
-							Name:        "app-http-api",
-							ServiceRefs: []string{"http-api"},
+							Name: "app-http-api",
+							Services: []*config.Service{
+								{
+									Name:      "http-api",
+									SourceURL: testSvcRepo,
+									Webhook: &config.Webhook{
+										Secret: &config.Secret{
+											Name:      "webhook-secret-tst-dev-http-api",
+											Namespace: "tst-cicd",
+										},
+									},
+									Pipelines: &config.Pipelines{
+										Integration: &config.TemplateBinding{Bindings: []string{"tst-dev-app-http-api-http-api-binding", "github-push-binding"}},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -128,7 +127,7 @@ func TestBootstrapManifest(t *testing.T) {
 		"05-pipelines/app-ci-pipeline.yaml",
 		"05-pipelines/ci-dryrun-from-push-pipeline.yaml",
 		"06-bindings/github-push-binding.yaml",
-		"06-bindings/tst-dev-http-api-binding.yaml",
+		"06-bindings/tst-dev-app-http-api-http-api-binding.yaml",
 		"07-templates/app-ci-build-from-push-template.yaml",
 		"07-templates/ci-dryrun-from-push-template.yaml",
 		"08-eventlisteners/cicd-event-listener.yaml",
@@ -154,11 +153,19 @@ func TestOrgRepoFromURL(t *testing.T) {
 
 func TestApplicationFromRepo(t *testing.T) {
 	want := &config.Application{
-		Name:        "app-http-api",
-		ServiceRefs: []string{"http-api"},
+		Name: "app-http-api",
+		Services: []*config.Service{
+			{
+
+				Name: "http-api",
+			},
+		},
+	}
+	svc := &config.Service{
+		Name: "http-api",
 	}
 
-	got, err := applicationFromRepo(testSvcRepo, "http-api")
+	got, err := applicationFromRepo(testSvcRepo, svc)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,7 +202,7 @@ func TestOverwriteFlag(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := Bootstrap(params, fakeFs)
-	want := errors.New("Directory already exists, cannot overwrite ( set --overwrite=true to continue )")
+	want := errors.New("pipelines.yaml in output path already exists. If you want replace your existing files, please rerun with --overwrite.")
 	if got.Error() != want.Error() {
 		t.Fatalf("Got %s want %s", got, want)
 	}

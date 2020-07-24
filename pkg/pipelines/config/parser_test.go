@@ -31,24 +31,20 @@ func TestParse(t *testing.T) {
 							Bindings: []string{"dev-ci-binding"},
 						},
 					},
-					Services: []*Service{
-						{
-							Name:      "service-http",
-							SourceURL: "https://github.com/myproject/myservice.git",
-						},
-						{Name: "service-redis"},
-					},
 					Apps: []*Application{
 						{
 							Name: "my-app-1",
-							ServiceRefs: []string{
-								"service-http",
+							Services: []*Service{
+								{
+									Name:      "service-http",
+									SourceURL: "https://github.com/myproject/myservice.git",
+								},
 							},
 						},
 						{
 							Name: "my-app-2",
-							ServiceRefs: []string{
-								"service-redis",
+							Services: []*Service{
+								{Name: "service-redis"},
 							},
 						},
 					},
@@ -67,16 +63,12 @@ func TestParse(t *testing.T) {
 				},
 				{
 					Name: "production",
-					Services: []*Service{
-						{Name: "service-http"},
-						{Name: "service-metrics"},
-					},
 					Apps: []*Application{
 						{
 							Name: "my-app-1",
-							ServiceRefs: []string{
-								"service-http",
-								"service-metrics",
+							Services: []*Service{
+								{Name: "service-http"},
+								{Name: "service-metrics"},
 							},
 						},
 					},
@@ -89,19 +81,15 @@ func TestParse(t *testing.T) {
 			Environments: []*Environment{
 				{
 					Name: "development",
-					Services: []*Service{
-						{
-							Name:      "app-1-service-http",
-							SourceURL: "https://github.com/myproject/myservice.git",
-						},
-						{Name: "app-1-service-metrics"},
-					},
 					Apps: []*Application{
 						{
 							Name: "my-app-1",
-							ServiceRefs: []string{
-								"app-1-service-http",
-								"app-1-service-metrics",
+							Services: []*Service{
+								{
+									Name:      "app-1-service-http",
+									SourceURL: "https://github.com/myproject/myservice.git",
+								},
+								{Name: "app-1-service-metrics"},
 							},
 						},
 					},
@@ -117,11 +105,12 @@ func TestParse(t *testing.T) {
 				{
 					Name:    "development",
 					Cluster: "testing.cluster",
-					Services: []*Service{
-						{Name: "service-http", SourceURL: "https://github.com/myproject/myservice.git"},
-					},
 					Apps: []*Application{
-						{Name: "my-app-1", ServiceRefs: []string{"service-http"}},
+						{Name: "my-app-1",
+							Services: []*Service{
+								{Name: "service-http",
+									SourceURL: "https://github.com/myproject/myservice.git"},
+							}},
 					},
 				},
 			},
