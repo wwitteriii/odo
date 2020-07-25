@@ -147,22 +147,22 @@ func createTemplateParamSpec(name string, description string) triggersv1.ParamSp
 
 func createDevCDResourceTemplate(saName string) []byte {
 	byteTemplate, _ := json.Marshal(createDevCDPipelineRun(saName))
-	return []byte(string(byteTemplate))
+	return byteTemplate
 }
 
 func createDevCIResourceTemplate(saName string) []byte {
 	byteTemplateCI, _ := json.Marshal(createDevCIPipelineRun(saName))
-	return []byte(string(byteTemplateCI))
+	return byteTemplateCI
 }
 
 func createCDResourceTemplate(saName string) []byte {
 	byteStageCD, _ := json.Marshal(createCDPipelineRun(saName))
-	return []byte(string(byteStageCD))
+	return byteStageCD
 }
 
 func createCIResourceTemplate(saName string) []byte {
 	byteStageCI, _ := json.Marshal(createCIPipelineRun(saName))
-	return []byte(string(byteStageCI))
+	return byteStageCI
 }
 
 func statusTrackerAnnotations(pipeline, description string) func(*v1.ObjectMeta) {
