@@ -78,6 +78,6 @@ func NewCmdBuild(name, fullName string) *cobra.Command {
 	}
 
 	buildCmd.Flags().StringVar(&o.output, "output", ".", "folder path to add Gitops resources")
-	buildCmd.Flags().StringVar(&o.pipelinesFilePath, "pipelines-file", "pipelines.yaml", "path to pipelines file")
+	buildCmd.Flags().StringVar(&o.pipelinesFilePath, "pipelines-folder", ".", "Folder path to add GitOps resources")
 	return buildCmd
 }
