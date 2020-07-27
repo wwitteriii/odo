@@ -104,7 +104,7 @@ func addInitCommands(cmd *cobra.Command, o *pipelines.InitOptions) {
 	cmd.Flags().StringVar(&o.OutputPath, "output", ".", "Path to write GitOps resources")
 	cmd.Flags().StringVarP(&o.Prefix, "prefix", "p", "", "Add a prefix to the environment names(Dev, stage,prod,cicd etc.) to distinguish and identify individual environments")
 	cmd.Flags().StringVar(&o.DockerConfigJSONFilename, "dockercfgjson", "~/.docker/config.json", "Filepath to config.json which authenticates the image push to the desired image registry ")
-	cmd.Flags().StringVar(&o.InternalRegistryHostname, "internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "Internal image registry hostname")
+	cmd.Flags().StringVar(&o.InternalRegistryHostname, "image-repo-internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "Host-name for internal image registry Eg docker-registry.default.svc.cluster.local:5000, an integrated container image registry to store images built by source code")
 	cmd.Flags().StringVar(&o.ImageRepo, "image-repo", "", "Image repository of the form '<registry>/<username>/<repository>' or '<project>/<app>' for internal registry to push built images to the repository")
 	cmd.Flags().StringVar(&o.SealedSecretsService.Namespace, "sealed-secrets-ns", "sealed-secrets", "Namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
 	cmd.Flags().StringVar(&o.SealedSecretsService.Name, "sealed-secrets-svc", "sealedsecretcontroller-sealed-secrets", "Name of the Sealed Secrets Services that encrypts secrets")
