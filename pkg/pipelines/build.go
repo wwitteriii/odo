@@ -43,7 +43,7 @@ func buildResources(fs afero.Fs, o *BuildParameters, m *config.Manifest) (res.Re
 	if argoCD != nil {
 		appLinks = environments.AppsToEnvironments
 	}
-
+	logBootstrapStatus("Parsing pipelines.yaml file to build resources in their respective directories")
 	envs, err := environments.Build(fs, m, saName, appLinks)
 	if err != nil {
 		return nil, err
@@ -60,6 +60,7 @@ func buildResources(fs afero.Fs, o *BuildParameters, m *config.Manifest) (res.Re
 	if err != nil {
 		return nil, err
 	}
+	logBootstrapStatus("Argocd resources have been configured")
 	resources = res.Merge(argoApps, resources)
 	return resources, nil
 }

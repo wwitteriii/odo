@@ -46,7 +46,7 @@ func Bootstrap(o *BootstrapOptions, appFs afero.Fs) error {
 	if err != nil {
 		return err
 	}
-	logBootstrapStatus("Building CICD resources")
+	logBootstrapStatus("Bootstrap process initiated")
 	if o.GitOpsWebhookSecret == "" {
 		gitopsSecret, err := secrets.GenerateString(webhookSecretLength)
 		if err != nil {
@@ -72,8 +72,6 @@ func Bootstrap(o *BootstrapOptions, appFs afero.Fs) error {
 	}
 
 	m := bootstrapped[pipelinesFile].(*config.Manifest)
-	logBootstrapStatus("Resources bootstrapped sucessfully")
-	logBootstrapStatus("Running build")
 	built, err := buildResources(appFs, buildParams, m)
 	if err != nil {
 		return fmt.Errorf("failed to build resources: %v", err)
@@ -111,7 +109,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	appName := repoToAppName(repoName)
 	serviceName := repoName
 	secretName := secrets.MakeServiceWebhookSecretName(ns["dev"], serviceName)
-	logBootstrapStatus("Bootstrapping dev and stage environment resources")
+	logBootstrapStatus(fmt.Sprintf("Bootstrapping %s and %s environment resources", ns["dev"], ns["stage"]))
 	envs, configEnv, err := bootstrapEnvironments(appRepo, o.Prefix, secretName, ns)
 	if err != nil {
 		return nil, err
@@ -131,7 +129,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	if err != nil {
 		return nil, err
 	}
-	logBootstrapStatus("Service/Deployment files for dev environment configured")
+	logBootstrapStatus(fmt.Sprintf("Service/Deployment files for %s environment configured", ns["dev"]))
 	hookSecret, err := secrets.CreateSealedSecret(
 		meta.NamespacedName(ns["cicd"], secretName),
 		o.SealedSecretsService,
@@ -147,7 +145,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	}
 	secretFilename := filepath.Join("03-secrets", secretName+".yaml")
 	secretsPath := filepath.Join(config.PathForPipelines(cfg), "base", secretFilename)
-	logBootstrapStatus("Service webhook secret created sucessfully")
+	logBootstrapStatus(fmt.Sprintf("Webhook secret to authenticate pull/push to %s repo created sucessfully", serviceName))
 	bootstrapped[secretsPath] = hookSecret
 
 	bindingName, imageRepoBindingFilename, svcImageBinding := createSvcImageBinding(cfg, devEnv, appName, serviceName, imageRepo, !isInternalRegistry)
@@ -321,5 +319,5 @@ func checkPipelinesFileExists(appFs afero.Fs, outputPath string, overWrite bool)
 
 //logs Success message to the outputs
 func logBootstrapStatus(message string) {
-	log.Success(message)
+	log.Info(message)
 }
