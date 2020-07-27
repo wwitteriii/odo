@@ -72,7 +72,7 @@ func newCmdAdd(name, fullName string) *cobra.Command {
 	cmd.Flags().StringVar(&o.AppName, "app-name", "", "Name of the application where the service will be added")
 	cmd.Flags().StringVar(&o.ServiceName, "service-name", "", "Name of the service to be added")
 	cmd.Flags().StringVar(&o.EnvName, "env-name", "", "Name of the environment where the service will be added")
-	cmd.Flags().StringVar(&o.ImageRepo, "image-repo", "", "Image repository of the form <registry>/<username>/<repository> or <project>/<app> which is used to push newly built images")
+	cmd.Flags().StringVar(&o.ImageRepo, "image-repo", "", "Image repository of the form <registry>/<username>/<repository> or <project>/<app> which is used to push newly built images at a single repository")
 	cmd.Flags().StringVar(&o.InternalRegistryHostname, "image-repo-internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "Host-name for internal image registry e.g. docker-registry.default.svc.cluster.local:5000, used if you are pushing your images to the internal image registry")
 	cmd.Flags().StringVar(&o.PipelinesFilePath, "pipelines-file", "pipelines.yaml", "Path to pipelines file")
 
