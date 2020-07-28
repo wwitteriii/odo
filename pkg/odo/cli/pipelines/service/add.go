@@ -67,17 +67,17 @@ func newCmdAdd(name, fullName string) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.GitRepoURL, "git-repo-url", "", "Provide the URL for your Service repository e.g. https://github.com/organisation/service.git")
-	cmd.Flags().StringVar(&o.WebhookSecret, "webhook-secret", "", "Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the Service repository. (if not provided, it will be auto-generated)")
-	cmd.Flags().StringVar(&o.AppName, "app-name", "", "the name of the application where the service will be added")
-	cmd.Flags().StringVar(&o.ServiceName, "service-name", "", "the name of the service to be added")
-	cmd.Flags().StringVar(&o.EnvName, "env-name", "", "the name of the environment where the service will be added")
-	cmd.Flags().StringVar(&o.ImageRepo, "image-repo", "", "used to push built images")
-	cmd.Flags().StringVar(&o.InternalRegistryHostname, "internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "internal image registry hostname")
-	cmd.Flags().StringVar(&o.PipelinesFilePath, "pipelines-file", "pipelines.yaml", "path to pipelines file")
+	cmd.Flags().StringVar(&o.GitRepoURL, "git-repo-url", "", "GitOps repository e.g. https://github.com/organisation/repository")
+	cmd.Flags().StringVar(&o.WebhookSecret, "webhook-secret", "", "Source Git repository webhook secret (if not provided, it will be auto-generated)")
+	cmd.Flags().StringVar(&o.AppName, "app-name", "", "Name of the application where the service will be added")
+	cmd.Flags().StringVar(&o.ServiceName, "service-name", "", "Name of the service to be added")
+	cmd.Flags().StringVar(&o.EnvName, "env-name", "", "Name of the environment where the service will be added")
+	cmd.Flags().StringVar(&o.ImageRepo, "image-repo", "", "Image repository of the form <registry>/<username>/<repository> or <project>/<app> which is used to push newly built images")
+	cmd.Flags().StringVar(&o.InternalRegistryHostname, "image-repo-internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "Host-name for internal image registry e.g. docker-registry.default.svc.cluster.local:5000, used if you are pushing your images to the internal image registry")
+	cmd.Flags().StringVar(&o.PipelinesFilePath, "pipelines-file", "pipelines.yaml", "Path to pipelines file")
 
-	cmd.Flags().StringVar(&o.SealedSecretsService.Namespace, "sealed-secrets-ns", "sealed-secrets", "namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
-	cmd.Flags().StringVar(&o.SealedSecretsService.Name, "sealed-secrets-svc", "sealedsecretcontroller-sealed-secrets", "name of the Sealed Secrets services that encrypts secrets")
+	cmd.Flags().StringVar(&o.SealedSecretsService.Namespace, "sealed-secrets-ns", "sealed-secrets", "Namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
+	cmd.Flags().StringVar(&o.SealedSecretsService.Name, "sealed-secrets-svc", "sealedsecretcontroller-sealed-secrets", "Name of the Sealed Secrets services that encrypts secrets")
 
 	// required flags
 	_ = cmd.MarkFlagRequired("service-name")

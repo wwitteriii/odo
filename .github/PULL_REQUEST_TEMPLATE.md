@@ -18,6 +18,12 @@
 
 **What does does this PR do / why we need it**:
 
+**Have you updated the necessary documentation?**
+
+See https://github.com/rhd-gitops-example/docs
+
+[ ] Updated
+
 **Which issue(s) this PR fixes**:
 
 Fixes #?
