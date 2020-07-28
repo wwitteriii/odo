@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/mitchellh/go-homedir"
+	"github.com/openshift/odo/pkg/log"
 	"github.com/openshift/odo/pkg/pipelines/config"
 	"github.com/openshift/odo/pkg/pipelines/dryrun"
 	"github.com/openshift/odo/pkg/pipelines/eventlisteners"
@@ -196,7 +197,7 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 	outputs[secretsPath] = githubSecret
 	outputs[namespacesPath] = namespaces.Create(cicdNamespace, o.GitOpsRepoURL)
 	outputs[rolesPath] = roles.CreateClusterRole(meta.NamespacedName("", roles.ClusterRoleName), Rules)
-	logBootstrapStatus("Webhook secret to authenticate pull/push to Gitops repo created sucessfully")
+	log.Info("Webhook secret to authenticate pull/push to Gitops repo created sucessfully")
 
 	sa := roles.CreateServiceAccount(meta.NamespacedName(cicdNamespace, saName))
 
@@ -210,7 +211,7 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 
 		// add secret and sa to outputs
 		outputs[serviceAccountPath] = roles.AddSecretToSA(sa, dockerSecretName)
-		logBootstrapStatus("Authentication to push image of service built using Buildah to internal/external image registry configured")
+		log.Info("Authentication to push image of service built using Buildah to internal/external image registry configured")
 
 	}
 
@@ -220,7 +221,7 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 			return nil, err
 		}
 		outputs = res.Merge(outputs, trackerResources)
-		logBootstrapStatus("Commit status tracking configured")
+		log.Info("Commit status tracking configured")
 
 	}
 
@@ -238,7 +239,7 @@ func createCICDResources(fs afero.Fs, repo scm.Repository, pipelineConfig *confi
 	outputs[pushTemplatePath] = triggers.CreateCIDryRunTemplate(cicdNamespace, saName)
 	outputs[appCIPushTemplatePath] = triggers.CreateDevCIBuildPRTemplate(cicdNamespace, saName)
 	outputs[eventListenerPath] = eventlisteners.Generate(repo, cicdNamespace, saName, eventlisteners.GitOpsWebhookSecret)
-	logBootstrapStatus("Openshift pipeline resources configured, now perform CI with Tekton and CD using Argocd")
+	log.Info("Openshift pipeline resources configured, now perform CI with Tekton and CD using Argocd")
 	route, err := routes.Generate(cicdNamespace)
 	if err != nil {
 		return nil, err

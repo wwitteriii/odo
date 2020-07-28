@@ -46,7 +46,7 @@ func Bootstrap(o *BootstrapOptions, appFs afero.Fs) error {
 	if err != nil {
 		return err
 	}
-	logBootstrapStatus("Bootstrap process initiated")
+	log.Info("Bootstrap process initiated")
 	if o.GitOpsWebhookSecret == "" {
 		gitopsSecret, err := secrets.GenerateString(webhookSecretLength)
 		if err != nil {
@@ -109,7 +109,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	appName := repoToAppName(repoName)
 	serviceName := repoName
 	secretName := secrets.MakeServiceWebhookSecretName(ns["dev"], serviceName)
-	logBootstrapStatus(fmt.Sprintf("Bootstrapping %s and %s environment resources", ns["dev"], ns["stage"]))
+	log.Infof("Bootstrapping %s and %s environment resources", ns["dev"], ns["stage"])
 	envs, configEnv, err := bootstrapEnvironments(appRepo, o.Prefix, secretName, ns)
 	if err != nil {
 		return nil, err
@@ -129,7 +129,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	if err != nil {
 		return nil, err
 	}
-	logBootstrapStatus(fmt.Sprintf("Service/Deployment files for %s environment configured", ns["dev"]))
+	log.Infof("Service/Deployment files for %s environment configured", ns["dev"])
 	hookSecret, err := secrets.CreateSealedSecret(
 		meta.NamespacedName(ns["cicd"], secretName),
 		o.SealedSecretsService,
@@ -145,7 +145,7 @@ func bootstrapResources(o *BootstrapOptions, appFs afero.Fs) (res.Resources, err
 	}
 	secretFilename := filepath.Join("03-secrets", secretName+".yaml")
 	secretsPath := filepath.Join(config.PathForPipelines(cfg), "base", secretFilename)
-	logBootstrapStatus(fmt.Sprintf("Webhook secret to authenticate pull/push to %s repo created sucessfully", serviceName))
+	log.Infof("Webhook secret to authenticate pull/push to %s repo created sucessfully", serviceName)
 	bootstrapped[secretsPath] = hookSecret
 
 	bindingName, imageRepoBindingFilename, svcImageBinding := createSvcImageBinding(cfg, devEnv, appName, serviceName, imageRepo, !isInternalRegistry)
@@ -315,9 +315,4 @@ func checkPipelinesFileExists(appFs afero.Fs, outputPath string, overWrite bool)
 		return fmt.Errorf("pipelines.yaml in output path already exists. If you want replace your existing files, please rerun with --overwrite.")
 	}
 	return nil
-}
-
-//logs Success message to the outputs
-func logBootstrapStatus(message string) {
-	log.Info(message)
 }
