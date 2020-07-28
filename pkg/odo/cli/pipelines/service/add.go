@@ -35,6 +35,7 @@ type AddServiceOptions struct {
 // Complete is called when the command is completed
 func (o *AddServiceOptions) Complete(name string, cmd *cobra.Command, args []string) error {
 	o.GitRepoURL = utility.AddGitSuffixIfNecessary(o.GitRepoURL)
+	o.PipelinesFilePath = o.PipelinesFilePath + "/pipelines.yaml"
 	return nil
 }
 
@@ -45,7 +46,6 @@ func (o *AddServiceOptions) Validate() error {
 
 // Run runs the project bootstrap command.
 func (o *AddServiceOptions) Run() error {
-	o.PipelinesFilePath = o.PipelinesFilePath + "/pipelines.yaml"
 	err := pipelines.AddService(o.AddServiceOptions, ioutils.NewFilesystem())
 	if err != nil {
 		return err

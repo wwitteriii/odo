@@ -47,6 +47,7 @@ func NewAddEnvParameters() *AddEnvParameters {
 // If the prefix provided doesn't have a "-" then one is added, this makes the
 // generated environment names nicer to read.
 func (eo *AddEnvParameters) Complete(name string, cmd *cobra.Command, args []string) error {
+	eo.pipelinesFile = eo.pipelinesFile + "/pipelines.yaml"
 	return nil
 }
 
@@ -59,7 +60,7 @@ func (eo *AddEnvParameters) Validate() error {
 func (eo *AddEnvParameters) Run() error {
 	options := pipelines.EnvParameters{
 		EnvName:           eo.envName,
-		PipelinesFilePath: eo.pipelinesFile + "/pipelines.yaml",
+		PipelinesFilePath: eo.pipelinesFile,
 		Cluster:           eo.cluster,
 	}
 	err := pipelines.AddEnv(&options, ioutils.NewFilesystem())

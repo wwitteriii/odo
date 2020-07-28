@@ -15,25 +15,27 @@ type keyValuePair struct {
 
 func TestCompleteAddOptions(t *testing.T) {
 	completeTests := []struct {
-		name string
-		url  string
-		want string
+		name                string
+		url                 string
+		pipelinesPath       string
+		wantURL             string
+		wantedPipelinesPath string
 	}{
-		{"service on GitLab", "https://gitlab.com/test/org", "https://gitlab.com/test/org.git"},
-		{"service on GitHub", "https://github.com/test/org", "https://github.com/test/org.git"},
-		{"service with no URL", "", ""},
-		{"suffix already present", "https://github.com/test/org.git", "https://github.com/test/org.git"},
+		{"service on GitLab", "https://gitlab.com/test/org", "../test-repo", "https://gitlab.com/test/org.git", "../test-repo/pipelines.yaml"},
+		{"service on GitHub", "https://github.com/test/org", "../test-repo/test-repo-2", "https://github.com/test/org.git", "../test-repo/test-repo-2/pipelines.yaml"},
+		{"service with no URL", "", "", "", "./pipelines.yaml"},
+		{"suffix already present", "https://github.com/test/org.git", "test-repo", "https://github.com/test/org.git", "test-repo/pipelines.yaml"},
 	}
 
 	for _, tt := range completeTests {
 		t.Run(tt.name, func(rt *testing.T) {
-			o := AddServiceOptions{AddServiceOptions: &pipelines.AddServiceOptions{GitRepoURL: tt.url}}
+			o := AddServiceOptions{AddServiceOptions: &pipelines.AddServiceOptions{GitRepoURL: tt.url, PipelinesFilePath: tt.pipelinesPath}}
 			err := o.Complete("test", &cobra.Command{}, []string{"test", "test/repo"})
 			if err != nil {
 				rt.Fatal(err)
 			}
-			if tt.want != o.GitRepoURL {
-				rt.Fatalf("URL mismatch: got %s, want %s", o.GitRepoURL, tt.want)
+			if tt.wantURL != o.GitRepoURL && tt.wantedPipelinesPath != o.PipelinesFilePath {
+				rt.Fatalf("URL mismatch: got %s, want %s", o.GitRepoURL, tt.wantURL)
 			}
 		})
 	}

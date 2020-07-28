@@ -20,7 +20,7 @@ type options struct {
 
 // Complete completes createOptions after they've been created
 func (o *options) Complete(name string, cmd *cobra.Command, args []string) (err error) {
-
+	o.pipelinesFilePath = o.pipelinesFilePath + "/pipelines.yaml"
 	return nil
 
 }
@@ -44,7 +44,7 @@ func (o *options) Validate() (err error) {
 func (o *options) setFlags(command *cobra.Command) {
 
 	// pipeline option
-	command.Flags().StringVar(&o.pipelinesFilePath, "pipelines-file", "pipelines.yaml", "Path to pipelines file")
+	command.Flags().StringVar(&o.pipelinesFilePath, "pipelines-folder", ".", "Folder path to add GitOps resources")
 
 	// access-token option
 	command.Flags().StringVar(&o.accessToken, "access-token", "", "Access token to be used to create Git repository webhook")

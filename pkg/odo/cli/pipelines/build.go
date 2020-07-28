@@ -42,6 +42,7 @@ func NewBuildParameters() *BuildParameters {
 
 // Complete completes BuildParameters after they've been created.
 func (io *BuildParameters) Complete(name string, cmd *cobra.Command, args []string) error {
+	io.pipelinesFilePath = io.pipelinesFilePath + "/pipelines.yaml"
 	return nil
 }
 
