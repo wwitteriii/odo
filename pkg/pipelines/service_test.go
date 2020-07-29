@@ -83,12 +83,12 @@ func TestServiceResourcesWithCICD(t *testing.T) {
 	}
 
 	got, err := serviceResources(m, fakeFs, &AddServiceOptions{
-		AppName:           "test-app",
-		EnvName:           "test-dev",
-		GitRepoURL:        "http://github.com/org/test",
-		PipelinesFilePath: pipelinesFile,
-		WebhookSecret:     "123",
-		ServiceName:       "test",
+		AppName:             "test-app",
+		EnvName:             "test-dev",
+		GitRepoURL:          "http://github.com/org/test",
+		PipelinesFolderPath: pipelinesFile,
+		WebhookSecret:       "123",
+		ServiceName:         "test",
 	})
 	assertNoError(t, err)
 	if diff := cmp.Diff(got, want, cmpopts.IgnoreMapEntries(func(k string, v interface{}) bool {
@@ -139,12 +139,12 @@ func TestServiceResourcesWithArgoCD(t *testing.T) {
 	}
 
 	got, err := serviceResources(m, fakeFs, &AddServiceOptions{
-		AppName:           "test-app",
-		EnvName:           "test-dev",
-		GitRepoURL:        "http://github.com/org/test",
-		PipelinesFilePath: pipelinesFile,
-		WebhookSecret:     "123",
-		ServiceName:       "test",
+		AppName:             "test-app",
+		EnvName:             "test-dev",
+		GitRepoURL:          "http://github.com/org/test",
+		PipelinesFolderPath: pipelinesFile,
+		WebhookSecret:       "123",
+		ServiceName:         "test",
 	})
 	assertNoError(t, err)
 	if diff := cmp.Diff(got, want, cmpopts.IgnoreMapEntries(func(k string, v interface{}) bool {
@@ -189,12 +189,12 @@ func TestServiceResourcesWithoutArgoCD(t *testing.T) {
 	}
 
 	got, err := serviceResources(m, fakeFs, &AddServiceOptions{
-		AppName:           "test-app",
-		EnvName:           "test-dev",
-		GitRepoURL:        "http://github.com/org/test",
-		PipelinesFilePath: pipelinesFile,
-		WebhookSecret:     "123",
-		ServiceName:       "test",
+		AppName:             "test-app",
+		EnvName:             "test-dev",
+		GitRepoURL:          "http://github.com/org/test",
+		PipelinesFolderPath: pipelinesFile,
+		WebhookSecret:       "123",
+		ServiceName:         "test",
 	})
 	assertNoError(t, err)
 	if diff := cmp.Diff(want, got, cmpopts.IgnoreMapEntries(func(k string, v interface{}) bool {
@@ -244,12 +244,12 @@ func TestAddServiceWithoutApp(t *testing.T) {
 	}
 
 	got, err := serviceResources(m, fakeFs, &AddServiceOptions{
-		AppName:           "new-app",
-		EnvName:           "test-dev",
-		GitRepoURL:        "http://github.com/org/test",
-		PipelinesFilePath: pipelinesFile,
-		WebhookSecret:     "123",
-		ServiceName:       "test",
+		AppName:             "new-app",
+		EnvName:             "test-dev",
+		GitRepoURL:          "http://github.com/org/test",
+		PipelinesFolderPath: pipelinesFile,
+		WebhookSecret:       "123",
+		ServiceName:         "test",
 	})
 	assertNoError(t, err)
 	for i := range want {
@@ -284,12 +284,12 @@ func TestAddService(t *testing.T) {
 		"config/argocd/test-dev-new-app-app.yaml",
 	}
 	err = AddService(&AddServiceOptions{
-		AppName:           "new-app",
-		EnvName:           "test-dev",
-		GitRepoURL:        "http://github.com/org/test",
-		PipelinesFilePath: pipelinesPath,
-		WebhookSecret:     "123",
-		ServiceName:       "test",
+		AppName:             "new-app",
+		EnvName:             "test-dev",
+		GitRepoURL:          "http://github.com/org/test",
+		PipelinesFolderPath: outputPath,
+		WebhookSecret:       "123",
+		ServiceName:         "test",
 	}, fakeFs)
 	assertNoError(t, err)
 	for _, path := range wantedPaths {
@@ -352,12 +352,12 @@ func TestServiceWithArgoCD(t *testing.T) {
 	assertNoError(t, err)
 	want = res.Merge(argo, want)
 	got, err := serviceResources(m, fakeFs, &AddServiceOptions{
-		AppName:           "test-app",
-		EnvName:           "test-dev",
-		GitRepoURL:        "http://github.com/org/test",
-		PipelinesFilePath: pipelinesFile,
-		WebhookSecret:     "123",
-		ServiceName:       "test",
+		AppName:             "test-app",
+		EnvName:             "test-dev",
+		GitRepoURL:          "http://github.com/org/test",
+		PipelinesFolderPath: pipelinesFile,
+		WebhookSecret:       "123",
+		ServiceName:         "test",
 	})
 	assertNoError(t, err)
 	if diff := cmp.Diff(got, want, cmpopts.IgnoreMapEntries(func(k string, v interface{}) bool {
