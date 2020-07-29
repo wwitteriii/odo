@@ -10,11 +10,11 @@ import (
 )
 
 type options struct {
-	accessToken       string
-	envName           string
-	isCICD            bool
-	pipelinesFilePath string
-	serviceName       string
+	accessToken         string
+	envName             string
+	isCICD              bool
+	pipelinesFolderPath string
+	serviceName         string
 	*genericclioptions.Context
 }
 
@@ -44,7 +44,7 @@ func (o *options) Validate() (err error) {
 func (o *options) setFlags(command *cobra.Command) {
 
 	// pipeline option
-	command.Flags().StringVar(&o.pipelinesFilePath, "pipelines-file", "pipelines.yaml", "Path to pipelines file")
+	command.Flags().StringVar(&o.pipelinesFolderPath, "pipelines-folder", ".", "Folder path to retrieve manifest, eg. /test/ where manifest exists at /test/pipelines.yaml")
 
 	// access-token option
 	command.Flags().StringVar(&o.accessToken, "access-token", "", "Access token to be used to create Git repository webhook")

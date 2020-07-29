@@ -26,32 +26,30 @@ type AddServiceOptions struct {
 	GitRepoURL               string
 	ImageRepo                string
 	InternalRegistryHostname string
-	PipelinesFilePath        string
+	PipelinesFolderPath      string
 	ServiceName              string
 	WebhookSecret            string
 	SealedSecretsService     types.NamespacedName // SealedSecrets service name
 }
 
 func AddService(p *AddServiceOptions, fs afero.Fs) error {
-	m, err := config.ParseFile(fs, p.PipelinesFilePath)
+	m, err := config.ParseFile(fs, p.PipelinesFolderPath)
 	if err != nil {
 		return fmt.Errorf("failed to parse pipelines-file: %v", err)
 	}
-
-	outputPath := filepath.Dir(p.PipelinesFilePath)
 
 	files, err := serviceResources(m, fs, p)
 	if err != nil {
 		return err
 	}
 
-	_, err = yaml.WriteResources(fs, outputPath, files)
+	_, err = yaml.WriteResources(fs, p.PipelinesFolderPath, files)
 	if err != nil {
 		return err
 	}
 	cfg := m.GetPipelinesConfig()
 	if cfg != nil {
-		base := filepath.Join(outputPath, config.PathForPipelines(cfg), "base")
+		base := filepath.Join(p.PipelinesFolderPath, config.PathForPipelines(cfg), "base")
 		err = updateKustomization(fs, base)
 		if err != nil {
 			return err
@@ -124,11 +122,11 @@ func serviceResources(m *config.Manifest, fs afero.Fs, o *AddServiceOptions) (re
 		return nil, err
 	}
 
-	files[filepath.Base(o.PipelinesFilePath)] = m
-	outputPath := filepath.Dir(o.PipelinesFilePath)
+	files[filepath.Base(o.PipelinesFolderPath+"/"+pipelinesFile)] = m
+	// outputPath := filepath.Dir(o.PipelinesFilePath)
 	buildParams := &BuildParameters{
-		PipelinesFilePath: o.PipelinesFilePath,
-		OutputPath:        outputPath,
+		PipelinesFolderPath: o.PipelinesFolderPath,
+		OutputPath:          o.PipelinesFolderPath,
 	}
 	built, err := buildResources(fs, buildParams, m)
 	if err != nil {
