@@ -52,7 +52,7 @@ func NewBootstrapParameters() *BootstrapParameters {
 // If the prefix provided doesn't have a "-" then one is added, this makes the
 // generated environment names nicer to read.
 func (io *BootstrapParameters) Complete(name string, cmd *cobra.Command, args []string) error {
-	io.GitOpsRepoURL = ui.EnterGitOpsRepoURL(io.Context)
+	io.GitOpsRepoURL = ui.EnterGitOpsRepoURL()
 	io.Prefix = utility.MaybeCompletePrefix(io.Prefix)
 	io.GitOpsRepoURL = utility.AddGitSuffixIfNecessary(io.GitOpsRepoURL)
 	io.ServiceRepoURL = utility.AddGitSuffixIfNecessary(io.ServiceRepoURL)
