@@ -7,12 +7,26 @@ import (
 )
 
 // EnterComponentName allows the user to specify the component name in a prompt
-func EnterGitOpsRepoURL() string {
+func EnterInteractiveCommandLine(message, defaultValue string, required bool) string {
 	var path string
-	prompt := &survey.Input{
-		Message: "What is the URL of the git repository you wish the new component to use",
+	var prompt *survey.Input
+	if defaultValue == "" {
+		prompt = &survey.Input{
+			Message: message,
+		}
+	} else {
+		prompt = &survey.Input{
+			Message: message,
+			Default: defaultValue,
+		}
 	}
-	err := survey.AskOne(prompt, &path, survey.Required)
-	ui.HandleError(err)
+	if required {
+		err := survey.AskOne(prompt, &path, survey.Required)
+		ui.HandleError(err)
+
+	} else {
+		err := survey.AskOne(prompt, &path, nil)
+		ui.HandleError(err)
+	}
 	return path
 }

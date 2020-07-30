@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/openshift/odo/pkg/log"
-	"github.com/openshift/odo/pkg/odo/cli/pipelines/ui"
 	"github.com/openshift/odo/pkg/odo/cli/pipelines/utility"
 	"github.com/openshift/odo/pkg/odo/genericclioptions"
 	"github.com/openshift/odo/pkg/pipelines"
@@ -52,7 +51,7 @@ func NewBootstrapParameters() *BootstrapParameters {
 // If the prefix provided doesn't have a "-" then one is added, this makes the
 // generated environment names nicer to read.
 func (io *BootstrapParameters) Complete(name string, cmd *cobra.Command, args []string) error {
-	io.GitOpsRepoURL = ui.EnterGitOpsRepoURL()
+	// io.GitOpsRepoURL = ui.EnterGitOpsRepoURL()
 	io.Prefix = utility.MaybeCompletePrefix(io.Prefix)
 	io.GitOpsRepoURL = utility.AddGitSuffixIfNecessary(io.GitOpsRepoURL)
 	io.ServiceRepoURL = utility.AddGitSuffixIfNecessary(io.ServiceRepoURL)
