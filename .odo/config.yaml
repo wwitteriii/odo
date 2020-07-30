@@ -1,0 +1,11 @@
+kind: LocalConfig
+apiversion: odo.openshift.io/v1alpha1
+ComponentSettings:
+  Type: dotnet:2.1
+  SourceLocation: .
+  SourceType: local
+  Ports:
+  - 8080/TCP
+  Application: app
+  Project: default
+  Name: dotnet-odo-nbir

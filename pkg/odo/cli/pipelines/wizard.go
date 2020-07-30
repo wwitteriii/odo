@@ -10,24 +10,25 @@ import (
 	"github.com/openshift/odo/pkg/odo/cli/pipelines/utility"
 	"github.com/openshift/odo/pkg/odo/genericclioptions"
 	"github.com/openshift/odo/pkg/pipelines"
+	"github.com/openshift/odo/pkg/pipelines/ioutils"
 	"github.com/spf13/cobra"
 
 	ktemplates "k8s.io/kubectl/pkg/util/templates"
 )
 
 const (
-	// BootstrapRecommendedCommandName the recommended command name
+	// WizardRecommendedCommandName the recommended command name
 	WizardRecommendedCommandName = "wizard"
 )
 
 var (
 	WizardExample = ktemplates.Examples(`
-    # Bootstrap OpenShift pipelines.
+    # Wizard OpenShift pipelines.
     %[1]s 
     `)
 
-	WizardLongDesc  = ktemplates.LongDesc(`Bootstrap GitOps CI/CD Manifest`)
-	WizardShortDesc = `Bootstrap pipelines with a starter configuration`
+	WizardLongDesc  = ktemplates.LongDesc(`Wizard GitOps CI/CD Manifest`)
+	WizardShortDesc = `Wizard pipelines with a starter configuration`
 )
 
 // WizardParameters encapsulates the parameters for the odo pipelines init command.
@@ -37,7 +38,7 @@ type WizardParameters struct {
 	*genericclioptions.Context
 }
 
-// NewBootstrapParameters bootstraps a BootstrapParameters instance.
+// NewWizardParameters Wizards a WizardParameters instance.
 func NewWizardParameters() *WizardParameters {
 	return &WizardParameters{
 		BootstrapOptions: &pipelines.BootstrapOptions{
@@ -46,14 +47,18 @@ func NewWizardParameters() *WizardParameters {
 	}
 }
 
-// Complete completes BootstrapParameters after they've been created.
+// Complete completes WizardParameters after they've been created.
 //
 // If the prefix provided doesn't have a "-" then one is added, this makes the
 // generated environment names nicer to read.
 func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []string) error {
 	io.GitOpsRepoURL = ui.EnterInteractiveCommandLine("Enter the gitops URL", "", true)
-	io.DockerConfigJSONFilename = ui.EnterInteractiveCommandLine("Filepath to config.json which authenticates the image push to the desired image registry", "", true)
+	io.DockerConfigJSONFilename = ui.EnterInteractiveCommandLine("Filepath to config.json which authenticates the image push to the desired image registry", "~/.docker/config.json", true)
 	io.ImageRepo = ui.EnterInteractiveCommandLine("Image repository of the form <registry>/<username>/<repository> or <project>/<app> which is used to push newly built images", "", true)
+	count := len(strings.Split(io.ImageRepo, "/"))
+	if count > 3 {
+		io.InternalRegistryHostname = ui.EnterInteractiveCommandLine("Host-name for internal image registry e.g. docker-registry.default.svc.cluster.local:5000, used if you are pushing your images to the internal image registry", "image-registry.openshift-image-registry.svc:5000", true)
+	}
 	io.OutputPath = ui.EnterInteractiveCommandLine("Path to write GitOps resources (default '.')", ".", false)
 	io.GitOpsWebhookSecret = ui.EnterInteractiveCommandLine("Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the GitOps repository. (if not provided, it will be auto-generated)", "", false)
 	io.SealedSecretsService.Name = ui.EnterInteractiveCommandLine("Name of the Sealed Secrets Services that encrypts secrets (default 'sealedsecretcontroller-sealed-secrets')", "sealed-secrets-controller", false)
@@ -63,14 +68,18 @@ func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []str
 		io.StatusTrackerAccessToken = ui.EnterInteractiveCommandLine("Please enter the git personal access token to push commit statuses to your Git hosting service", "", true)
 	}
 	io.Prefix = ui.EnterInteractiveCommandLine("Enter the prefix if you desire", "", false)
-
 	io.Prefix = utility.MaybeCompletePrefix(io.Prefix)
+	io.InitOption = ui.EnterInteractiveCommandLine("Please enter (y/n) if you desire to use service to the gitops repository", "n", true)
+	if io.InitOption == "y" {
+		io.ServiceRepoURL = ui.EnterInteractiveCommandLine("Enter the service URL", "", true)
+		io.ServiceWebhookSecret = ui.EnterInteractiveCommandLine("Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the Service repository. (if not provided, it will be auto-generated)", "", false)
+	}
 	io.GitOpsRepoURL = utility.AddGitSuffixIfNecessary(io.GitOpsRepoURL)
 	io.ServiceRepoURL = utility.AddGitSuffixIfNecessary(io.ServiceRepoURL)
 	return nil
 }
 
-// Validate validates the parameters of the BootstrapParameters.
+// Validate validates the parameters of the WizardParameters.
 func (io *WizardParameters) Validate() error {
 	gr, err := url.Parse(io.GitOpsRepoURL)
 	if err != nil {
@@ -85,12 +94,20 @@ func (io *WizardParameters) Validate() error {
 	return nil
 }
 
-// Run runs the project bootstrap command.
+// Run runs the project Wizard command.
 func (io *WizardParameters) Run() error {
-	// err := pipelines.Bootstrap(io.BootstrapOptions, ioutils.NewFilesystem())
-	// if err != nil {
-	// 	return err
-	// }
+	log.Success(io.InitOption)
+	if io.InitOption == "y" {
+		err := pipelines.Bootstrap(io.BootstrapOptions, ioutils.NewFilesystem())
+		if err != nil {
+			return err
+		}
+	} else {
+		err := pipelines.Init(io.InitOptions, ioutils.NewFilesystem())
+		if err != nil {
+			return err
+		}
+	}
 	log.Success("Bootstrapped GitOps sucessfully.")
 	return nil
 }
@@ -103,7 +120,7 @@ func NewCmdWizard(name, fullName string) *cobra.Command {
 		Use:     name,
 		Short:   WizardShortDesc,
 		Long:    WizardLongDesc,
-		Example: fmt.Sprintf(bootstrapExample, fullName),
+		Example: fmt.Sprintf(WizardExample, fullName),
 		Run: func(cmd *cobra.Command, args []string) {
 			genericclioptions.GenericRun(o, cmd, args)
 		},

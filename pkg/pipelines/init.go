@@ -32,6 +32,7 @@ import (
 
 // InitOptions is a struct that provides flags for the Init command.
 type InitOptions struct {
+	InitOption               string
 	GitOpsRepoURL            string // This is where the pipelines and configuration are.
 	GitOpsWebhookSecret      string // This is the secret for authenticating hooks from your GitOps repo.
 	Prefix                   string
