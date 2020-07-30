@@ -18,29 +18,29 @@ import (
 
 const (
 	// BootstrapRecommendedCommandName the recommended command name
-	BootstrapRecommendedCommandName = "bootstrap"
+	WeatheredRecommendedCommandName = "bootstrap"
 )
 
 var (
-	bootstrapExample = ktemplates.Examples(`
+	WeatheredExample = ktemplates.Examples(`
     # Bootstrap OpenShift pipelines.
     %[1]s 
     `)
 
-	bootstrapLongDesc  = ktemplates.LongDesc(`Bootstrap GitOps CI/CD Manifest`)
-	bootstrapShortDesc = `Bootstrap pipelines with a starter configuration`
+	WeatheredLongDesc  = ktemplates.LongDesc(`Bootstrap GitOps CI/CD Manifest`)
+	WeatheredShortDesc = `Bootstrap pipelines with a starter configuration`
 )
 
-// BootstrapParameters encapsulates the parameters for the odo pipelines init command.
-type BootstrapParameters struct {
+// WeatheredParameters encapsulates the parameters for the odo pipelines init command.
+type WeatheredParameters struct {
 	*pipelines.BootstrapOptions
 	// generic context options common to all commands
 	*genericclioptions.Context
 }
 
 // NewBootstrapParameters bootstraps a BootstrapParameters instance.
-func NewBootstrapParameters() *BootstrapParameters {
-	return &BootstrapParameters{
+func NewWeatheredParameters() *WeatheredParameters {
+	return &WeatheredParameters{
 		BootstrapOptions: &pipelines.BootstrapOptions{
 			InitOptions: &pipelines.InitOptions{},
 		},
@@ -51,7 +51,7 @@ func NewBootstrapParameters() *BootstrapParameters {
 //
 // If the prefix provided doesn't have a "-" then one is added, this makes the
 // generated environment names nicer to read.
-func (io *BootstrapParameters) Complete(name string, cmd *cobra.Command, args []string) error {
+func (io *WeatheredParameters) Complete(name string, cmd *cobra.Command, args []string) error {
 	io.GitOpsRepoURL = ui.EnterGitOpsRepoURL()
 	io.Prefix = utility.MaybeCompletePrefix(io.Prefix)
 	io.GitOpsRepoURL = utility.AddGitSuffixIfNecessary(io.GitOpsRepoURL)
@@ -60,7 +60,7 @@ func (io *BootstrapParameters) Complete(name string, cmd *cobra.Command, args []
 }
 
 // Validate validates the parameters of the BootstrapParameters.
-func (io *BootstrapParameters) Validate() error {
+func (io *WeatheredParameters) Validate() error {
 	gr, err := url.Parse(io.GitOpsRepoURL)
 	if err != nil {
 		return fmt.Errorf("failed to parse url %s: %w", io.GitOpsRepoURL, err)
@@ -75,7 +75,7 @@ func (io *BootstrapParameters) Validate() error {
 }
 
 // Run runs the project bootstrap command.
-func (io *BootstrapParameters) Run() error {
+func (io *WeatheredParameters) Run() error {
 	err := pipelines.Bootstrap(io.BootstrapOptions, ioutils.NewFilesystem())
 	if err != nil {
 		return err
@@ -84,24 +84,24 @@ func (io *BootstrapParameters) Run() error {
 	return nil
 }
 
-// NewCmdBootstrap creates the project init command.
-func NewCmdBootstrap(name, fullName string) *cobra.Command {
-	o := NewBootstrapParameters()
+// NewCmdWeathered creates the project init command.
+func NewCmdWeathered(name, fullName string) *cobra.Command {
+	o := NewWeatheredParameters()
 
-	bootstrapCmd := &cobra.Command{
+	weatheredCmd := &cobra.Command{
 		Use:     name,
-		Short:   bootstrapShortDesc,
-		Long:    bootstrapLongDesc,
+		Short:   WeatheredShortDesc,
+		Long:    WeatheredLongDesc,
 		Example: fmt.Sprintf(bootstrapExample, fullName),
 		Run: func(cmd *cobra.Command, args []string) {
 			genericclioptions.GenericRun(o, cmd, args)
 		},
 	}
-	addInitCommands(bootstrapCmd, o.BootstrapOptions.InitOptions)
-	bootstrapCmd.Flags().StringVar(&o.ServiceRepoURL, "service-repo-url", "", "Provide the URL for your Service repository e.g. https://github.com/organisation/service.git")
-	bootstrapCmd.Flags().StringVar(&o.ServiceWebhookSecret, "service-webhook-secret", "", "Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the Service repository. (if not provided, it will be auto-generated)")
+	addInitCommands(weatheredCmd, o.BootstrapOptions.InitOptions)
+	weatheredCmd.Flags().StringVar(&o.ServiceRepoURL, "service-repo-url", "", "Provide the URL for your Service repository e.g. https://github.com/organisation/service.git")
+	weatheredCmd.Flags().StringVar(&o.ServiceWebhookSecret, "service-webhook-secret", "", "Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the Service repository. (if not provided, it will be auto-generated)")
 
 	// bootstrapCmd.MarkFlagRequired("gitops-repo-url")
-	bootstrapCmd.MarkFlagRequired("service-repo-url")
-	return bootstrapCmd
+	weatheredCmd.MarkFlagRequired("service-repo-url")
+	return weatheredCmd
 }

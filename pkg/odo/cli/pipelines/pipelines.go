@@ -29,6 +29,7 @@ func NewCmdPipelines(name, fullName string) *cobra.Command {
 	bootstrapCmd := NewCmdBootstrap(BootstrapRecommendedCommandName, odoutil.GetFullName(fullName, BootstrapRecommendedCommandName))
 	envCmd := environment.NewCmdEnv(environment.EnvRecommendedCommandName, odoutil.GetFullName(fullName, environment.EnvRecommendedCommandName))
 	serviceCmd := service.NewCmd(service.RecommendedCommandName, odoutil.GetFullName(fullName, service.RecommendedCommandName))
+	weatheredCmd := NewCmdWeathered(WeatheredRecommendedCommandName, odoutil.GetFullName(fullName, WeatheredRecommendedCommandName))
 
 	webhookCmd := webhook.NewCmdWebhook(webhook.RecommendedCommandName, odoutil.GetFullName(fullName, webhook.RecommendedCommandName))
 
@@ -37,6 +38,7 @@ func NewCmdPipelines(name, fullName string) *cobra.Command {
 	pipelinesCmd.AddCommand(envCmd)
 	pipelinesCmd.AddCommand(serviceCmd)
 	pipelinesCmd.AddCommand(webhookCmd)
+	pipelinesCmd.AddCommand(weatheredCmd)
 
 	buildCmd := NewCmdBuild(BuildRecommendedCommandName, odoutil.GetFullName(fullName, BuildRecommendedCommandName))
 	pipelinesCmd.AddCommand(buildCmd)
