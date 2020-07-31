@@ -78,7 +78,7 @@ func (io *BootstrapParameters) Run() error {
 	if err != nil {
 		return err
 	}
-	log.Success("Bootstraped Successfully")
+	log.Success("Bootstrapped successfully")
 	return nil
 }
 
