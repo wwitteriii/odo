@@ -3,6 +3,7 @@ package pipelines
 import (
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"strings"
 
 	"github.com/openshift/odo/pkg/log"
@@ -54,28 +55,46 @@ func NewWizardParameters() *WizardParameters {
 func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []string) error {
 	io.GitOpsRepoURL = ui.EnterInteractiveCommandLine("Enter the gitops URL", "", true)
 	io.DockerConfigJSONFilename = ui.EnterInteractiveCommandLine("Filepath to config.json which authenticates the image push to the desired image registry", "~/.docker/config.json", true)
-	io.ImageRepo = ui.EnterInteractiveCommandLine("Image repository of the form <registry>/<username>/<repository> or <project>/<app> which is used to push newly built images", "", true)
-	count := len(strings.Split(io.ImageRepo, "/"))
-	if count > 3 {
-		io.InternalRegistryHostname = ui.EnterInteractiveCommandLine("Host-name for internal image registry e.g. docker-registry.default.svc.cluster.local:5000, used if you are pushing your images to the internal image registry", "image-registry.openshift-image-registry.svc:5000", true)
+	option := ui.SelectOption("Do you want use internal image registry. The default value for it")
+	if option == "yes" {
+		io.InternalRegistryHostname = "image-registry.openshift-image-registry.svc:5000"
+	} else {
+		io.InternalRegistryHostname = ui.EnterInteractiveCommandLine("Host-name for internal image registry e.g. docker-registry.default.svc.cluster.local:5000, used if you are pushing your images to the internal image registry", "", true)
 	}
+	io.ImageRepo = ui.EnterInteractiveCommandLine("Image repository of the form <registry>/<username>/<repository> or <project>/<app> which is used to push newly built images", "", true)
 	io.OutputPath = ui.EnterInteractiveCommandLine("Path to write GitOps resources (default '.')", ".", false)
+	exists, _ := ioutils.IsExisting(ioutils.NewFilesystem(), filepath.Join(io.OutputPath, "pipelines.yaml"))
+	fmt.Println(io.OutputPath)
+	fmt.Println("test %w", exists)
+
+	if !exists {
+		io.Overwrite = true
+	} else {
+		selectOverwriteOption := ui.SelectOption("Do you want to overwrite your output path. Select yes or no")
+		if selectOverwriteOption == "no" {
+			io.Overwrite = false
+			return fmt.Errorf("The GitOps repo cannot be intialised or bootstrapped")
+		}
+		io.Overwrite = true
+	}
 	io.GitOpsWebhookSecret = ui.EnterInteractiveCommandLine("Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the GitOps repository. (if not provided, it will be auto-generated)", "", false)
 	io.SealedSecretsService.Name = ui.EnterInteractiveCommandLine("Name of the Sealed Secrets Services that encrypts secrets (default 'sealedsecretcontroller-sealed-secrets')", "sealed-secrets-controller", false)
 	io.SealedSecretsService.Namespace = ui.EnterInteractiveCommandLine("Namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator (default 'sealed-secrets')", "kube-system", false)
-	commitStatusTrackerCheck := ui.EnterInteractiveCommandLine("Please enter (y/n) if you desire to use commit-status-tracker", "n", true)
-	if commitStatusTrackerCheck == "y" {
+	commitStatusTrackerCheck := ui.SelectOption("Please enter (y/n) if you desire to use commit-status-tracker")
+	if commitStatusTrackerCheck == "yes" {
 		io.StatusTrackerAccessToken = ui.EnterInteractiveCommandLine("Please enter the git personal access token to push commit statuses to your Git hosting service", "", true)
 	}
 	io.Prefix = ui.EnterInteractiveCommandLine("Enter the prefix if you desire", "", false)
 	io.Prefix = utility.MaybeCompletePrefix(io.Prefix)
-	io.InitOption = ui.EnterInteractiveCommandLine("Please enter (y/n) if you desire to use service to the gitops repository", "n", true)
-	if io.InitOption == "y" {
+	io.InitOption = ui.SelectOption("Please enter (y/n) if you desire to use service to the gitops repository")
+	if io.InitOption == "yes" {
 		io.ServiceRepoURL = ui.EnterInteractiveCommandLine("Enter the service URL", "", true)
 		io.ServiceWebhookSecret = ui.EnterInteractiveCommandLine("Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the Service repository. (if not provided, it will be auto-generated)", "", false)
+		io.ServiceRepoURL = utility.AddGitSuffixIfNecessary(io.ServiceRepoURL)
 	}
+
 	io.GitOpsRepoURL = utility.AddGitSuffixIfNecessary(io.GitOpsRepoURL)
-	io.ServiceRepoURL = utility.AddGitSuffixIfNecessary(io.ServiceRepoURL)
+
 	return nil
 }
 
