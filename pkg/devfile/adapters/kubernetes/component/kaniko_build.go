@@ -102,7 +102,7 @@ func (a Adapter) createKanikoBuilderPod(labels map[string]string, init, builder 
 	pod := &corev1.Pod{
 		ObjectMeta: objectMeta,
 		Spec: corev1.PodSpec{
-			RestartPolicy: corev1.RestartPolicyOnFailure,
+			RestartPolicy: corev1.RestartPolicyNever,
 			SecurityContext: &corev1.PodSecurityContext{
 				RunAsUser: &defaultId,
 			},
