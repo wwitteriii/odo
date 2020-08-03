@@ -21,6 +21,79 @@ func EnterInteractiveCommandLineGitRepo() string {
 	return path
 }
 
+// EnterComponentName allows the user to specify the component name in a prompt
+func EnterInteractiveCommandLineInternalRegistry() string {
+	var path string
+	var prompt *survey.Input
+	prompt = &survey.Input{
+		Message: "Host-name for internal image registry e.g. docker-registry.default.svc.cluster.local:5000, used if you are pushing your images to the internal image registry",
+		Default: "image-registry.openshift-image-registry.svc:5000",
+	}
+
+	err := survey.AskOne(prompt, &path, nil)
+	ui.HandleError(err)
+
+	return path
+}
+
+func EnterInteractiveCommandLineImageRepoInternalRegistry() string {
+	var path string
+	var prompt *survey.Input
+	prompt = &survey.Input{
+		Message: " Image repository of the form <project>/<app> which is used to push newly built images.",
+		Help:    " By default images are built from source, whenever there is a push to the repository for your service source code and this image will be pushed to the image repository specified in this parameter, if the value is of the form <registry>/<username>/<repository>, then it assumed that it is an upstream image repository e.g. Quay, if its of the form <project>/<app> the internal registry present on the current cluster will be used as the image repository.",
+	}
+
+	err := survey.AskOne(prompt, &path, survey.Required)
+	ui.HandleError(err)
+
+	return path
+}
+
+func EnterInteractiveCommandLineDockercfg() string {
+	var path string
+	var prompt *survey.Input
+	prompt = &survey.Input{
+		Message: " Path to config.json which authenticates image pushes to the desired image registry, the default is <insert default>?",
+		Help:    "  The secret present in the file path generates a secure secret that authenticates the push of the image built when the app-ci pipeline is run. The image along with the necessary labels will be present on the upstream image repository of choice.",
+		Default: "~/.docker/config.json",
+	}
+
+	err := survey.AskOne(prompt, &path, nil)
+	ui.HandleError(err)
+
+	return path
+}
+
+func EnterInteractiveCommandLineImageRepoExternalRepository() string {
+	var path string
+	var prompt *survey.Input
+	prompt = &survey.Input{
+		Message: "Image repository of the form <registry>/<username>/<repository> which is used to push newly built images.",
+		Help:    "  By default images are built from source, whenever there is a push to the repository for your service source code and this image will be pushed to the image repository specified in this parameter, if the value is of the form <registry>/<username>/<repository>, then it assumed that it is an upstream image repository e.g. Quay, if its of the form <project>/<app> the internal registry present on the current cluster will be used as the image repository.",
+	}
+
+	err := survey.AskOne(prompt, &path, survey.Required)
+	ui.HandleError(err)
+
+	return path
+}
+
+func EnterInteractiveCommandLineOutputPath() string {
+	var path string
+	var prompt *survey.Input
+	prompt = &survey.Input{
+		Message: "Provide a path to write GitOps resources?",
+		Help:    "This is the path where the GitOps repository configuration is stored locally before you push it to the repository GitopsRepoURL <fill in the string from GitOpsRepoURL>",
+		Default: ".",
+	}
+
+	err := survey.AskOne(prompt, &path, nil)
+	ui.HandleError(err)
+
+	return path
+}
+
 // OptionBootstrap allows the user to choose if they want to bootstrap or not
 
 func SelectOptionImageRepository() string {
@@ -87,22 +160,3 @@ func SelectOptionOverWriteCheck() string {
 	ui.HandleError(err)
 	return path
 }
-
-// // Proceed displays a given message and asks the user if they want to proceed using the optionally specified Stdio instance (useful
-// // for testing purposes)
-// func Proceed(message string, stdio ...terminal.Stdio) bool {
-// 	var response bool
-// 	prompt := &survey.Confirm{
-// 		Message: message,
-// 	}
-
-// 	if len(stdio) == 1 {
-// 		prompt.WithStdio(stdio[0])
-// 	}
-
-// 	err := survey.AskOne(prompt, &response, survey.Required)
-// 	HandleError(err)
-
-// 	return response
-// }
-// Checks whether the pipelines.yaml is present in the output path specified.

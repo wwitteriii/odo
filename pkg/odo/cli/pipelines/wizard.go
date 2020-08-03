@@ -56,14 +56,14 @@ func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []str
 	io.GitOpsRepoURL = ui.EnterInteractiveCommandLineGitRepo()
 	option := ui.SelectOptionImageRepository()
 	if option == "Openshift Internal repository" {
-		io.InternalRegistryHostname = ui.EnterInteractiveCommandLine("Host-name for internal image registry e.g. docker-registry.default.svc.cluster.local:5000, used if you are pushing your images to the internal image registry", "image-registry.openshift-image-registry.svc:5000", true)
-		io.ImageRepo = ui.EnterInteractiveCommandLine("Image repository of the form <project>/<app> which is used to push newly built images", "", true)
+		io.InternalRegistryHostname = ui.EnterInteractiveCommandLineInternalRegistry()
+		io.ImageRepo = ui.EnterInteractiveCommandLineImageRepoInternalRegistry()
 
 	} else {
-		io.DockerConfigJSONFilename = ui.EnterInteractiveCommandLine("Filepath to config.json which authenticates the image push to the desired image registry", "~/.docker/config.json", true)
-		io.ImageRepo = ui.EnterInteractiveCommandLine("Image repository of the form <registry>/<username>/<repository> which is used to push newly built images", "", true)
+		io.DockerConfigJSONFilename = ui.EnterInteractiveCommandLineDockercfg()
+		io.ImageRepo = ui.EnterInteractiveCommandLineImageRepoExternalRepository()
 	}
-	io.OutputPath = ui.EnterInteractiveCommandLine("Path to write GitOps resources (default '.')", ".", false)
+	io.OutputPath = ui.EnterInteractiveCommandLineOutputPath()
 	exists, _ := ioutils.IsExisting(ioutils.NewFilesystem(), filepath.Join(io.OutputPath, "pipelines.yaml"))
 
 	if !exists {
