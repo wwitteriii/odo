@@ -77,9 +77,9 @@ func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []str
 
 		io.Overwrite = true
 	}
-	io.GitOpsWebhookSecret = ui.EnterInteractiveCommandLine("Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the GitOps repository. (if not provided, it will be auto-generated)", "", false)
-	io.SealedSecretsService.Name = ui.EnterInteractiveCommandLine("Name of the Sealed Secrets Services that encrypts secrets (default 'sealedsecretcontroller-sealed-secrets')", "sealed-secrets-controller", false)
-	io.SealedSecretsService.Namespace = ui.EnterInteractiveCommandLine("Namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator (default 'sealed-secrets')", "kube-system", false)
+	io.GitOpsWebhookSecret = ui.EnterInteractiveCommandLineGitWebhookSecret()
+	io.SealedSecretsService.Name = ui.EnterInteractiveCommandLineSealedSecrets()
+	io.SealedSecretsService.Namespace = ui.EnterInteractiveCommandLineSealedSecretNamespace()
 	commitStatusTrackerCheck := ui.SelectOptionCommitStatusTracker()
 	if commitStatusTrackerCheck == "yes" {
 		io.StatusTrackerAccessToken = ui.EnterInteractiveCommandLineStatusTrackerAccessToken()
@@ -144,11 +144,5 @@ func NewCmdWizard(name, fullName string) *cobra.Command {
 			genericclioptions.GenericRun(o, cmd, args)
 		},
 	}
-	// addInitCommands(weatheredCmd, o.BootstrapOptions.InitOptions)
-	// weatheredCmd.Flags().StringVar(&o.ServiceRepoURL, "service-repo-url", "", "Provide the URL for your Service repository e.g. https://github.com/organisation/service.git")
-	// weatheredCmd.Flags().StringVar(&o.ServiceWebhookSecret, "service-webhook-secret", "", "Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the Service repository. (if not provided, it will be auto-generated)")
-
-	// // bootstrapCmd.MarkFlagRequired("gitops-repo-url")
-	// weatheredCmd.MarkFlagRequired("service-repo-url")
 	return wizardCmd
 }

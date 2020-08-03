@@ -94,17 +94,107 @@ func EnterInteractiveCommandLineOutputPath() string {
 	return path
 }
 
+func EnterInteractiveCommandLineGitWebhookSecret() string {
+	var path string
+	var prompt *survey.Input
+	prompt = &survey.Input{
+		Message: " Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the Service repository. (if not provided, it will be auto-generated)",
+		Help:    "The webhook secret is a secure string you plan to use to authenticate pull/push requests to the version control system of your choice, this secure string will be added to the webhook sealed secret created to enhance security. Choose a secure string of your choice for this field.",
+		Default: "",
+	}
 
+	err := survey.AskOne(prompt, &path, nil)
+	ui.HandleError(err)
 
+	return path
+}
+
+func EnterInteractiveCommandLineSealedSecrets() string {
+	var path string
+	var prompt *survey.Input
+	prompt = &survey.Input{
+		Message: "Name of the Sealed Secrets Services that encrypts secrets <sealed-secrets-controller>",
+		Help:    "If you have a custom installation of the Sealed Secrets operator, we need to know where to communicate with it to seal your secrets.",
+		Default: "sealed-secrets-controller",
+	}
+
+	err := survey.AskOne(prompt, &path, nil)
+	ui.HandleError(err)
+
+	return path
+}
+
+func EnterInteractiveCommandLineSealedSecretNamespace() string {
+	var path string
+	var prompt *survey.Input
+	prompt = &survey.Input{
+		Message: "Provide a namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator? <kube-system>",
+		Help:    "If you have a custom installation of the Sealed Secrets operator, we need to know how to communicate with it to seal your secrets",
+		Default: "kube-system",
+	}
+
+	err := survey.AskOne(prompt, &path, nil)
+	ui.HandleError(err)
+
+	return path
+}
 
 // OptionBootstrap allows the user to choose if they want to bootstrap or not
+
+func EnterInteractiveCommandLineStatusTrackerAccessToken() string {
+	var path string
+	prompt := &survey.Password{
+		Message: "Please provide a token used to authenticate API calls to push commit-status updates to your Git hosting service",
+		Help:    "commit-status-tracker reports the completion status of OpenShift pipeline runs to your Git hosting status on success or failure, this token will be encrypted as a secret in your cluster.\n If you are using Github, please see here for how to generate a token https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token\nIf you are using GitLab, please see here for how to generate a token https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html",
+	}
+	err := survey.AskOne(prompt, &path, survey.Required)
+	ui.HandleError(err)
+	return path
+}
+
+//
+func EnterInteractiveCommandLinePrefix() string {
+	var path string
+	prompt := &survey.Input{
+		Message: "Add a prefix to the environment names(dev, stage,cicd etc.) to distinguish and identify individual environments?",
+		Help:    "The prefix helps differentiate between the different namespaces on the cluster, the default namespace cicd will appear as test-cicd if the prefix passed is test.",
+	}
+	err := survey.AskOne(prompt, &path, nil)
+	ui.HandleError(err)
+	return path
+}
+
+//
+func EnterInteractiveCommandLineServiceRepoURL() string {
+	var path string
+	prompt := &survey.Input{
+		Message: "Provide the URL for your Service repository e.g. https://github.com/organisation/service.git",
+		Help:    "The repository name where the source code of your service is situated",
+	}
+	err := survey.AskOne(prompt, &path, survey.Required)
+	ui.HandleError(err)
+	return path
+}
+
+// EnterInteractiveCommandLineServiceWebhookSecret function for Service webhook secret
+func EnterInteractiveCommandLineServiceWebhookSecret() string {
+	var path string
+	prompt := &survey.Input{
+		Message: " Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the Service repository. (if not provided, it will be auto-generated)",
+		Default: "",
+		Help:    "The webhook secret is a secure string you plan to use to authenticate pull/push requests to the version control system of your choice, this secure string will be added to the webhook sealed secret created to enhance security. Choose a secure string of your choice for this field.",
+	}
+	err := survey.AskOne(prompt, &path, nil)
+	ui.HandleError(err)
+	return path
+}
 
 func SelectOptionImageRepository() string {
 	var path string
 
 	prompt := &survey.Select{
 		Message: "Select type of image repository",
-		Options: []string{"Openshift Internal repository", "quay.io"},
+		Options: []string{"Openshift Internal repository", "External Registry"},
 		Default: "Openshift Internal repository",
 	}
 	err := survey.AskOne(prompt, &path, survey.Required)
@@ -125,60 +215,6 @@ func SelectOptionOverwrite() string {
 	return path
 }
 
-func EnterInteractiveCommandLineStatusTrackerAccessToken() string{
-	var path string
-	prompt = &survey.Password{
-		Message: "Please provide a token used to authenticate API calls to push commit-status updates to your Git hosting service",
-		Help: "commit-status-tracker reports the completion status of OpenShift pipeline runs to your Git hosting status on success or failure, this token will be encrypted as a secret in your cluster.\n If you are using Github, please see here for how to generate a token https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token\nIf you are using GitLab, please see here for how to generate a token https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html",
-	}
-	err := survey.AskOne(prompt, &path, survey.Required)
-	ui.HandleError(err)
-	return path
-}
-
-//
-func EnterInteractiveCommandLinePrefix() string{
-	var path string
-	prompt := &survey.Input{
-		Message: "Add a prefix to the environment names(dev, stage,cicd etc.) to distinguish and identify individual environments?",
-		Help: "The prefix helps differentiate between the different namespaces on the cluster, the default namespace cicd will appear as test-cicd if the prefix passed is test.",
-	}
-	err := survey.AskOne(prompt, &path, nil)
-	ui.HandleError(err)
-	return path
-}
-//
-func EnterInteractiveCommandLineServiceRepoURL() string {
-	var path string
-	prompt := &survey.Input{
-		Message: "Provide the URL for your Service repository e.g. https://github.com/organisation/service.git",
-		Help: "The repository name where the source code of your service is situated",
-	}
-	err := survey.AskOne(prompt, &path, survey.Required)
-	ui.HandleError(err)
-	return path
-}
-
-// EnterInteractiveCommandLineServiceWebhookSecret function for Service webhook secret
-func EnterInteractiveCommandLineServiceWebhookSecret() string {
-	var path string
-	prompt := &survey.Input{
-		Message: " Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the Service repository. (if not provided, it will be auto-generated)",
-		Default: "",
-		Help: "The webhook secret is a secure string you plan to use to authenticate pull/push requests to the version control system of your choice, this secure string will be added to the webhook sealed secret created to enhance security. Choose a secure string of your choice for this field."
-	}
-	err := survey.AskOne(prompt, &path, nil)
-	ui.HandleError(err)
-	return path
-}
-
-// // Proceed displays a given message and asks the user if they want to proceed using the optionally specified Stdio instance (useful
-// // for testing purposes)
-// func Proceed(message string, stdio ...terminal.Stdio) bool {
-// 	var response bool
-// 	prompt := &survey.Confirm{
-// 		Message: message,
-// 	}
 func SelectOptionCommitStatusTracker() string {
 	var path string
 
