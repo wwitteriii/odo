@@ -53,41 +53,41 @@ func NewWizardParameters() *WizardParameters {
 // If the prefix provided doesn't have a "-" then one is added, this makes the
 // generated environment names nicer to read.
 func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []string) error {
-	io.GitOpsRepoURL = ui.EnterInteractiveCommandLine("Enter the gitops URL", "", true)
-	io.DockerConfigJSONFilename = ui.EnterInteractiveCommandLine("Filepath to config.json which authenticates the image push to the desired image registry", "~/.docker/config.json", true)
-	option := ui.SelectOption("Do you want use internal image registry. The default value for it")
-	if option == "yes" {
-		io.InternalRegistryHostname = "image-registry.openshift-image-registry.svc:5000"
+	io.GitOpsRepoURL = ui.EnterInteractiveCommandLineGitRepo()
+	option := ui.SelectOptionImageRepository()
+	if option == "Openshift Internal repository" {
+		io.InternalRegistryHostname = ui.EnterInteractiveCommandLineInternalRegistry()
+		io.ImageRepo = ui.EnterInteractiveCommandLineImageRepoInternalRegistry()
+
 	} else {
-		io.InternalRegistryHostname = ui.EnterInteractiveCommandLine("Host-name for internal image registry e.g. docker-registry.default.svc.cluster.local:5000, used if you are pushing your images to the internal image registry", "", true)
+		io.DockerConfigJSONFilename = ui.EnterInteractiveCommandLineDockercfg()
+		io.ImageRepo = ui.EnterInteractiveCommandLineImageRepoExternalRepository()
 	}
-	io.ImageRepo = ui.EnterInteractiveCommandLine("Image repository of the form <registry>/<username>/<repository> or <project>/<app> which is used to push newly built images", "", true)
-	io.OutputPath = ui.EnterInteractiveCommandLine("Path to write GitOps resources (default '.')", ".", false)
+	io.OutputPath = ui.EnterInteractiveCommandLineOutputPath()
 	exists, _ := ioutils.IsExisting(ioutils.NewFilesystem(), filepath.Join(io.OutputPath, "pipelines.yaml"))
-	fmt.Println(io.OutputPath)
-	fmt.Println("test %w", exists)
 
 	if !exists {
 		io.Overwrite = true
 	} else {
-		selectOverwriteOption := ui.SelectOption("Do you want to overwrite your output path. Select yes or no")
+		selectOverwriteOption := ui.SelectOptionOverwrite()
 		if selectOverwriteOption == "no" {
 			io.Overwrite = false
-			return fmt.Errorf("The GitOps repo cannot be intialised or bootstrapped")
+			return fmt.Errorf("Cannot create Gitops configuration since file exists at")
 		}
+
 		io.Overwrite = true
 	}
 	io.GitOpsWebhookSecret = ui.EnterInteractiveCommandLine("Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the GitOps repository. (if not provided, it will be auto-generated)", "", false)
 	io.SealedSecretsService.Name = ui.EnterInteractiveCommandLine("Name of the Sealed Secrets Services that encrypts secrets (default 'sealedsecretcontroller-sealed-secrets')", "sealed-secrets-controller", false)
 	io.SealedSecretsService.Namespace = ui.EnterInteractiveCommandLine("Namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator (default 'sealed-secrets')", "kube-system", false)
-	commitStatusTrackerCheck := ui.SelectOption("Please enter (y/n) if you desire to use commit-status-tracker")
+	commitStatusTrackerCheck := ui.SelectOptionCommitStatusTracker()
 	if commitStatusTrackerCheck == "yes" {
 		io.StatusTrackerAccessToken = ui.EnterInteractiveCommandLineStatusTrackerAccessToken()
 	}
-	io.Prefix = ui.EnterInteractiveCommandLine("Enter the prefix if you desire", "", false)
+	io.Prefix = ui.EnterInteractiveCommandLinePrefix()
 	io.Prefix = utility.MaybeCompletePrefix(io.Prefix)
-	io.InitOption = ui.SelectOption("Please enter (y/n) if you desire to use service to the gitops repository")
-	if io.InitOption == "yes" {
+	InitOption := ui.SelectOptionBootstrap()
+	if InitOption == "Bootstrap" {
 		io.ServiceRepoURL = ui.EnterInteractiveCommandLineServiceRepoURL()
 		io.ServiceWebhookSecret = ui.EnterInteractiveCommandLineServiceWebhookSecret()
 		io.ServiceRepoURL = utility.AddGitSuffixIfNecessary(io.ServiceRepoURL)
@@ -115,19 +115,19 @@ func (io *WizardParameters) Validate() error {
 
 // Run runs the project Wizard command.
 func (io *WizardParameters) Run() error {
-	log.Success(io.InitOption)
-	if io.InitOption == "y" {
+	if io.ServiceRepoURL != "" {
 		err := pipelines.Bootstrap(io.BootstrapOptions, ioutils.NewFilesystem())
 		if err != nil {
 			return err
 		}
+		log.Success("Bootstrapped GitOps sucessfully.")
 	} else {
 		err := pipelines.Init(io.InitOptions, ioutils.NewFilesystem())
 		if err != nil {
 			return err
 		}
+		log.Success("Initialized GitOps sucessfully.")
 	}
-	log.Success("Bootstrapped GitOps sucessfully.")
 	return nil
 }
 

@@ -7,27 +7,90 @@ import (
 )
 
 // EnterComponentName allows the user to specify the component name in a prompt
-func EnterInteractiveCommandLine(message, defaultValue string, required bool) string {
+func EnterInteractiveCommandLineGitRepo() string {
 	var path string
 	var prompt *survey.Input
-	if defaultValue == "" {
-		prompt = &survey.Input{
-			Message: message,
-		}
-	} else {
-		prompt = &survey.Input{
-			Message: message,
-			Default: defaultValue,
-		}
+	prompt = &survey.Input{
+		Message: "Provide the URL for your GitOps repository",
+		Help:    "The GitOps repository stores your GitOps configuration files, including your Openshift Pipelines resources for driving automated deployments and builds.  Please enter a valid git repository e.g. https://github.com/example/myorg.git",
 	}
-	if required {
-		err := survey.AskOne(prompt, &path, survey.Required)
-		ui.HandleError(err)
 
-	} else {
-		err := survey.AskOne(prompt, &path, nil)
-		ui.HandleError(err)
+	err := survey.AskOne(prompt, &path, survey.Required)
+	ui.HandleError(err)
+
+	return path
+}
+
+// EnterComponentName allows the user to specify the component name in a prompt
+func EnterInteractiveCommandLineInternalRegistry() string {
+	var path string
+	var prompt *survey.Input
+	prompt = &survey.Input{
+		Message: "Host-name for internal image registry e.g. docker-registry.default.svc.cluster.local:5000, used if you are pushing your images to the internal image registry",
+		Default: "image-registry.openshift-image-registry.svc:5000",
 	}
+
+	err := survey.AskOne(prompt, &path, nil)
+	ui.HandleError(err)
+
+	return path
+}
+
+func EnterInteractiveCommandLineImageRepoInternalRegistry() string {
+	var path string
+	var prompt *survey.Input
+	prompt = &survey.Input{
+		Message: " Image repository of the form <project>/<app> which is used to push newly built images.",
+		Help:    " By default images are built from source, whenever there is a push to the repository for your service source code and this image will be pushed to the image repository specified in this parameter, if the value is of the form <registry>/<username>/<repository>, then it assumed that it is an upstream image repository e.g. Quay, if its of the form <project>/<app> the internal registry present on the current cluster will be used as the image repository.",
+	}
+
+	err := survey.AskOne(prompt, &path, survey.Required)
+	ui.HandleError(err)
+
+	return path
+}
+
+func EnterInteractiveCommandLineDockercfg() string {
+	var path string
+	var prompt *survey.Input
+	prompt = &survey.Input{
+		Message: " Path to config.json which authenticates image pushes to the desired image registry, the default is <insert default>?",
+		Help:    "  The secret present in the file path generates a secure secret that authenticates the push of the image built when the app-ci pipeline is run. The image along with the necessary labels will be present on the upstream image repository of choice.",
+		Default: "~/.docker/config.json",
+	}
+
+	err := survey.AskOne(prompt, &path, nil)
+	ui.HandleError(err)
+
+	return path
+}
+
+func EnterInteractiveCommandLineImageRepoExternalRepository() string {
+	var path string
+	var prompt *survey.Input
+	prompt = &survey.Input{
+		Message: "Image repository of the form <registry>/<username>/<repository> which is used to push newly built images.",
+		Help:    "  By default images are built from source, whenever there is a push to the repository for your service source code and this image will be pushed to the image repository specified in this parameter, if the value is of the form <registry>/<username>/<repository>, then it assumed that it is an upstream image repository e.g. Quay, if its of the form <project>/<app> the internal registry present on the current cluster will be used as the image repository.",
+	}
+
+	err := survey.AskOne(prompt, &path, survey.Required)
+	ui.HandleError(err)
+
+	return path
+}
+
+func EnterInteractiveCommandLineOutputPath() string {
+	var path string
+	var prompt *survey.Input
+	prompt = &survey.Input{
+		Message: "Provide a path to write GitOps resources?",
+		Help:    "This is the path where the GitOps repository configuration is stored locally before you push it to the repository GitopsRepoURL <fill in the string from GitOpsRepoURL>",
+		Default: ".",
+	}
+
+	err := survey.AskOne(prompt, &path, nil)
+	ui.HandleError(err)
+
 	return path
 }
 
@@ -36,11 +99,24 @@ func EnterInteractiveCommandLine(message, defaultValue string, required bool) st
 
 // OptionBootstrap allows the user to choose if they want to bootstrap or not
 
-func SelectOption(message string) string {
+func SelectOptionImageRepository() string {
 	var path string
 
 	prompt := &survey.Select{
-		Message: message,
+		Message: "Select type of image repository",
+		Options: []string{"Openshift Internal repository", "quay.io"},
+		Default: "Openshift Internal repository",
+	}
+	err := survey.AskOne(prompt, &path, survey.Required)
+	ui.HandleError(err)
+	return path
+}
+
+func SelectOptionOverwrite() string {
+	var path string
+
+	prompt := &survey.Select{
+		Message: "Do you want to overwrite your output path. Select yes or no",
 		Options: []string{"yes", "no"},
 		Default: "no",
 	}
@@ -103,14 +179,41 @@ func EnterInteractiveCommandLineServiceWebhookSecret() string {
 // 	prompt := &survey.Confirm{
 // 		Message: message,
 // 	}
+func SelectOptionCommitStatusTracker() string {
+	var path string
 
-// 	if len(stdio) == 1 {
-// 		prompt.WithStdio(stdio[0])
-// 	}
+	prompt := &survey.Select{
+		Message: "Please enter (yes/no) if you desire to use commit-status-tracker",
+		Options: []string{"yes", "no"},
+		Default: "no",
+	}
+	err := survey.AskOne(prompt, &path, survey.Required)
+	ui.HandleError(err)
+	return path
+}
 
-// 	err := survey.AskOne(prompt, &response, survey.Required)
-// 	HandleError(err)
+func SelectOptionBootstrap() string {
+	var path string
 
-// 	return response
-// }
-// Checks whether the pipelines.yaml is present in the output path specified.
+	prompt := &survey.Select{
+		Message: "Please enter (Bootstrap/init), choose bootstrap if you wish to add a mock service to the gitops repository",
+		Options: []string{"Bootstrap", "init"},
+		Default: "no",
+	}
+	err := survey.AskOne(prompt, &path, survey.Required)
+	ui.HandleError(err)
+	return path
+}
+
+func SelectOptionOverWriteCheck() string {
+	var path string
+
+	prompt := &survey.Select{
+		Message: "Would you like to pass in a different path and try again",
+		Options: []string{"yes", "no"},
+		Default: "no",
+	}
+	err := survey.AskOne(prompt, &path, survey.Required)
+	ui.HandleError(err)
+	return path
+}
