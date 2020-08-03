@@ -82,14 +82,14 @@ func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []str
 	io.SealedSecretsService.Namespace = ui.EnterInteractiveCommandLine("Namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator (default 'sealed-secrets')", "kube-system", false)
 	commitStatusTrackerCheck := ui.SelectOption("Please enter (y/n) if you desire to use commit-status-tracker")
 	if commitStatusTrackerCheck == "yes" {
-		io.StatusTrackerAccessToken = ui.EnterInteractiveCommandLine("Please enter the git personal access token to push commit statuses to your Git hosting service", "", true)
+		io.StatusTrackerAccessToken = ui.EnterInteractiveCommandLineStatusTrackerAccessToken()
 	}
 	io.Prefix = ui.EnterInteractiveCommandLine("Enter the prefix if you desire", "", false)
 	io.Prefix = utility.MaybeCompletePrefix(io.Prefix)
 	io.InitOption = ui.SelectOption("Please enter (y/n) if you desire to use service to the gitops repository")
 	if io.InitOption == "yes" {
-		io.ServiceRepoURL = ui.EnterInteractiveCommandLine("Enter the service URL", "", true)
-		io.ServiceWebhookSecret = ui.EnterInteractiveCommandLine("Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the Service repository. (if not provided, it will be auto-generated)", "", false)
+		io.ServiceRepoURL = ui.EnterInteractiveCommandLineServiceRepoURL()
+		io.ServiceWebhookSecret = ui.EnterInteractiveCommandLineServiceWebhookSecret()
 		io.ServiceRepoURL = utility.AddGitSuffixIfNecessary(io.ServiceRepoURL)
 	}
 
