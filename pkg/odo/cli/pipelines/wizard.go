@@ -63,17 +63,20 @@ func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []str
 	}
 	io.ImageRepo = ui.EnterInteractiveCommandLine("Image repository of the form <registry>/<username>/<repository> or <project>/<app> which is used to push newly built images", "", true)
 	io.OutputPath = ui.EnterInteractiveCommandLine("Path to write GitOps resources (default '.')", ".", false)
-	exists, _ := ioutils.IsExisting(ioutils.NewFilesystem(), filepath.Join(io.OutputPath, "pipelinesFile"))
-	if exists {
+	exists, _ := ioutils.IsExisting(ioutils.NewFilesystem(), filepath.Join(io.OutputPath, "pipelines.yaml"))
+	fmt.Println(io.OutputPath)
+	fmt.Println("test %w", exists)
+
+	if !exists {
+		io.Overwrite = true
+	} else {
 		selectOverwriteOption := ui.SelectOption("Do you want to overwrite your output path. Select yes or no")
 		if selectOverwriteOption == "no" {
 			io.Overwrite = false
 			return fmt.Errorf("The GitOps repo cannot be intialised or bootstrapped")
-		} else {
-			io.Overwrite = true
 		}
+		io.Overwrite = true
 	}
-	io.Overwrite = true
 	io.GitOpsWebhookSecret = ui.EnterInteractiveCommandLine("Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the GitOps repository. (if not provided, it will be auto-generated)", "", false)
 	io.SealedSecretsService.Name = ui.EnterInteractiveCommandLine("Name of the Sealed Secrets Services that encrypts secrets (default 'sealedsecretcontroller-sealed-secrets')", "sealed-secrets-controller", false)
 	io.SealedSecretsService.Namespace = ui.EnterInteractiveCommandLine("Namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator (default 'sealed-secrets')", "kube-system", false)

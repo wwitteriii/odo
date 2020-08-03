@@ -63,3 +63,4 @@ func SelectOption(message string) string {
 
 // 	return response
 // }
+// Checks whether the pipelines.yaml is present in the output path specified.
