@@ -7,37 +7,79 @@ import (
 )
 
 // EnterComponentName allows the user to specify the component name in a prompt
-func EnterInteractiveCommandLine(message, defaultValue string, required bool) string {
+func EnterInteractiveCommandLineGitRepo() string {
 	var path string
 	var prompt *survey.Input
-	if defaultValue == "" {
-		prompt = &survey.Input{
-			Message: message,
-		}
-	} else {
-		prompt = &survey.Input{
-			Message: message,
-			Default: defaultValue,
-		}
+	prompt = &survey.Input{
+		Message: "Provide the URL for your GitOps repository",
+		Help:    "The GitOps repository stores your GitOps configuration files, including your Openshift Pipelines resources for driving automated deployments and builds.  Please enter a valid git repository e.g. https://github.com/example/myorg.git",
 	}
-	if required {
-		err := survey.AskOne(prompt, &path, survey.Required)
-		ui.HandleError(err)
 
-	} else {
-		err := survey.AskOne(prompt, &path, nil)
-		ui.HandleError(err)
-	}
+	err := survey.AskOne(prompt, &path, survey.Required)
+	ui.HandleError(err)
+
 	return path
 }
 
 // OptionBootstrap allows the user to choose if they want to bootstrap or not
 
-func SelectOption(message string) string {
+func SelectOptionImageRepository() string {
 	var path string
 
 	prompt := &survey.Select{
-		Message: message,
+		Message: "Select type of image repository",
+		Options: []string{"Openshift Internal repository", "quay.io"},
+		Default: "Openshift Internal repository",
+	}
+	err := survey.AskOne(prompt, &path, survey.Required)
+	ui.HandleError(err)
+	return path
+}
+
+func SelectOptionOverwrite() string {
+	var path string
+
+	prompt := &survey.Select{
+		Message: "Do you want to overwrite your output path. Select yes or no",
+		Options: []string{"yes", "no"},
+		Default: "no",
+	}
+	err := survey.AskOne(prompt, &path, survey.Required)
+	ui.HandleError(err)
+	return path
+}
+
+func SelectOptionCommitStatusTracker() string {
+	var path string
+
+	prompt := &survey.Select{
+		Message: "Please enter (yes/no) if you desire to use commit-status-tracker",
+		Options: []string{"yes", "no"},
+		Default: "no",
+	}
+	err := survey.AskOne(prompt, &path, survey.Required)
+	ui.HandleError(err)
+	return path
+}
+
+func SelectOptionBootstrap() string {
+	var path string
+
+	prompt := &survey.Select{
+		Message: "Please enter (Bootstrap/init), choose bootstrap if you wish to add a mock service to the gitops repository",
+		Options: []string{"Bootstrap", "init"},
+		Default: "no",
+	}
+	err := survey.AskOne(prompt, &path, survey.Required)
+	ui.HandleError(err)
+	return path
+}
+
+func SelectOptionOverWriteCheck() string {
+	var path string
+
+	prompt := &survey.Select{
+		Message: "Would you like to pass in a different path and try again",
 		Options: []string{"yes", "no"},
 		Default: "no",
 	}
