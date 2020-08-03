@@ -1,10 +1,13 @@
 package component
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+	"os/signal"
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
@@ -94,7 +97,57 @@ func (a Adapter) runKaniko(parameters common.BuildParameters) error {
 		log.Errorf("err: %s\n", err.Error())
 		return err
 	}
-	return errors.New("WIP: Need to redirect log output the stdout and wait for build to complete")
+	// return errors.New("WIP: Need to redirect log output the stdout and wait for build to complete")
+
+	log.Successf("Started builder pod %s using Kaniko Build strategy", pod.GetName())
+
+	reader, _ := io.Pipe()
+	controlC := make(chan os.Signal, 1)
+
+	var cmdOutput string
+	// This Go routine will automatically pipe the output from WaitForBuildToFinish to
+	// our logger.
+	// We pass the controlC os.Signal in order to output the logs within the terminateBuild
+	// function if the process is interrupted by the user performing a ^C. If we didn't pass it
+	// The Scanner would consume the log, and only output it if there was an err within this
+	// func.
+	go func(controlC chan os.Signal) {
+		select {
+		case <-controlC:
+			return
+		default:
+			scanner := bufio.NewScanner(reader)
+			for scanner.Scan() {
+				line := scanner.Text()
+
+				if log.IsDebug() {
+					_, err := fmt.Fprintln(os.Stdout, line)
+					if err != nil {
+						log.Errorf("Unable to print to stdout: %v", err)
+					}
+				}
+
+				cmdOutput += fmt.Sprintln(line)
+			}
+		}
+	}(controlC)
+
+	s := log.Spinner("Waiting for builder pod to complete")
+	// if err := client.WaitForBuildToFinish(bc.Name, writer, BuildTimeout); err != nil {
+	// 	s.End(false)
+	// 	return errors.Wrapf(err, "unable to build image using BuildConfig %s, error: %s", buildName, cmdOutput)
+	// }
+
+	if _, err := a.Client.WaitAndGetPod(watchOptions, corev1.PodSucceeded, "Waiting for builder pod to complete", false); err != nil {
+		s.End(false)
+		return errors.Wrapf(err, "unable to build image using Kaniko, error: %s", cmdOutput)
+	}
+
+	s.End(true)
+	// Stop listening for a ^C so it doesnt perform terminateBuild during any later stages
+	signal.Stop(controlC)
+	log.Successf("Successfully built container image: %s", parameters.Tag)
+	return nil
 }
 
 func (a Adapter) createKanikoBuilderPod(labels map[string]string, init, builder *corev1.Container) error {
