@@ -1,7 +1,6 @@
 package component
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -125,38 +124,14 @@ func (a Adapter) runBuildConfig(client *occlient.Client, parameters common.Build
 	}
 	log.Successf("Started build %s using BuildConfig", bc.Name)
 
-	reader, writer := io.Pipe()
+	ioReader, ioWriter := io.Pipe()
 
 	var cmdOutput string
-	// This Go routine will automatically pipe the output from WaitForBuildToFinish to
-	// our logger.
-	// We pass the controlC os.Signal in order to output the logs within the terminateBuild
-	// function if the process is interrupted by the user performing a ^C. If we didn't pass it
-	// The Scanner would consume the log, and only output it if there was an err within this
-	// func.
-	go func(controlC chan os.Signal) {
-		select {
-		case <-controlC:
-			return
-		default:
-			scanner := bufio.NewScanner(reader)
-			for scanner.Scan() {
-				line := scanner.Text()
 
-				if log.IsDebug() {
-					_, err := fmt.Fprintln(os.Stdout, line)
-					if err != nil {
-						log.Errorf("Unable to print to stdout: %v", err)
-					}
-				}
-
-				cmdOutput += fmt.Sprintln(line)
-			}
-		}
-	}(controlC)
+	go utils.PipeStdOutput(cmdOutput, ioReader, controlC)
 
 	s := log.Spinner("Waiting for build to complete")
-	if err := client.WaitForBuildToFinish(bc.Name, writer, BuildTimeout); err != nil {
+	if err := client.WaitForBuildToFinish(bc.Name, ioWriter, BuildTimeout); err != nil {
 		s.End(false)
 		return errors.Wrapf(err, "unable to build image using BuildConfig %s, error: %s", buildName, cmdOutput)
 	}
