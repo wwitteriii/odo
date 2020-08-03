@@ -1,28 +1,23 @@
 package component
 
 import (
-	"bufio"
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"os/signal"
 	"strings"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/openshift/odo/pkg/devfile/adapters/common"
+	"github.com/openshift/odo/pkg/devfile/adapters/kubernetes/utils"
 	"github.com/openshift/odo/pkg/kclient"
 	"github.com/openshift/odo/pkg/log"
-	"github.com/openshift/odo/pkg/secret"
 	"github.com/openshift/odo/pkg/sync"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	runtimeUnstructured "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog"
 )
 
@@ -44,9 +39,20 @@ var (
 )
 
 func (a Adapter) runKaniko(parameters common.BuildParameters) error {
-	if err := a.createSecret(parameters.EnvSpecificInfo.GetNamespace(), parameters.DockerConfigJSONFilename); err != nil {
+	var secretUnstructured *unstructured.Unstructured
+	var err error
+	if secretUnstructured, err = utils.CreateSecret(regcredName, parameters.EnvSpecificInfo.GetNamespace(), parameters.DockerConfigJSONFilename); err != nil {
 		return err
 	}
+
+	if _, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
+		Namespace(parameters.EnvSpecificInfo.GetNamespace()).
+		Create(secretUnstructured, metav1.CreateOptions{}); err != nil {
+		if errors.Cause(err).Error() != "secrets \""+regcredName+"\" already exists" {
+			return err
+		}
+	}
+
 	containerName := "build"
 	initContainerName := "init"
 	labels := map[string]string{
@@ -105,38 +111,10 @@ func (a Adapter) runKaniko(parameters common.BuildParameters) error {
 	controlC := make(chan os.Signal, 1)
 
 	var cmdOutput string
-	// This Go routine will automatically pipe the output from WaitForBuildToFinish to
-	// our logger.
-	// We pass the controlC os.Signal in order to output the logs within the terminateBuild
-	// function if the process is interrupted by the user performing a ^C. If we didn't pass it
-	// The Scanner would consume the log, and only output it if there was an err within this
-	// func.
-	go func(controlC chan os.Signal) {
-		select {
-		case <-controlC:
-			return
-		default:
-			scanner := bufio.NewScanner(reader)
-			for scanner.Scan() {
-				line := scanner.Text()
 
-				if log.IsDebug() {
-					_, err := fmt.Fprintln(os.Stdout, line)
-					if err != nil {
-						log.Errorf("Unable to print to stdout: %v", err)
-					}
-				}
-
-				cmdOutput += fmt.Sprintln(line)
-			}
-		}
-	}(controlC)
+	go utils.PipeStdOutput(cmdOutput, reader, controlC)
 
 	s := log.Spinner("Waiting for builder pod to complete")
-	// if err := client.WaitForBuildToFinish(bc.Name, writer, BuildTimeout); err != nil {
-	// 	s.End(false)
-	// 	return errors.Wrapf(err, "unable to build image using BuildConfig %s, error: %s", buildName, cmdOutput)
-	// }
 
 	if _, err := a.Client.WaitAndGetPod(watchOptions, corev1.PodSucceeded, "Waiting for builder pod to complete", false); err != nil {
 		s.End(false)
@@ -232,49 +210,4 @@ func initContainer(name string) *corev1.Container {
 			buildContextVolumeMount,
 		},
 	}
-}
-
-func (a Adapter) createSecret(ns, dcokerConfigFile string) error {
-	filename, err := homedir.Expand(dcokerConfigFile)
-	if err != nil {
-		return fmt.Errorf("failed to generate path to file for %s: %v", dcokerConfigFile, err)
-	}
-
-	f, err := os.Open(filename)
-	if err != nil {
-		return fmt.Errorf("failed to read Docker config %#v : %s", filename, err)
-	}
-	defer f.Close()
-
-	secret, err := secret.CreateDockerConfigSecret(types.NamespacedName{
-		Name:      regcredName,
-		Namespace: ns,
-	}, f)
-	if err != nil {
-		return err
-	}
-
-	secretData, err := runtimeUnstructured.DefaultUnstructuredConverter.ToUnstructured(secret)
-	if err != nil {
-		return err
-	}
-
-	secretBytes, err := json.Marshal(secretData)
-	if err != nil {
-		return err
-	}
-
-	var secretUnstructured *unstructured.Unstructured
-	if err := json.Unmarshal(secretBytes, &secretUnstructured); err != nil {
-		return err
-	}
-
-	if _, err = a.Client.DynamicClient.Resource(secretGroupVersionResource).
-		Namespace(ns).
-		Create(secretUnstructured, metav1.CreateOptions{}); err != nil {
-		if errors.Cause(err).Error() != "secrets \""+regcredName+"\" already exists" {
-			return err
-		}
-	}
-	return nil
 }
