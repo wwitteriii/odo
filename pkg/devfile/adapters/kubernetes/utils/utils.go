@@ -406,15 +406,3 @@ func CreateSecret(regcredName string, ns string, dockerConfigData []byte) (*unst
 
 	return secretUnstructured, nil
 }
-
-// func getSA(ns *corev1.Namespace) (*corev1.ServiceAccount, error) {
-
-// 	log.Info("finding sa", "sa", "builder", "ns", ns.Name)
-// 	sa := &corev1.ServiceAccount{}
-// 	saType := types.NamespacedName{Name: "builder", Namespace: ns.Name}
-// 	if err := client.Client.Get(context.TODO(), saType, sa); err == nil {
-// 		return sa, err
-// 	} else {
-// 		return nil, err
-// 	}
-// }
