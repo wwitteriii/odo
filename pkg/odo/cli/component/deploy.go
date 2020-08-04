@@ -49,6 +49,7 @@ type DeployOptions struct {
 	DeploymentPort           int
 	dockerConfigJSONFilename string
 	rootless                 bool
+	buildType                devfile.BuildStrategy
 
 	*genericclioptions.Context
 }
@@ -108,6 +109,7 @@ func (do *DeployOptions) Validate() (err error) {
 	s = log.Spinner("Validating build information")
 
 	var dockerfileURL string
+	o.buildType = devfile.SourceToImage
 	components := do.devObj.Data.GetAliasedComponents()
 	for _, component := range components {
 		if component.Dockerfile != nil {
