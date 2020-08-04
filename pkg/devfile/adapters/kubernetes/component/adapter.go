@@ -97,8 +97,26 @@ func (a Adapter) runBuildConfig(client *occlient.Client, parameters common.Build
 		buildOutput = "ImageStreamTag"
 	}
 
+	var secretUnstructured *unstructured.Unstructured
+
 	if destinationImageRegistry == "external" {
 		secretName = "regcred"
+		data, err := utils.CreateDockerConfigDataFromFilepath(parameters.DockerConfigJSONFilename)
+		if err != nil {
+			return err
+		}
+
+		if secretUnstructured, err = utils.CreateSecret(regcredName, parameters.EnvSpecificInfo.GetNamespace(), data); err != nil {
+			return err
+		}
+
+		if _, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
+			Namespace(parameters.EnvSpecificInfo.GetNamespace()).
+			Create(secretUnstructured, metav1.CreateOptions{}); err != nil {
+			if errors.Cause(err).Error() != "secrets \""+regcredName+"\" already exists" {
+				return err
+			}
+		}
 	} else {
 		secretName = ""
 	}

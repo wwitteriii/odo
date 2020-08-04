@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/signal"
 
 	"strings"
 
-	"github.com/mitchellh/go-homedir"
 	"github.com/openshift/odo/pkg/devfile/adapters/common"
 	"github.com/openshift/odo/pkg/devfile/adapters/kubernetes/utils"
 	"github.com/openshift/odo/pkg/kclient"
@@ -46,20 +44,10 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRe
 	var err error
 
 	if destinationImageRegistry == "external" {
-		filename, err := homedir.Expand(parameters.DockerConfigJSONFilename)
+		data, err := utils.CreateDockerConfigDataFromFilepath(parameters.DockerConfigJSONFilename)
 		if err != nil {
-			return fmt.Errorf("failed to generate path to file for %s: %v", parameters.DockerConfigJSONFilename, err)
+			return err
 		}
-
-		f, err := os.Open(filename)
-		if err != nil {
-			return fmt.Errorf("failed to read Docker config %#v : %s", filename, err)
-		}
-		data, err := ioutil.ReadAll(f)
-		if err != nil {
-			return fmt.Errorf("failed to read secret data: %v", err)
-		}
-		defer f.Close()
 
 		if secretUnstructured, err = utils.CreateSecret(regcredName, parameters.EnvSpecificInfo.GetNamespace(), data); err != nil {
 			return err

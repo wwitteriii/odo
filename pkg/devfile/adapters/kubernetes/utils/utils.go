@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 
 	// "context"
+	"github.com/mitchellh/go-homedir"
 	adaptersCommon "github.com/openshift/odo/pkg/devfile/adapters/common"
 
 	devfileParser "github.com/openshift/odo/pkg/devfile/parser"
@@ -357,6 +359,24 @@ func PipeStdOutput(cmdOutput string, reader *io.PipeReader, controlC chan os.Sig
 			cmdOutput += fmt.Sprintln(line)
 		}
 	}
+}
+
+func CreateDockerConfigDataFromFilepath(DockerConfigJSONFilename string) ([]byte, error) {
+	filename, err := homedir.Expand(DockerConfigJSONFilename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate path to file for %s: %v", DockerConfigJSONFilename, err)
+	}
+
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read Docker config %#v : %s", filename, err)
+	}
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read secret data: %v", err)
+	}
+	defer f.Close()
+	return data, nil
 }
 
 func CreateSecret(regcredName string, ns string, dockerConfigData []byte) (*unstructured.Unstructured, error) {
