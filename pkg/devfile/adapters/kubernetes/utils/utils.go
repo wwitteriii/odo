@@ -32,6 +32,27 @@ import (
 	"k8s.io/klog"
 )
 
+type DockerConfigJson struct {
+	auths        []BuilderDockerCfg
+	HttpHeaders  httpHeaders
+	experimental string
+}
+
+type httpHeaders struct {
+	UserAgent string
+}
+
+type BuilderDockerCfg struct {
+	InternalImageRegistryURL Credentials `json:"image-registry.openshift-image-registry.svc:5000"`
+}
+
+type Credentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Email    string `json:"email"`
+	Auth     string `json:"auth"`
+}
+
 // ComponentExists checks whether a deployment by the given name exists
 func ComponentExists(client kclient.Client, name string) (bool, error) {
 	deployment, err := client.GetDeploymentByName(name)
@@ -407,14 +428,20 @@ func CreateSecret(regcredName string, ns string, dockerConfigData []byte) (*unst
 	return secretUnstructured, nil
 }
 
-// func getSA(ns *corev1.Namespace) (*corev1.ServiceAccount, error) {
+func CreateDockerConfigJSONData(authData BuilderDockerCfg) ([]byte, error) {
 
-// 	log.Info("finding sa", "sa", "builder", "ns", ns.Name)
-// 	sa := &corev1.ServiceAccount{}
-// 	saType := types.NamespacedName{Name: "builder", Namespace: ns.Name}
-// 	if err := client.Client.Get(context.TODO(), saType, sa); err == nil {
-// 		return sa, err
-// 	} else {
-// 		return nil, err
-// 	}
-// }
+	dockerConfigJSON := DockerConfigJson{
+		auths: []BuilderDockerCfg{authData},
+		HttpHeaders: httpHeaders{
+			UserAgent: "Docker-Client/19.03.8 (darwin)",
+		},
+		experimental: "disabled",
+	}
+
+	data, err := json.Marshal(dockerConfigJSON)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}

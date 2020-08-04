@@ -106,14 +106,14 @@ func (a Adapter) runBuildConfig(client *occlient.Client, parameters common.Build
 			return err
 		}
 
-		if secretUnstructured, err = utils.CreateSecret(regcredName, parameters.EnvSpecificInfo.GetNamespace(), data); err != nil {
+		if secretUnstructured, err = utils.CreateSecret(secretName, parameters.EnvSpecificInfo.GetNamespace(), data); err != nil {
 			return err
 		}
 
 		if _, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
 			Namespace(parameters.EnvSpecificInfo.GetNamespace()).
 			Create(secretUnstructured, metav1.CreateOptions{}); err != nil {
-			if errors.Cause(err).Error() != "secrets \""+regcredName+"\" already exists" {
+			if errors.Cause(err).Error() != "secrets \""+secretName+"\" already exists" {
 				return err
 			}
 		}

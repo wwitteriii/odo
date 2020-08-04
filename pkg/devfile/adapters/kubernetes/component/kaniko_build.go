@@ -2,11 +2,12 @@ package component
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"os/signal"
-
+	"strconv"
 	"strings"
 
 	"github.com/openshift/odo/pkg/devfile/adapters/common"
@@ -23,12 +24,13 @@ import (
 )
 
 const (
-	regcredName           = "regcred"
-	kanikoSecret          = "kaniko-secret"
-	buildContext          = "build-context"
-	buildContextMountPath = "/root/build-context"
-	kanikoSecretMountPath = "/root/.docker"
-	completionFile        = "/tmp/complete"
+	regcredName              = "regcred"
+	kanikoSecret             = "kaniko-secret"
+	buildContext             = "build-context"
+	buildContextMountPath    = "/root/build-context"
+	kanikoSecretMountPath    = "/root/.docker"
+	completionFile           = "/tmp/complete"
+	internalImageRegistryURL = "image-registry.openshift-image-registy.svc:5000"
 )
 
 var (
@@ -37,11 +39,14 @@ var (
 
 	secretGroupVersionResource = schema.GroupVersionResource{Group: "", Version: "v1", Resource: "secrets"}
 	defaultId                  = int64(0)
+	saSecretNames              = []string{}
 )
 
 func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRegistry string) error {
 	var secretUnstructured *unstructured.Unstructured
 	var err error
+	var serviceAccountList *corev1.ServiceAccountList
+	var builderDockerCfgSecret *corev1.Secret
 
 	if destinationImageRegistry == "external" {
 		data, err := utils.CreateDockerConfigDataFromFilepath(parameters.DockerConfigJSONFilename)
@@ -53,7 +58,58 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRe
 			return err
 		}
 	} else if destinationImageRegistry == "internal" {
-		// TODO: internal registry secret creation
+		if serviceAccountList, err = a.Client.KubeClient.CoreV1().ServiceAccounts(parameters.EnvSpecificInfo.GetNamespace()).List(metav1.ListOptions{}); err != nil {
+			return err
+		}
+
+		if serviceAccountList != nil {
+			for _, sa := range serviceAccountList.Items {
+				if sa.ObjectMeta.Name == "builder" && sa.Secrets != nil {
+					for _, secret := range sa.Secrets {
+						saSecretNames = append(saSecretNames, secret.Name)
+					}
+
+				}
+			}
+		} else {
+			return errors.New("No service accounts found in this namespace")
+		}
+
+		for _, saSecretName := range saSecretNames {
+			retrievedSecret, err := a.Client.KubeClient.CoreV1().Secrets(parameters.EnvSpecificInfo.GetNamespace()).Get(saSecretName, metav1.GetOptions{})
+			if err != nil {
+				return errors.Wrap(err, "Error retrieving SA dockercfg secret")
+			}
+			if retrievedSecret.Type == "kubernetes.io/dockercfg" {
+				builderDockerCfgSecret = retrievedSecret
+			}
+
+		}
+
+		var builderDockerCfgSecretBytes []byte
+		bs := fmt.Sprintf("%v", builderDockerCfgSecret.Data[".dockercfg"])
+		for _, ps := range strings.Split(strings.Trim(bs, "[]"), " ") {
+			pi, _ := strconv.Atoi(ps)
+			builderDockerCfgSecretBytes = append(builderDockerCfgSecretBytes, byte(pi))
+		}
+
+		builderDockerCfg := &utils.BuilderDockerCfg{
+			InternalImageRegistryURL: utils.Credentials{},
+		}
+
+		err = json.Unmarshal(builderDockerCfgSecretBytes, builderDockerCfg)
+		if err != nil {
+			return err
+		}
+
+		data, err := utils.CreateDockerConfigJSONData(*builderDockerCfg)
+		if err != nil {
+			return errors.Wrap(err, "Error retrieving internal registry credentials from SA")
+		}
+		if secretUnstructured, err = utils.CreateSecret(regcredName, parameters.EnvSpecificInfo.GetNamespace(), data); err != nil {
+			return err
+		}
+		// return errors.New("testing")
 	}
 
 	if _, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
@@ -70,7 +126,7 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRe
 		"component": a.ComponentName,
 	}
 
-	if err := a.createKanikoBuilderPod(labels, initContainer(initContainerName), builderContainer(containerName, parameters.Tag)); err != nil {
+	if err := a.createKanikoBuilderPod(labels, initContainer(initContainerName), builderContainer(containerName, parameters.Tag), regcredName); err != nil {
 		return errors.Wrap(err, "error while creating kaniko builder pod")
 	}
 
@@ -138,7 +194,7 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRe
 	return nil
 }
 
-func (a Adapter) createKanikoBuilderPod(labels map[string]string, init, builder *corev1.Container) error {
+func (a Adapter) createKanikoBuilderPod(labels map[string]string, init, builder *corev1.Container, secretName string) error {
 	objectMeta := kclient.CreateObjectMeta(a.ComponentName, a.Client.Namespace, labels, nil)
 	pod := &corev1.Pod{
 		ObjectMeta: objectMeta,
@@ -153,7 +209,7 @@ func (a Adapter) createKanikoBuilderPod(labels map[string]string, init, builder 
 				{Name: kanikoSecret,
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
-							SecretName: regcredName,
+							SecretName: secretName,
 							Items: []corev1.KeyToPath{
 								{
 									Key:  ".dockerconfigjson",
