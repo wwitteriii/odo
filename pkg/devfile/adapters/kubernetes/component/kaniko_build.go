@@ -53,7 +53,7 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRe
 		if err != nil {
 			return err
 		}
-
+		fmt.Printf("%s", fmt.Sprintf("%s", data))
 		if secretUnstructured, err = utils.CreateSecret(regcredName, parameters.EnvSpecificInfo.GetNamespace(), data); err != nil {
 			return err
 		}
@@ -95,10 +95,8 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRe
 		}
 
 		builderDockerCfg := &utils.BuilderDockerCfg{
-			InternalImageRegistryURL: &utils.Credentials{},
+			InternalImageRegistryCredentials: utils.Credentials{},
 		}
-
-		// fmt.Printf(builderDockerCfg.InternalImageRegistryURL.Auth)
 
 		err = json.Unmarshal(builderDockerCfgSecretBytes, builderDockerCfg)
 		if err != nil {
@@ -109,9 +107,11 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRe
 		if err != nil {
 			return errors.Wrap(err, "Error retrieving internal registry credentials from SA")
 		}
+
 		if secretUnstructured, err = utils.CreateSecret(regcredName, parameters.EnvSpecificInfo.GetNamespace(), data); err != nil {
 			return err
 		}
+
 	}
 
 	if _, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
@@ -205,17 +205,16 @@ func (a Adapter) createKanikoBuilderPod(labels map[string]string, init, builder 
 			SecurityContext: &corev1.PodSecurityContext{
 				RunAsUser: &defaultId,
 			},
-			// ServiceAccountName: "builder",
 			InitContainers: []corev1.Container{*init},
 			Containers:     []corev1.Container{*builder},
 			Volumes: []corev1.Volume{
 				{Name: kanikoSecret,
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
-							SecretName: "builder-dockercfg-4r56z",
+							SecretName: secretName,
 							Items: []corev1.KeyToPath{
 								{
-									Key:  ".dockercfg",
+									Key:  ".dockerconfigjson",
 									Path: "config.json",
 								},
 							},

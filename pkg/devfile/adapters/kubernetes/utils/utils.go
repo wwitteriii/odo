@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	// "context"
 	"github.com/mitchellh/go-homedir"
 	adaptersCommon "github.com/openshift/odo/pkg/devfile/adapters/common"
 
@@ -26,16 +25,15 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	// "sigs.k8s.io/controller-runtime/pkg/client"
 	runtimeUnstructured "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog"
 )
 
 type DockerConfigJson struct {
-	auths        *BuilderDockerCfg
+	Auths        *BuilderDockerCfg
 	HttpHeaders  httpHeaders
-	experimental string
+	Experimental string `json:"experimental"`
 }
 
 type httpHeaders struct {
@@ -43,14 +41,11 @@ type httpHeaders struct {
 }
 
 type BuilderDockerCfg struct {
-	InternalImageRegistryURL *Credentials `json:"image-registry.openshift-image-registry.svc:5000"`
+	InternalImageRegistryCredentials Credentials `json:"image-registry.openshift-image-registry.svc:5000"`
 }
 
 type Credentials struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Email    string `json:"email"`
-	Auth     string `json:"auth"`
+	Auth string `json:"auth"`
 }
 
 // ComponentExists checks whether a deployment by the given name exists
@@ -428,14 +423,14 @@ func CreateSecret(regcredName string, ns string, dockerConfigData []byte) (*unst
 	return secretUnstructured, nil
 }
 
-func CreateDockerConfigJSONData(authData BuilderDockerCfg) ([]byte, error) {
+func CreateDockerConfigJSONData(authToken BuilderDockerCfg) ([]byte, error) {
 
 	dockerConfigJSON := DockerConfigJson{
-		auths: &authData,
+		Auths: &authToken,
 		HttpHeaders: httpHeaders{
 			UserAgent: "Docker-Client/19.03.8 (darwin)",
 		},
-		experimental: "disabled",
+		Experimental: "disabled",
 	}
 
 	data, err := json.Marshal(dockerConfigJSON)
