@@ -81,7 +81,9 @@ type Adapter struct {
 
 const dockerfilePath string = "Dockerfile"
 
-func (a Adapter) runBuildConfig(client *occlient.Client, parameters common.BuildParameters) (err error) {
+var secretName string
+
+func (a Adapter) runBuildConfig(client *occlient.Client, parameters common.BuildParameters, destinationImageRegistry string) (err error) {
 	buildName := a.ComponentName
 
 	commonObjectMeta := metav1.ObjectMeta{
@@ -95,11 +97,17 @@ func (a Adapter) runBuildConfig(client *occlient.Client, parameters common.Build
 		buildOutput = "ImageStreamTag"
 	}
 
+	if destinationImageRegistry == "external" {
+		secretName = "regcred"
+	} else {
+		secretName = ""
+	}
+
 	controlC := make(chan os.Signal, 1)
 	signal.Notify(controlC, os.Interrupt, syscall.SIGTERM)
 	go a.terminateBuild(controlC, client, commonObjectMeta)
 
-	_, err = client.CreateDockerBuildConfigWithBinaryInput(commonObjectMeta, dockerfilePath, parameters.Tag, []corev1.EnvVar{}, buildOutput)
+	_, err = client.CreateDockerBuildConfigWithBinaryInput(commonObjectMeta, dockerfilePath, parameters.Tag, []corev1.EnvVar{}, buildOutput, secretName)
 	if err != nil {
 		return err
 	}
@@ -165,6 +173,21 @@ func (a Adapter) Build(parameters common.BuildParameters) (err error) {
 	if err != nil {
 		return err
 	}
+	var destinationImageRegistry string
+	components := strings.Split(parameters.Tag, "/")
+
+	if len(components) < 2 {
+		return errors.New("Invalid image tag supplied, must contain at least 2 components")
+	} else if len(components) == 2 {
+		// assume internal registry
+		destinationImageRegistry = "internal"
+	} else {
+		if components[0] == "docker.io" || components[0] == "quay.io" {
+			destinationImageRegistry = "external"
+		} else if components[0] == "image-registry.openshift-image-registry.svc:5000" {
+			destinationImageRegistry = "internal"
+		}
+	}
 
 	isBuildConfigSupported, err := client.IsBuildConfigSupported()
 	if err != nil {
@@ -172,9 +195,9 @@ func (a Adapter) Build(parameters common.BuildParameters) (err error) {
 	}
 
 	if isBuildConfigSupported && !parameters.Rootless {
-		return a.runBuildConfig(client, parameters)
+		return a.runBuildConfig(client, parameters, destinationImageRegistry)
 	} else {
-		return a.runKaniko(parameters)
+		return a.runKaniko(parameters, destinationImageRegistry)
 	}
 }
 

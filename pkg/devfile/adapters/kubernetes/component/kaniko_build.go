@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/signal"
+
 	"strings"
 
+	"github.com/mitchellh/go-homedir"
 	"github.com/openshift/odo/pkg/devfile/adapters/common"
 	"github.com/openshift/odo/pkg/devfile/adapters/kubernetes/utils"
 	"github.com/openshift/odo/pkg/kclient"
@@ -38,11 +41,31 @@ var (
 	defaultId                  = int64(0)
 )
 
-func (a Adapter) runKaniko(parameters common.BuildParameters) error {
+func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRegistry string) error {
 	var secretUnstructured *unstructured.Unstructured
 	var err error
-	if secretUnstructured, err = utils.CreateSecret(regcredName, parameters.EnvSpecificInfo.GetNamespace(), parameters.DockerConfigJSONFilename); err != nil {
-		return err
+
+	if destinationImageRegistry == "external" {
+		filename, err := homedir.Expand(parameters.DockerConfigJSONFilename)
+		if err != nil {
+			return fmt.Errorf("failed to generate path to file for %s: %v", parameters.DockerConfigJSONFilename, err)
+		}
+
+		f, err := os.Open(filename)
+		if err != nil {
+			return fmt.Errorf("failed to read Docker config %#v : %s", filename, err)
+		}
+		data, err := ioutil.ReadAll(f)
+		if err != nil {
+			return fmt.Errorf("failed to read secret data: %v", err)
+		}
+		defer f.Close()
+
+		if secretUnstructured, err = utils.CreateSecret(regcredName, parameters.EnvSpecificInfo.GetNamespace(), data); err != nil {
+			return err
+		}
+	} else if destinationImageRegistry == "internal" {
+		// TODO: internal registry secret creation
 	}
 
 	if _, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
@@ -103,7 +126,6 @@ func (a Adapter) runKaniko(parameters common.BuildParameters) error {
 		log.Errorf("err: %s\n", err.Error())
 		return err
 	}
-	// return errors.New("WIP: Need to redirect log output the stdout and wait for build to complete")
 
 	log.Successf("Started builder pod %s using Kaniko Build strategy", pod.GetName())
 

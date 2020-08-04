@@ -2,14 +2,14 @@ package utils
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 
-	"encoding/json"
-
+	// "context"
 	adaptersCommon "github.com/openshift/odo/pkg/devfile/adapters/common"
 
 	devfileParser "github.com/openshift/odo/pkg/devfile/parser"
@@ -17,14 +17,14 @@ import (
 	"github.com/openshift/odo/pkg/envinfo"
 	"github.com/openshift/odo/pkg/kclient"
 	"github.com/openshift/odo/pkg/log"
-	"github.com/openshift/odo/pkg/util"
-
-	"github.com/mitchellh/go-homedir"
 	"github.com/openshift/odo/pkg/secret"
+	"github.com/openshift/odo/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	// "sigs.k8s.io/controller-runtime/pkg/client"
 	runtimeUnstructured "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog"
@@ -359,22 +359,12 @@ func PipeStdOutput(cmdOutput string, reader *io.PipeReader, controlC chan os.Sig
 	}
 }
 
-func CreateSecret(regcredName string, ns, dcokerConfigFile string) (*unstructured.Unstructured, error) {
-	filename, err := homedir.Expand(dcokerConfigFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate path to file for %s: %v", dcokerConfigFile, err)
-	}
-
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read Docker config %#v : %s", filename, err)
-	}
-	defer f.Close()
+func CreateSecret(regcredName string, ns string, dockerConfigData []byte) (*unstructured.Unstructured, error) {
 
 	secret, err := secret.CreateDockerConfigSecret(types.NamespacedName{
 		Name:      regcredName,
 		Namespace: ns,
-	}, f)
+	}, dockerConfigData)
 	if err != nil {
 		return nil, err
 	}
@@ -396,3 +386,15 @@ func CreateSecret(regcredName string, ns, dcokerConfigFile string) (*unstructure
 
 	return secretUnstructured, nil
 }
+
+// func getSA(ns *corev1.Namespace) (*corev1.ServiceAccount, error) {
+
+// 	log.Info("finding sa", "sa", "builder", "ns", ns.Name)
+// 	sa := &corev1.ServiceAccount{}
+// 	saType := types.NamespacedName{Name: "builder", Namespace: ns.Name}
+// 	if err := client.Client.Get(context.TODO(), saType, sa); err == nil {
+// 		return sa, err
+// 	} else {
+// 		return nil, err
+// 	}
+// }
