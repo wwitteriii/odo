@@ -33,7 +33,7 @@ import (
 )
 
 type DockerConfigJson struct {
-	auths        []BuilderDockerCfg
+	auths        *BuilderDockerCfg
 	HttpHeaders  httpHeaders
 	experimental string
 }
@@ -43,7 +43,7 @@ type httpHeaders struct {
 }
 
 type BuilderDockerCfg struct {
-	InternalImageRegistryURL Credentials `json:"image-registry.openshift-image-registry.svc:5000"`
+	InternalImageRegistryURL *Credentials `json:"image-registry.openshift-image-registry.svc:5000"`
 }
 
 type Credentials struct {
@@ -431,7 +431,7 @@ func CreateSecret(regcredName string, ns string, dockerConfigData []byte) (*unst
 func CreateDockerConfigJSONData(authData BuilderDockerCfg) ([]byte, error) {
 
 	dockerConfigJSON := DockerConfigJson{
-		auths: []BuilderDockerCfg{authData},
+		auths: &authData,
 		HttpHeaders: httpHeaders{
 			UserAgent: "Docker-Client/19.03.8 (darwin)",
 		},

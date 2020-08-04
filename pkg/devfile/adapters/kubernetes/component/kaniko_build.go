@@ -82,6 +82,7 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRe
 			}
 			if retrievedSecret.Type == "kubernetes.io/dockercfg" {
 				builderDockerCfgSecret = retrievedSecret
+				break
 			}
 
 		}
@@ -94,8 +95,10 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRe
 		}
 
 		builderDockerCfg := &utils.BuilderDockerCfg{
-			InternalImageRegistryURL: utils.Credentials{},
+			InternalImageRegistryURL: &utils.Credentials{},
 		}
+
+		// fmt.Printf(builderDockerCfg.InternalImageRegistryURL.Auth)
 
 		err = json.Unmarshal(builderDockerCfgSecretBytes, builderDockerCfg)
 		if err != nil {
@@ -109,7 +112,6 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRe
 		if secretUnstructured, err = utils.CreateSecret(regcredName, parameters.EnvSpecificInfo.GetNamespace(), data); err != nil {
 			return err
 		}
-		// return errors.New("testing")
 	}
 
 	if _, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
@@ -126,7 +128,7 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRe
 		"component": a.ComponentName,
 	}
 
-	if err := a.createKanikoBuilderPod(labels, initContainer(initContainerName), builderContainer(containerName, parameters.Tag), regcredName); err != nil {
+	if err := a.createKanikoBuilderPod(labels, initContainer(initContainerName), builderContainer(containerName, parameters.Tag, destinationImageRegistry), regcredName); err != nil {
 		return errors.Wrap(err, "error while creating kaniko builder pod")
 	}
 
@@ -203,16 +205,17 @@ func (a Adapter) createKanikoBuilderPod(labels map[string]string, init, builder 
 			SecurityContext: &corev1.PodSecurityContext{
 				RunAsUser: &defaultId,
 			},
+			// ServiceAccountName: "builder",
 			InitContainers: []corev1.Container{*init},
 			Containers:     []corev1.Container{*builder},
 			Volumes: []corev1.Volume{
 				{Name: kanikoSecret,
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
-							SecretName: secretName,
+							SecretName: "builder-dockercfg-4r56z",
 							Items: []corev1.KeyToPath{
 								{
-									Key:  ".dockerconfigjson",
+									Key:  ".dockercfg",
 									Path: "config.json",
 								},
 							},
@@ -237,10 +240,14 @@ func (a Adapter) createKanikoBuilderPod(labels map[string]string, init, builder 
 	return nil
 }
 
-func builderContainer(name, imageTag string) *corev1.Container {
+func builderContainer(name, imageTag, destinationImageRegistry string) *corev1.Container {
 	commandArgs := []string{"--dockerfile=" + buildContextMountPath + "/Dockerfile",
 		"--context=dir://" + buildContextMountPath,
 		"--destination=" + imageTag}
+
+	if destinationImageRegistry == "internal" {
+		commandArgs = append(commandArgs, "--skip-tls-verify")
+	}
 	envVars := []corev1.EnvVar{
 		{Name: "DOCKER_CONFIG", Value: kanikoSecretMountPath},
 		{Name: "AWS_ACCESS_KEY_ID", Value: "NOT_SET"},
