@@ -17,13 +17,11 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog"
 )
 
 const (
-	regcredName           = "regcred"
 	kanikoSecret          = "kaniko-secret"
 	buildContext          = "build-context"
 	buildContextMountPath = "/root/build-context"
@@ -39,30 +37,7 @@ var (
 	defaultId                  = int64(0)
 )
 
-func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRegistry string) error {
-	var secretUnstructured *unstructured.Unstructured
-	var err error
-
-	if destinationImageRegistry == "external" {
-		data, err := utils.CreateDockerConfigDataFromFilepath(parameters.DockerConfigJSONFilename)
-		if err != nil {
-			return err
-		}
-
-		if secretUnstructured, err = utils.CreateSecret(regcredName, parameters.EnvSpecificInfo.GetNamespace(), data); err != nil {
-			return err
-		}
-	} else if destinationImageRegistry == "internal" {
-		// TODO: internal registry secret creation
-	}
-
-	if _, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
-		Namespace(parameters.EnvSpecificInfo.GetNamespace()).
-		Create(secretUnstructured, metav1.CreateOptions{}); err != nil {
-		if errors.Cause(err).Error() != "secrets \""+regcredName+"\" already exists" {
-			return err
-		}
-	}
+func (a Adapter) runKaniko(parameters common.BuildParameters, isImageRegistryInternal bool) error {
 
 	containerName := "build"
 	initContainerName := "init"

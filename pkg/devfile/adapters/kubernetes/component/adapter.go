@@ -45,6 +45,7 @@ import (
 )
 
 const (
+	regcredName           = "regcred"
 	DeployComponentSuffix = "-deploy"
 	BuildTimeout          = 5 * time.Minute
 )
@@ -81,9 +82,7 @@ type Adapter struct {
 
 const dockerfilePath string = "Dockerfile"
 
-var secretName string
-
-func (a Adapter) runBuildConfig(client *occlient.Client, parameters common.BuildParameters, destinationImageRegistry string) (err error) {
+func (a Adapter) runBuildConfig(client *occlient.Client, parameters common.BuildParameters, isImageRegistryInternal bool) (err error) {
 	buildName := a.ComponentName
 
 	commonObjectMeta := metav1.ObjectMeta{
@@ -97,34 +96,14 @@ func (a Adapter) runBuildConfig(client *occlient.Client, parameters common.Build
 		buildOutput = "ImageStreamTag"
 	}
 
-	var secretUnstructured *unstructured.Unstructured
-
-	if destinationImageRegistry == "external" {
-		secretName = "regcred"
-		data, err := utils.CreateDockerConfigDataFromFilepath(parameters.DockerConfigJSONFilename)
-		if err != nil {
-			return err
-		}
-
-		if secretUnstructured, err = utils.CreateSecret(regcredName, parameters.EnvSpecificInfo.GetNamespace(), data); err != nil {
-			return err
-		}
-
-		if _, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
-			Namespace(parameters.EnvSpecificInfo.GetNamespace()).
-			Create(secretUnstructured, metav1.CreateOptions{}); err != nil {
-			if errors.Cause(err).Error() != "secrets \""+regcredName+"\" already exists" {
-				return err
-			}
-		}
-	} else {
-		secretName = ""
-	}
-
 	controlC := make(chan os.Signal, 1)
 	signal.Notify(controlC, os.Interrupt, syscall.SIGTERM)
 	go a.terminateBuild(controlC, client, commonObjectMeta)
 
+	var secretName string
+	if !isImageRegistryInternal {
+		secretName = regcredName
+	}
 	_, err = client.CreateDockerBuildConfigWithBinaryInput(commonObjectMeta, dockerfilePath, parameters.Tag, []corev1.EnvVar{}, buildOutput, secretName)
 	if err != nil {
 		return err
@@ -191,31 +170,27 @@ func (a Adapter) Build(parameters common.BuildParameters) (err error) {
 	if err != nil {
 		return err
 	}
-	var destinationImageRegistry string
-	components := strings.Split(parameters.Tag, "/")
-
-	if len(components) < 2 {
-		return errors.New("Invalid image tag supplied, must contain at least 2 components")
-	} else if len(components) == 2 {
-		// assume internal registry
-		destinationImageRegistry = "internal"
-	} else {
-		if components[0] == "docker.io" || components[0] == "quay.io" {
-			destinationImageRegistry = "external"
-		} else if components[0] == "image-registry.openshift-image-registry.svc:5000" {
-			destinationImageRegistry = "internal"
-		}
-	}
 
 	isBuildConfigSupported, err := client.IsBuildConfigSupported()
 	if err != nil {
 		return err
 	}
 
+	isImageRegistryInternal, err := isInternalRegistry(parameters.Tag)
+	if err != nil {
+		return err
+	}
+
+	if !isImageRegistryInternal {
+		if err := a.createDockerConfigSecret(parameters); err != nil {
+			return err
+		}
+	}
+
 	if isBuildConfigSupported && !parameters.Rootless {
-		return a.runBuildConfig(client, parameters, destinationImageRegistry)
+		return a.runBuildConfig(client, parameters, isImageRegistryInternal)
 	} else {
-		return a.runKaniko(parameters, destinationImageRegistry)
+		return a.runKaniko(parameters, isImageRegistryInternal)
 	}
 }
 
@@ -1044,4 +1019,34 @@ func (a Adapter) Exec(command []string) error {
 	}
 
 	return exec.ExecuteCommand(&a.Client, componentInfo, command, true, nil, nil)
+}
+
+func (a Adapter) createDockerConfigSecret(parameters common.BuildParameters) error {
+	data, err := utils.CreateDockerConfigDataFromFilepath(parameters.DockerConfigJSONFilename)
+	if err != nil {
+		return err
+	}
+	secretUnstructured, err := utils.CreateSecret(regcredName, parameters.EnvSpecificInfo.GetNamespace(), data)
+	if err != nil {
+		return err
+	}
+	if _, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
+		Namespace(parameters.EnvSpecificInfo.GetNamespace()).
+		Create(secretUnstructured, metav1.CreateOptions{}); err != nil {
+		if errors.Cause(err).Error() != "secrets \""+regcredName+"\" already exists" {
+			return err
+		}
+	}
+	return nil
+}
+
+func isInternalRegistry(imageTag string) (bool, error) {
+	components := strings.Split(imageTag, "/")
+	if len(components) < 2 || len(components) > 3 {
+		return false, fmt.Errorf("Invalid image tag '%s', must contain at least 2 components", imageTag)
+	}
+	if len(components) == 2 || components[0] == "image-registry.openshift-image-registry.svc:5000" {
+		return true, nil
+	}
+	return false, nil
 }
