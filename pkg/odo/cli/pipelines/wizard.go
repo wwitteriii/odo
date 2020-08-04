@@ -94,7 +94,6 @@ func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []str
 	}
 
 	io.GitOpsRepoURL = utility.AddGitSuffixIfNecessary(io.GitOpsRepoURL)
-
 	return nil
 }
 

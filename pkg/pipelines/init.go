@@ -115,6 +115,7 @@ func Init(o *InitOptions, fs afero.Fs) error {
 	}
 	if o.GitOpsWebhookSecret == "" {
 		gitSecret, err := secrets.GenerateString(webhookSecretLength)
+		fmt.Println("Was in this webhook block")
 		if err != nil {
 			return fmt.Errorf("failed to generate GitOps webhook secret: %v", err)
 		}
