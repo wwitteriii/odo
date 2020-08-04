@@ -16,6 +16,7 @@ import (
 	"time"
 
 	componentlabels "github.com/openshift/odo/pkg/component/labels"
+	"github.com/openshift/odo/pkg/devfile"
 	"github.com/openshift/odo/pkg/envinfo"
 	"github.com/openshift/odo/pkg/exec"
 
@@ -196,10 +197,17 @@ func (a Adapter) Build(parameters common.BuildParameters) (err error) {
 		return err
 	}
 
-	if isBuildConfigSupported && !parameters.Rootless {
-		return a.runBuildConfig(client, parameters)
-	} else {
-		return a.runKaniko(parameters)
+	switch parameters.BuildType {
+	case devfile.DockerFile:
+		if isBuildConfigSupported && !parameters.Rootless {
+			return a.runBuildConfig(client, parameters)
+		} else {
+			return a.runKaniko(parameters)
+		}
+	case devfile.SourceToImage:
+		return a.runSourceToImage(client, parameters)
+	default:
+		return errors.New("BuildType is undefined.")
 	}
 }
 

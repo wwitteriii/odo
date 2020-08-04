@@ -1,6 +1,7 @@
 package common
 
 import (
+	"github.com/openshift/odo/pkg/devfile"
 	devfileParser "github.com/openshift/odo/pkg/devfile/parser"
 	"github.com/openshift/odo/pkg/devfile/parser/data/common"
 	"github.com/openshift/odo/pkg/envinfo"
@@ -36,6 +37,7 @@ type BuildParameters struct {
 	IgnoredFiles             []string                // IgnoredFiles is the list of files to not push up to a component
 	DockerConfigJSONFilename string                  // Credentials refers to the path to the dockerconfig file containing external registry credentials
 	Rootless                 bool                    // Rootless/Unprivileged builder pod
+	BuildType                devfile.BuildStrategy   // Build strategy to be used
 }
 
 // DeployParameters is a struct containing the parameters to be used when building the image for a devfile component

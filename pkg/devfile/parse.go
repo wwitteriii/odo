@@ -5,6 +5,17 @@ import (
 	"github.com/openshift/odo/pkg/devfile/validate"
 )
 
+type BuildStrategy int
+
+const (
+	DockerFile BuildStrategy = iota
+	SourceToImage
+)
+
+func (b BuildStrategy) String() string {
+	return [...]string{"DockerFile", "SourceToImage"}[b]
+}
+
 // This is the top level parse code which has validation code specific to odo hence it cannot be kept inside the
 // devfile/parser package. That package is supposed to be independent of odo.
 
