@@ -72,7 +72,7 @@ func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []str
 		selectOverwriteOption := ui.SelectOptionOverwrite()
 		if selectOverwriteOption == "no" {
 			io.Overwrite = false
-			return fmt.Errorf("Cannot create Gitops configuration since file exists at")
+			return fmt.Errorf("Cannot create Gitops configuration since file exists at %s", io.OutputPath)
 		}
 
 		io.Overwrite = true
