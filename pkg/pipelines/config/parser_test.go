@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/openshift/odo/pkg/pipelines/ioutils"
+	"github.com/openshift/odo/pkg/pipelines/yaml"
 )
 
 func TestParse(t *testing.T) {
@@ -135,5 +136,36 @@ func TestParse(t *testing.T) {
 				rt.Errorf("Parse(%s) failed diff\n%s", tt.filename, diff)
 			}
 		})
+	}
+}
+
+func TestParsePipelinesFolder(t *testing.T) {
+
+	want := &Manifest{
+		Environments: []*Environment{
+			{
+				Name:    "development",
+				Cluster: "testing.cluster",
+				Apps: []*Application{
+					{Name: "my-app-1",
+						Services: []*Service{
+							{Name: "service-http",
+								SourceURL: "https://github.com/myproject/myservice.git"},
+						}},
+				},
+			},
+		},
+	}
+
+	fakeFs := ioutils.NewMapFilesystem()
+	yaml.MarshalItemToFile(fakeFs, "gitops/pipelines.yaml", want)
+
+	got, err := ParsePipelinesFolder(fakeFs, "gitops")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(got, want); diff != "" {
+		t.Fatalf("ParsePipelinesFolder() failed: %s", diff)
 	}
 }

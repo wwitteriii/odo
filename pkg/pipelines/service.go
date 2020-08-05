@@ -33,7 +33,7 @@ type AddServiceOptions struct {
 }
 
 func AddService(p *AddServiceOptions, fs afero.Fs) error {
-	m, err := config.ParseFile(fs, p.PipelinesFolderPath)
+	m, err := config.ParsePipelinesFolder(fs, p.PipelinesFolderPath)
 	if err != nil {
 		return fmt.Errorf("failed to parse pipelines-file: %v", err)
 	}
@@ -122,8 +122,7 @@ func serviceResources(m *config.Manifest, fs afero.Fs, o *AddServiceOptions) (re
 		return nil, err
 	}
 
-	files[filepath.Base(o.PipelinesFolderPath+"/"+pipelinesFile)] = m
-	// outputPath := filepath.Dir(o.PipelinesFilePath)
+	files[filepath.Base(filepath.Join(o.PipelinesFolderPath, pipelinesFile))] = m
 	buildParams := &BuildParameters{
 		PipelinesFolderPath: o.PipelinesFolderPath,
 		OutputPath:          o.PipelinesFolderPath,

@@ -19,7 +19,7 @@ type EnvParameters struct {
 
 // AddEnv adds a new environment to the pipelines-file.
 func AddEnv(o *EnvParameters, appFs afero.Fs) error {
-	m, err := config.ParseFile(appFs, o.PipelinesFolderPath)
+	m, err := config.ParsePipelinesFolder(appFs, o.PipelinesFolderPath)
 	if err != nil {
 		return fmt.Errorf("failed to parse pipeline-file: %v", err)
 	}
@@ -37,7 +37,6 @@ func AddEnv(o *EnvParameters, appFs afero.Fs) error {
 	}
 	m.Environments = append(m.Environments, newEnv)
 	files[pipelinesFile] = m
-	// outputPath := filepath.Dir(o.PipelinesFilePath)
 	buildParams := &BuildParameters{
 		PipelinesFolderPath: o.PipelinesFolderPath,
 		OutputPath:          o.PipelinesFolderPath,

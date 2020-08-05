@@ -74,7 +74,7 @@ func newCmdAdd(name, fullName string) *cobra.Command {
 	cmd.Flags().StringVar(&o.EnvName, "env-name", "", "Name of the environment where the service will be added")
 	cmd.Flags().StringVar(&o.ImageRepo, "image-repo", "", "Image repository of the form <registry>/<username>/<repository> or <project>/<app> which is used to push newly built images")
 	cmd.Flags().StringVar(&o.InternalRegistryHostname, "image-repo-internal-registry-hostname", "image-registry.openshift-image-registry.svc:5000", "Host-name for internal image registry e.g. docker-registry.default.svc.cluster.local:5000, used if you are pushing your images to the internal image registry")
-	cmd.Flags().StringVar(&o.PipelinesFolderPath, "pipelines-folder", ".", "Folder path to retrieve manifest, eg. /test/ where manifest exists at /test/pipelines.yaml")
+	cmd.Flags().StringVar(&o.PipelinesFolderPath, "pipelines-folder", ".", "Folder path to retrieve manifest, eg. /test where manifest exists at /test/pipelines.yaml")
 
 	cmd.Flags().StringVar(&o.SealedSecretsService.Namespace, "sealed-secrets-ns", "sealed-secrets", "Namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator")
 	cmd.Flags().StringVar(&o.SealedSecretsService.Name, "sealed-secrets-svc", "sealedsecretcontroller-sealed-secrets", "Name of the Sealed Secrets services that encrypts secrets")

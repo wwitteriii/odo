@@ -6,6 +6,11 @@ import (
 	"sort"
 )
 
+const (
+	// PipelinesFile is the name of the pipelines manifest file
+	PipelinesFile = "pipelines.yaml"
+)
+
 // PathForService gives a repo-rooted path within a repository.
 func PathForService(app *Application, env *Environment, serviceName string) string {
 	return filepath.Join(PathForApplication(env, app), "services", serviceName)

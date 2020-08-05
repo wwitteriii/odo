@@ -77,7 +77,7 @@ func NewCmdBuild(name, fullName string) *cobra.Command {
 		},
 	}
 
-	buildCmd.Flags().StringVar(&o.output, "output", ".", "folder path to add Gitops resources")
-	buildCmd.Flags().StringVar(&o.pipelinesFolderPath, "pipelines-folder", ".", "Folder path to retrieve manifest, eg. /test/ where manifest exists at /test/pipelines.yaml")
+	buildCmd.Flags().StringVar(&o.output, "output", ".", "Folder path to add GitOps resources")
+	buildCmd.Flags().StringVar(&o.pipelinesFolderPath, "pipelines-folder", ".", "Folder path to retrieve manifest, eg. /test where manifest exists at /test/pipelines.yaml")
 	return buildCmd
 }

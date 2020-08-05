@@ -44,7 +44,7 @@ func (o *options) Validate() (err error) {
 func (o *options) setFlags(command *cobra.Command) {
 
 	// pipeline option
-	command.Flags().StringVar(&o.pipelinesFolderPath, "pipelines-folder", ".", "Folder path to retrieve manifest, eg. /test/ where manifest exists at /test/pipelines.yaml")
+	command.Flags().StringVar(&o.pipelinesFolderPath, "pipelines-folder", ".", "Folder path to retrieve manifest, eg. /test where manifest exists at /test/pipelines.yaml")
 
 	// access-token option
 	command.Flags().StringVar(&o.accessToken, "access-token", "", "Access token to be used to create Git repository webhook")

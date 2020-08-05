@@ -7,7 +7,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/mkmik/multierror"
 	"github.com/openshift/odo/pkg/pipelines/ioutils"
-	"github.com/spf13/afero"
 	"knative.dev/pkg/apis"
 )
 
@@ -123,7 +122,7 @@ func TestValidate(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%s (%s)", test.desc, test.filename), func(rt *testing.T) {
-			pipelines, err := ParseFileTest(ioutils.NewFilesystem(), test.filename)
+			pipelines, err := ParseFile(ioutils.NewFilesystem(), test.filename)
 			if err != nil {
 				rt.Fatalf("failed to parse file:%v", err)
 			}
@@ -154,14 +153,4 @@ func matchMultiErrors(t *testing.T, a error, b error) error {
 		}
 	}
 	return nil
-}
-
-// A test version of the parse file test
-func ParseFileTest(fs afero.Fs, filepath string) (*Manifest, error) {
-	f, err := fs.Open(filepath)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	return Parse(f)
 }

@@ -64,7 +64,7 @@ func (eo *AddEnvParameters) Run() error {
 	}
 	err := pipelines.AddEnv(&options, ioutils.NewFilesystem())
 	if err != nil {
-		return nil
+		return err
 	}
 	log.Successf("Created Environment %s sucessfully.", eo.envName)
 	return nil
@@ -86,7 +86,7 @@ func NewCmdAddEnv(name, fullName string) *cobra.Command {
 
 	addEnvCmd.Flags().StringVar(&o.envName, "env-name", "", "Name of the environment/namespace")
 	addEnvCmd.MarkFlagRequired("env-name")
-	addEnvCmd.Flags().StringVar(&o.pipelinesFolder, "pipelines-folder", ".", "Folder path to retrieve manifest, eg. /test/ where manifest exists at /test/pipelines.yaml")
+	addEnvCmd.Flags().StringVar(&o.pipelinesFolder, "pipelines-folder", ".", "Folder path to retrieve manifest, eg. /test where manifest exists at /test/pipelines.yaml")
 	addEnvCmd.Flags().StringVar(&o.cluster, "cluster", "", "Deployment cluster e.g. https://kubernetes.local.svc")
 	return addEnvCmd
 }

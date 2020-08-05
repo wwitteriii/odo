@@ -20,7 +20,7 @@ type BuildParameters struct {
 
 // BuildResources builds all resources from a pipelines.
 func BuildResources(o *BuildParameters, appFs afero.Fs) error {
-	m, err := config.ParseFile(appFs, o.PipelinesFolderPath)
+	m, err := config.ParsePipelinesFolder(appFs, o.PipelinesFolderPath)
 	if err != nil {
 		return fmt.Errorf("failed to parse pipelines: %v", err)
 	}

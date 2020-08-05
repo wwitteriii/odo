@@ -113,8 +113,8 @@ func TestGetGitRepoURL(t *testing.T) {
 				},
 			},
 			isCICD:      false,
-			serviceName: &QualifiedServiceName{EnvironmentName: "myenv", ServiceName: "myservice"},
-			want:        "https://github.com/foo2/bar.git",
+			serviceName: &QualifiedServiceName{EnvironmentName: "myenv", ServiceName: "notmyservice"},
+			want:        "https://not/mine",
 		},
 	}
 
