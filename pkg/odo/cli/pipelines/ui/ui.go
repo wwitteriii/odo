@@ -100,7 +100,6 @@ func EnterInteractiveCommandLineGitWebhookSecret() string {
 	prompt = &survey.Input{
 		Message: "Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the GitOps repository. (if not provided, it will be auto-generated)",
 		Help:    "The webhook secret is a secure string you plan to use to authenticate pull/push requests to the version control system of your choice, this secure string will be added to the webhook sealed secret created to enhance security. Choose a secure string of your choice for this field.",
-		Default: "",
 	}
 
 	err := survey.AskOne(prompt, &path, nil)
@@ -176,7 +175,6 @@ func EnterInteractiveCommandLineServiceWebhookSecret() string {
 	var path string
 	prompt := &survey.Input{
 		Message: " Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the Service repository. (if not provided, it will be auto-generated)",
-		Default: "",
 		Help:    "The webhook secret is a secure string you plan to use to authenticate pull/push requests to the version control system of your choice, this secure string will be added to the webhook sealed secret created to enhance security. Choose a secure string of your choice for this field.",
 	}
 	err := survey.AskOne(prompt, &path, nil)
@@ -216,7 +214,6 @@ func SelectOptionCommitStatusTracker() string {
 	prompt := &survey.Select{
 		Message: "Please enter (yes/no) if you desire to use commit-status-tracker",
 		Options: []string{"yes", "no"},
-		Default: "no",
 	}
 	err := survey.AskOne(prompt, &path, survey.Required)
 	ui.HandleError(err)
@@ -225,10 +222,9 @@ func SelectOptionCommitStatusTracker() string {
 
 func SelectOptionBootstrap() string {
 	var path string
-
 	prompt := &survey.Select{
 		Message: "Please enter (Bootstrap/init), choose bootstrap if you wish to add a mock service to the gitops repository",
-		Options: []string{"Bootstrap", "init"},
+		Options: []string{"Bootstrap", "Initialise"},
 		Default: "Bootstrap",
 	}
 	err := survey.AskOne(prompt, &path, survey.Required)
