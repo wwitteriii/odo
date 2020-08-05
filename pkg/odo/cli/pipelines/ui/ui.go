@@ -40,8 +40,8 @@ func EnterInteractiveCommandLineImageRepoInternalRegistry() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
-		Message: " Image repository of the form <project>/<app> which is used to push newly built images.",
-		Help:    " By default images are built from source, whenever there is a push to the repository for your service source code and this image will be pushed to the image repository specified in this parameter, if the value is of the form <registry>/<username>/<repository>, then it assumed that it is an upstream image repository e.g. Quay, if its of the form <project>/<app> the internal registry present on the current cluster will be used as the image repository.",
+		Message: "Image repository of the form <project>/<app> which is used to push newly built images.",
+		Help:    "By default images are built from source, whenever there is a push to the repository for your service source code and this image will be pushed to the image repository specified in this parameter, if the value is of the form <registry>/<username>/<repository>, then it assumed that it is an upstream image repository e.g. Quay, if its of the form <project>/<app> the internal registry present on the current cluster will be used as the image repository.",
 	}
 
 	err := survey.AskOne(prompt, &path, survey.Required)
@@ -54,8 +54,8 @@ func EnterInteractiveCommandLineDockercfg() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
-		Message: " Path to config.json which authenticates image pushes to the desired image registry, the default is <insert default>?",
-		Help:    "  The secret present in the file path generates a secure secret that authenticates the push of the image built when the app-ci pipeline is run. The image along with the necessary labels will be present on the upstream image repository of choice.",
+		Message: "Path to config.json which authenticates image pushes to the desired image registry, the default is <insert default>?",
+		Help:    "The secret present in the file path generates a secure secret that authenticates the push of the image built when the app-ci pipeline is run. The image along with the necessary labels will be present on the upstream image repository of choice.",
 		Default: "~/.docker/config.json",
 	}
 
@@ -70,7 +70,7 @@ func EnterInteractiveCommandLineImageRepoExternalRepository() string {
 	var prompt *survey.Input
 	prompt = &survey.Input{
 		Message: "Image repository of the form <registry>/<username>/<repository> which is used to push newly built images.",
-		Help:    "  By default images are built from source, whenever there is a push to the repository for your service source code and this image will be pushed to the image repository specified in this parameter, if the value is of the form <registry>/<username>/<repository>, then it assumed that it is an upstream image repository e.g. Quay, if its of the form <project>/<app> the internal registry present on the current cluster will be used as the image repository.",
+		Help:    "By default images are built from source, whenever there is a push to the repository for your service source code and this image will be pushed to the image repository specified in this parameter, if the value is of the form <registry>/<username>/<repository>, then it assumed that it is an upstream image repository e.g. Quay, if its of the form <project>/<app> the internal registry present on the current cluster will be used as the image repository.",
 	}
 
 	err := survey.AskOne(prompt, &path, survey.Required)
@@ -98,7 +98,7 @@ func EnterInteractiveCommandLineGitWebhookSecret() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
-		Message: " Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the Service repository. (if not provided, it will be auto-generated)",
+		Message: "Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the GitOps repository. (if not provided, it will be auto-generated)",
 		Help:    "The webhook secret is a secure string you plan to use to authenticate pull/push requests to the version control system of your choice, this secure string will be added to the webhook sealed secret created to enhance security. Choose a secure string of your choice for this field.",
 		Default: "",
 	}
@@ -139,8 +139,6 @@ func EnterInteractiveCommandLineSealedSecretNamespace() string {
 	return path
 }
 
-// OptionBootstrap allows the user to choose if they want to bootstrap or not
-
 func EnterInteractiveCommandLineStatusTrackerAccessToken() string {
 	var path string
 	prompt := &survey.Password{
@@ -152,7 +150,6 @@ func EnterInteractiveCommandLineStatusTrackerAccessToken() string {
 	return path
 }
 
-//
 func EnterInteractiveCommandLinePrefix() string {
 	var path string
 	prompt := &survey.Input{
@@ -164,7 +161,6 @@ func EnterInteractiveCommandLinePrefix() string {
 	return path
 }
 
-//
 func EnterInteractiveCommandLineServiceRepoURL() string {
 	var path string
 	prompt := &survey.Input{
@@ -176,7 +172,6 @@ func EnterInteractiveCommandLineServiceRepoURL() string {
 	return path
 }
 
-// EnterInteractiveCommandLineServiceWebhookSecret function for Service webhook secret
 func EnterInteractiveCommandLineServiceWebhookSecret() string {
 	var path string
 	prompt := &survey.Input{
@@ -234,7 +229,7 @@ func SelectOptionBootstrap() string {
 	prompt := &survey.Select{
 		Message: "Please enter (Bootstrap/init), choose bootstrap if you wish to add a mock service to the gitops repository",
 		Options: []string{"Bootstrap", "init"},
-		Default: "no",
+		Default: "Bootstrap",
 	}
 	err := survey.AskOne(prompt, &path, survey.Required)
 	ui.HandleError(err)
