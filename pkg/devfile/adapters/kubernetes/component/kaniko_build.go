@@ -24,7 +24,6 @@ import (
 )
 
 const (
-	regcredName              = "regcred"
 	kanikoSecret             = "kaniko-secret"
 	buildContext             = "build-context"
 	buildContextMountPath    = "/root/build-context"
@@ -42,22 +41,13 @@ var (
 	saSecretNames              = []string{}
 )
 
-func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRegistry string) error {
+func (a Adapter) runKaniko(parameters common.BuildParameters, isImageRegistryInternal bool) error {
 	var secretUnstructured *unstructured.Unstructured
 	var err error
 	var serviceAccountList *corev1.ServiceAccountList
 	var builderDockerCfgSecret *corev1.Secret
 
-	if destinationImageRegistry == "external" {
-		data, err := utils.CreateDockerConfigDataFromFilepath(parameters.DockerConfigJSONFilename)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("%s", fmt.Sprintf("%s", data))
-		if secretUnstructured, err = utils.CreateSecret(regcredName, parameters.EnvSpecificInfo.GetNamespace(), data); err != nil {
-			return err
-		}
-	} else if destinationImageRegistry == "internal" {
+	if isImageRegistryInternal {
 		if serviceAccountList, err = a.Client.KubeClient.CoreV1().ServiceAccounts(parameters.EnvSpecificInfo.GetNamespace()).List(metav1.ListOptions{}); err != nil {
 			return err
 		}
@@ -112,14 +102,14 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRe
 			return err
 		}
 
-	}
-
-	if _, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
-		Namespace(parameters.EnvSpecificInfo.GetNamespace()).
-		Create(secretUnstructured, metav1.CreateOptions{}); err != nil {
-		if errors.Cause(err).Error() != "secrets \""+regcredName+"\" already exists" {
-			return err
+		if _, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
+			Namespace(parameters.EnvSpecificInfo.GetNamespace()).
+			Create(secretUnstructured, metav1.CreateOptions{}); err != nil {
+			if errors.Cause(err).Error() != "secrets \""+regcredName+"\" already exists" {
+				return err
+			}
 		}
+
 	}
 
 	containerName := "build"
@@ -128,7 +118,7 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, destinationImageRe
 		"component": a.ComponentName,
 	}
 
-	if err := a.createKanikoBuilderPod(labels, initContainer(initContainerName), builderContainer(containerName, parameters.Tag, destinationImageRegistry), regcredName); err != nil {
+	if err := a.createKanikoBuilderPod(labels, initContainer(initContainerName), builderContainer(containerName, parameters.Tag, isImageRegistryInternal), regcredName); err != nil {
 		return errors.Wrap(err, "error while creating kaniko builder pod")
 	}
 
@@ -239,12 +229,12 @@ func (a Adapter) createKanikoBuilderPod(labels map[string]string, init, builder 
 	return nil
 }
 
-func builderContainer(name, imageTag, destinationImageRegistry string) *corev1.Container {
+func builderContainer(name, imageTag string, isImageRegistryInternal bool) *corev1.Container {
 	commandArgs := []string{"--dockerfile=" + buildContextMountPath + "/Dockerfile",
 		"--context=dir://" + buildContextMountPath,
 		"--destination=" + imageTag}
 
-	if destinationImageRegistry == "internal" {
+	if isImageRegistryInternal {
 		commandArgs = append(commandArgs, "--skip-tls-verify")
 	}
 	envVars := []corev1.EnvVar{
