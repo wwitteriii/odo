@@ -53,17 +53,17 @@ func NewWizardParameters() *WizardParameters {
 // If the prefix provided doesn't have a "-" then one is added, this makes the
 // generated environment names nicer to read.
 func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []string) error {
-	io.GitOpsRepoURL = ui.EnterInteractiveCommandLineGitRepo()
+	io.GitOpsRepoURL = ui.EnterGitRepo()
 	option := ui.SelectOptionImageRepository()
 	if option == "Openshift Internal repository" {
-		io.InternalRegistryHostname = ui.EnterInteractiveCommandLineInternalRegistry()
-		io.ImageRepo = ui.EnterInteractiveCommandLineImageRepoInternalRegistry()
+		io.InternalRegistryHostname = ui.EnterInternalRegistry()
+		io.ImageRepo = ui.EnterImageRepoInternalRegistry()
 
 	} else {
-		io.DockerConfigJSONFilename = ui.EnterInteractiveCommandLineDockercfg()
-		io.ImageRepo = ui.EnterInteractiveCommandLineImageRepoExternalRepository()
+		io.DockerConfigJSONFilename = ui.EnterDockercfg()
+		io.ImageRepo = ui.EnterImageRepoExternalRepository()
 	}
-	io.OutputPath = ui.EnterInteractiveCommandLineOutputPath()
+	io.OutputPath = ui.EnterOutputPath()
 	exists, _ := ioutils.IsExisting(ioutils.NewFilesystem(), filepath.Join(io.OutputPath, "pipelines.yaml"))
 
 	if !exists {
@@ -77,19 +77,19 @@ func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []str
 
 		io.Overwrite = true
 	}
-	io.GitOpsWebhookSecret = ui.EnterInteractiveCommandLineGitWebhookSecret()
-	io.SealedSecretsService.Name = ui.EnterInteractiveCommandLineSealedSecrets()
-	io.SealedSecretsService.Namespace = ui.EnterInteractiveCommandLineSealedSecretNamespace()
+	io.GitOpsWebhookSecret = ui.EnterGitWebhookSecret()
+	io.SealedSecretsService.Name = ui.EnterSealedSecretService()
+	io.SealedSecretsService.Namespace = ui.EnterSealedSecretNamespace()
 	commitStatusTrackerCheck := ui.SelectOptionCommitStatusTracker()
 	if commitStatusTrackerCheck == "yes" {
-		io.StatusTrackerAccessToken = ui.EnterInteractiveCommandLineStatusTrackerAccessToken()
+		io.StatusTrackerAccessToken = ui.EnterStatusTrackerAccessToken()
 	}
-	io.Prefix = ui.EnterInteractiveCommandLinePrefix()
+	io.Prefix = ui.EnterPrefix()
 	io.Prefix = utility.MaybeCompletePrefix(io.Prefix)
 	InitOption := ui.SelectOptionBootstrap()
 	if InitOption == "Bootstrap" {
-		io.ServiceRepoURL = ui.EnterInteractiveCommandLineServiceRepoURL()
-		io.ServiceWebhookSecret = ui.EnterInteractiveCommandLineServiceWebhookSecret()
+		io.ServiceRepoURL = ui.EnterServiceRepoURL()
+		io.ServiceWebhookSecret = ui.EnterServiceWebhookSecret()
 		io.ServiceRepoURL = utility.AddGitSuffixIfNecessary(io.ServiceRepoURL)
 	}
 

@@ -6,8 +6,8 @@ import (
 	"github.com/openshift/odo/pkg/odo/cli/ui"
 )
 
-// EnterComponentName allows the user to specify the component name in a prompt
-func EnterInteractiveCommandLineGitRepo() string {
+// EnterGitRepo allows the user to specify the git repository in a prompt
+func EnterGitRepo() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
@@ -21,8 +21,8 @@ func EnterInteractiveCommandLineGitRepo() string {
 	return path
 }
 
-// EnterComponentName allows the user to specify the component name in a prompt
-func EnterInteractiveCommandLineInternalRegistry() string {
+// EnterInternalRegistry allows the user to specify the internal registry in a prompt
+func EnterInternalRegistry() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
@@ -36,7 +36,7 @@ func EnterInteractiveCommandLineInternalRegistry() string {
 	return path
 }
 
-func EnterInteractiveCommandLineImageRepoInternalRegistry() string {
+func EnterImageRepoInternalRegistry() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
@@ -50,7 +50,7 @@ func EnterInteractiveCommandLineImageRepoInternalRegistry() string {
 	return path
 }
 
-func EnterInteractiveCommandLineDockercfg() string {
+func EnterDockercfg() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
@@ -65,7 +65,7 @@ func EnterInteractiveCommandLineDockercfg() string {
 	return path
 }
 
-func EnterInteractiveCommandLineImageRepoExternalRepository() string {
+func EnterImageRepoExternalRepository() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
@@ -79,7 +79,7 @@ func EnterInteractiveCommandLineImageRepoExternalRepository() string {
 	return path
 }
 
-func EnterInteractiveCommandLineOutputPath() string {
+func EnterOutputPath() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
@@ -94,7 +94,7 @@ func EnterInteractiveCommandLineOutputPath() string {
 	return path
 }
 
-func EnterInteractiveCommandLineGitWebhookSecret() string {
+func EnterGitWebhookSecret() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
@@ -108,7 +108,7 @@ func EnterInteractiveCommandLineGitWebhookSecret() string {
 	return path
 }
 
-func EnterInteractiveCommandLineSealedSecrets() string {
+func EnterSealedSecretService() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
@@ -123,7 +123,7 @@ func EnterInteractiveCommandLineSealedSecrets() string {
 	return path
 }
 
-func EnterInteractiveCommandLineSealedSecretNamespace() string {
+func EnterSealedSecretNamespace() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
@@ -138,7 +138,7 @@ func EnterInteractiveCommandLineSealedSecretNamespace() string {
 	return path
 }
 
-func EnterInteractiveCommandLineStatusTrackerAccessToken() string {
+func EnterStatusTrackerAccessToken() string {
 	var path string
 	prompt := &survey.Password{
 		Message: "Please provide a token used to authenticate API calls to push commit-status updates to your Git hosting service",
@@ -149,7 +149,7 @@ func EnterInteractiveCommandLineStatusTrackerAccessToken() string {
 	return path
 }
 
-func EnterInteractiveCommandLinePrefix() string {
+func EnterPrefix() string {
 	var path string
 	prompt := &survey.Input{
 		Message: "Add a prefix to the environment names(dev, stage,cicd etc.) to distinguish and identify individual environments?",
@@ -160,7 +160,7 @@ func EnterInteractiveCommandLinePrefix() string {
 	return path
 }
 
-func EnterInteractiveCommandLineServiceRepoURL() string {
+func EnterServiceRepoURL() string {
 	var path string
 	prompt := &survey.Input{
 		Message: "Provide the URL for your Service repository e.g. https://github.com/organisation/service.git",
@@ -171,7 +171,7 @@ func EnterInteractiveCommandLineServiceRepoURL() string {
 	return path
 }
 
-func EnterInteractiveCommandLineServiceWebhookSecret() string {
+func EnterServiceWebhookSecret() string {
 	var path string
 	prompt := &survey.Input{
 		Message: " Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the Service repository. (if not provided, it will be auto-generated)",
