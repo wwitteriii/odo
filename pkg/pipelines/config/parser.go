@@ -1,8 +1,10 @@
 package config
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
+	"path/filepath"
 
 	"github.com/spf13/afero"
 	"sigs.k8s.io/yaml"
@@ -31,4 +33,17 @@ func ParseFile(fs afero.Fs, filename string) (*Manifest, error) {
 	}
 	defer f.Close()
 	return Parse(f)
+}
+
+// ParsePipelinesFolder will accept the pipelines folder path
+// and appends pipelines file name before parsing it
+func ParsePipelinesFolder(fs afero.Fs, folderPath string) (*Manifest, error) {
+	info, err := fs.Stat(folderPath)
+	if err != nil {
+		return nil, err
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("The path %s is a file path(required directory path)", folderPath)
+	}
+	return ParseFile(fs, filepath.Join(folderPath, PipelinesFile))
 }

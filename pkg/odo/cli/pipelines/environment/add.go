@@ -29,10 +29,10 @@ var (
 
 // AddEnvParameters encapsulates the parameters for the odo pipelines init command.
 type AddEnvParameters struct {
-	envName       string
-	output        string
-	pipelinesFile string
-	cluster       string
+	envName         string
+	output          string
+	pipelinesFolder string
+	cluster         string
 	// generic context options common to all commands
 	*genericclioptions.Context
 }
@@ -58,13 +58,13 @@ func (eo *AddEnvParameters) Validate() error {
 // Run runs the project bootstrap command.
 func (eo *AddEnvParameters) Run() error {
 	options := pipelines.EnvParameters{
-		EnvName:           eo.envName,
-		PipelinesFilePath: eo.pipelinesFile,
-		Cluster:           eo.cluster,
+		EnvName:             eo.envName,
+		PipelinesFolderPath: eo.pipelinesFolder,
+		Cluster:             eo.cluster,
 	}
 	err := pipelines.AddEnv(&options, ioutils.NewFilesystem())
 	if err != nil {
-		return nil
+		return err
 	}
 	log.Successf("Created Environment %s sucessfully.", eo.envName)
 	return nil
@@ -86,7 +86,7 @@ func NewCmdAddEnv(name, fullName string) *cobra.Command {
 
 	addEnvCmd.Flags().StringVar(&o.envName, "env-name", "", "Name of the environment/namespace")
 	addEnvCmd.MarkFlagRequired("env-name")
-	addEnvCmd.Flags().StringVar(&o.pipelinesFile, "pipelines-file", "pipelines.yaml", "Path to pipelines file")
+	addEnvCmd.Flags().StringVar(&o.pipelinesFolder, "pipelines-folder", ".", "Folder path to retrieve manifest, eg. /test where manifest exists at /test/pipelines.yaml")
 	addEnvCmd.Flags().StringVar(&o.cluster, "cluster", "", "Deployment cluster e.g. https://kubernetes.local.svc")
 	return addEnvCmd
 }

@@ -2,7 +2,6 @@ package pipelines
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/openshift/odo/pkg/pipelines/config"
 	res "github.com/openshift/odo/pkg/pipelines/resources"
@@ -13,14 +12,14 @@ import (
 
 // EnvParameters encapsulates parameters for add env command
 type EnvParameters struct {
-	PipelinesFilePath string
-	EnvName           string
-	Cluster           string
+	PipelinesFolderPath string
+	EnvName             string
+	Cluster             string
 }
 
 // AddEnv adds a new environment to the pipelines-file.
 func AddEnv(o *EnvParameters, appFs afero.Fs) error {
-	m, err := config.ParseFile(appFs, o.PipelinesFilePath)
+	m, err := config.ParsePipelinesFolder(appFs, o.PipelinesFolderPath)
 	if err != nil {
 		return fmt.Errorf("failed to parse pipeline-file: %v", err)
 	}
@@ -38,17 +37,16 @@ func AddEnv(o *EnvParameters, appFs afero.Fs) error {
 	}
 	m.Environments = append(m.Environments, newEnv)
 	files[pipelinesFile] = m
-	outputPath := filepath.Dir(o.PipelinesFilePath)
 	buildParams := &BuildParameters{
-		PipelinesFilePath: o.PipelinesFilePath,
-		OutputPath:        outputPath,
+		PipelinesFolderPath: o.PipelinesFolderPath,
+		OutputPath:          o.PipelinesFolderPath,
 	}
 	built, err := buildResources(appFs, buildParams, m)
 	if err != nil {
 		return fmt.Errorf("failed to build resources: %v", err)
 	}
 	files = res.Merge(built, files)
-	_, err = yaml.WriteResources(appFs, outputPath, files)
+	_, err = yaml.WriteResources(appFs, o.PipelinesFolderPath, files)
 	return err
 }
 
