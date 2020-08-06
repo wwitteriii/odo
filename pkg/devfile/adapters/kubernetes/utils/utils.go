@@ -30,24 +30,6 @@ import (
 	"k8s.io/klog"
 )
 
-type DockerConfigJson struct {
-	Auths        *BuilderDockerCfg
-	HttpHeaders  httpHeaders
-	Experimental string `json:"experimental"`
-}
-
-type httpHeaders struct {
-	UserAgent string
-}
-
-type BuilderDockerCfg struct {
-	InternalImageRegistryCredentials Credentials `json:"image-registry.openshift-image-registry.svc:5000"`
-}
-
-type Credentials struct {
-	Auth string `json:"auth"`
-}
-
 // ComponentExists checks whether a deployment by the given name exists
 func ComponentExists(client kclient.Client, name string) (bool, error) {
 	deployment, err := client.GetDeploymentByName(name)
@@ -395,17 +377,17 @@ func CreateDockerConfigDataFromFilepath(DockerConfigJSONFilename string) ([]byte
 	return data, nil
 }
 
-func CreateSecret(regcredName string, ns string, dockerConfigData []byte) (*unstructured.Unstructured, error) {
+func CreateSecret(secretName string, ns string, dockerConfigData []byte) (*unstructured.Unstructured, error) {
 
-	secret, err := secret.CreateDockerConfigSecret(types.NamespacedName{
-		Name:      regcredName,
+	dockerCfgSecret, err := secret.CreateDockerConfigSecret(types.NamespacedName{
+		Name:      secretName,
 		Namespace: ns,
 	}, dockerConfigData)
 	if err != nil {
 		return nil, err
 	}
 
-	secretData, err := runtimeUnstructured.DefaultUnstructuredConverter.ToUnstructured(secret)
+	secretData, err := runtimeUnstructured.DefaultUnstructuredConverter.ToUnstructured(dockerCfgSecret)
 	if err != nil {
 		return nil, err
 	}
@@ -421,22 +403,4 @@ func CreateSecret(regcredName string, ns string, dockerConfigData []byte) (*unst
 	}
 
 	return secretUnstructured, nil
-}
-
-func CreateDockerConfigJSONData(authToken BuilderDockerCfg) ([]byte, error) {
-
-	dockerConfigJSON := DockerConfigJson{
-		Auths: &authToken,
-		HttpHeaders: httpHeaders{
-			UserAgent: "Docker-Client/19.03.8 (darwin)",
-		},
-		Experimental: "disabled",
-	}
-
-	data, err := json.Marshal(dockerConfigJSON)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
 }

@@ -1,8 +1,6 @@
 package utils
 
 import (
-	"bytes"
-	"encoding/json"
 	"reflect"
 	"strconv"
 	"testing"
@@ -621,46 +619,4 @@ func TestUpdateContainersWithSupervisord(t *testing.T) {
 		})
 	}
 
-}
-
-func TestCreateSecret(t *testing.T) {
-
-}
-
-func TestCreateDockerConfigJSONData(t *testing.T) {
-
-	authToken := BuilderDockerCfg{
-		InternalImageRegistryCredentials: Credentials{
-			Auth: "dummy-auth-token",
-		},
-	}
-
-	dockerConfigJSON := DockerConfigJson{
-		Auths: &BuilderDockerCfg{
-			InternalImageRegistryCredentials: Credentials{
-				Auth: "dummy-auth-token",
-			},
-		},
-		HttpHeaders: httpHeaders{
-			UserAgent: "Docker-Client/19.03.8 (darwin)",
-		},
-		Experimental: "disabled",
-	}
-
-	data, err := json.Marshal(dockerConfigJSON)
-	if err != nil {
-		t.Errorf("Failed to marshal dockerconfigjson struct")
-	}
-
-	got, err := CreateDockerConfigJSONData(authToken)
-	if err != nil {
-		t.Errorf("Failed to retrieve byte array")
-	}
-
-	want := data
-
-	res := bytes.Compare(got, want)
-	if res != 0 {
-		t.Errorf("Byte arrays do not match")
-	}
 }
