@@ -72,14 +72,13 @@ func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []str
 	}
 	io.Prefix = ui.EnterPrefix()
 	io.Prefix = utility.MaybeCompletePrefix(io.Prefix)
-	InitOption := ui.SelectOptionBootstrap()
-	if InitOption == "Bootstrap" {
-		io.ServiceRepoURL = ui.EnterServiceRepoURL()
+	io.ServiceRepoURL = ui.EnterServiceRepoURL()
+	if io.ServiceRepoURL != "" {
 		io.ServiceWebhookSecret = ui.EnterServiceWebhookSecret()
 		io.ServiceRepoURL = utility.AddGitSuffixIfNecessary(io.ServiceRepoURL)
 	}
 
-	io.OutputPath = ui.EnterOutputPath()
+	io.OutputPath = ui.EnterOutputPath(io.GitOpsRepoURL)
 	exists, _ := ioutils.IsExisting(ioutils.NewFilesystem(), filepath.Join(io.OutputPath, "pipelines.yaml"))
 	if exists {
 		selectOverwriteOption := ui.SelectOptionOverwrite()

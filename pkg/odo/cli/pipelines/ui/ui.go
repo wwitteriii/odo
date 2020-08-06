@@ -28,7 +28,7 @@ func EnterInternalRegistry() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
-		Message: "Host-name for internal image registry e.g. docker-registry.default.svc.cluster.local:5000, used if you are pushing your images to the internal image registry",
+		Message: "Host-name for internal image registry to be used if you are pushing your images to the internal image registry",
 		Default: "image-registry.openshift-image-registry.svc:5000",
 	}
 
@@ -58,7 +58,7 @@ func EnterDockercfg() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
-		Message: "Path to config.json which authenticates image pushes to the desired image registry, the default is ~/.docker/config.json?",
+		Message: "Path to config.json which authenticates image pushes to the desired image registry",
 		Help:    "The secret present in the file path generates a secure secret that authenticates the push of the image built when the app-ci pipeline is run. The image along with the necessary labels will be present on the upstream image repository of choice.",
 		Default: "~/.docker/config.json",
 	}
@@ -120,7 +120,7 @@ func EnterSealedSecretService() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
-		Message: "Name of the Sealed Secrets Services that encrypts secrets <sealed-secrets-controller>",
+		Message: "Name of the Sealed Secrets Services that encrypts secrets",
 		Help:    "If you have a custom installation of the Sealed Secrets operator, we need to know where to communicate with it to seal your secrets.",
 		Default: "sealed-secrets-controller",
 	}
@@ -136,7 +136,7 @@ func EnterSealedSecretNamespace() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
-		Message: "Provide a namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator? <kube-system>",
+		Message: "Provide a namespace in which the Sealed Secrets operator is installed, automatically generated secrets are encrypted with this operator?",
 		Help:    "If you have a custom installation of the Sealed Secrets operator, we need to know how to communicate with it to seal your secrets",
 		Default: "kube-system",
 	}
@@ -163,7 +163,7 @@ func EnterStatusTrackerAccessToken() string {
 func EnterPrefix() string {
 	var path string
 	prompt := &survey.Input{
-		Message: "Add a prefix to the environment names(dev, stage,cicd etc.) to distinguish and identify individual environments?",
+		Message: "Add a prefix to the environment names(dev, stage, cicd etc.) to distinguish and identify individual environments?",
 		Help:    "The prefix helps differentiate between the different namespaces on the cluster, the default namespace cicd will appear as test-cicd if the prefix passed is test.",
 	}
 	err := survey.AskOne(prompt, &path, nil)
