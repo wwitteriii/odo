@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+
 	"gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/odo/pkg/odo/cli/ui"
@@ -21,7 +23,7 @@ func EnterGitRepo() string {
 	return path
 }
 
-// EnterInternalRegistry allows the user to specify the internal registry in a prompt
+// EnterInternalRegistry allows the user to specify the internal registry in a UI prompt.
 func EnterInternalRegistry() string {
 	var path string
 	var prompt *survey.Input
@@ -36,6 +38,7 @@ func EnterInternalRegistry() string {
 	return path
 }
 
+// EnterImageRepoInternalRegistry allows the user to specify the Internal image repository in a UI prompt.
 func EnterImageRepoInternalRegistry() string {
 	var path string
 	var prompt *survey.Input
@@ -50,11 +53,12 @@ func EnterImageRepoInternalRegistry() string {
 	return path
 }
 
+// EnterDockercfg allows the user to specify the path to the docker config json file for external image repository authentication in a UI prompt.
 func EnterDockercfg() string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
-		Message: "Path to config.json which authenticates image pushes to the desired image registry, the default is <insert default>?",
+		Message: "Path to config.json which authenticates image pushes to the desired image registry, the default is ~/.docker/config.json?",
 		Help:    "The secret present in the file path generates a secure secret that authenticates the push of the image built when the app-ci pipeline is run. The image along with the necessary labels will be present on the upstream image repository of choice.",
 		Default: "~/.docker/config.json",
 	}
@@ -65,6 +69,7 @@ func EnterDockercfg() string {
 	return path
 }
 
+// EnterImageRepoExternalRepository allows the user to specify the type of image repository they wish to use in a UI prompt.
 func EnterImageRepoExternalRepository() string {
 	var path string
 	var prompt *survey.Input
@@ -79,12 +84,13 @@ func EnterImageRepoExternalRepository() string {
 	return path
 }
 
-func EnterOutputPath() string {
+// EnterOutputPath allows the user to specify the path where the gitops configuration must reside locally in a UI prompt.
+func EnterOutputPath(GitopsUrl string) string {
 	var path string
 	var prompt *survey.Input
 	prompt = &survey.Input{
 		Message: "Provide a path to write GitOps resources?",
-		Help:    "This is the path where the GitOps repository configuration is stored locally before you push it to the repository GitopsRepoURL <fill in the string from GitOpsRepoURL>",
+		Help:    fmt.Sprintf("This is the path where the GitOps repository configuration is stored locally before you push it to the repository GitopsRepoURL %s", GitopsUrl),
 		Default: ".",
 	}
 
@@ -94,6 +100,7 @@ func EnterOutputPath() string {
 	return path
 }
 
+// EnterGitWebhookSecret allows the user to specify the webhook secret string they wish to authenticate push/pull to gitops repo in a UI prompt.
 func EnterGitWebhookSecret() string {
 	var path string
 	var prompt *survey.Input
@@ -108,6 +115,7 @@ func EnterGitWebhookSecret() string {
 	return path
 }
 
+// EnterSealedSecretService , if the secret isnt installed using the operator it is necessary to manually add the sealed-secrets-controller name through this UI prompt.
 func EnterSealedSecretService() string {
 	var path string
 	var prompt *survey.Input
@@ -123,6 +131,7 @@ func EnterSealedSecretService() string {
 	return path
 }
 
+// EnterSealedSecretNamespace , if the secret isnt installed using the operator it is necessary to manually add the sealed-secrets-namepsace in which its installed through this UI prompt.
 func EnterSealedSecretNamespace() string {
 	var path string
 	var prompt *survey.Input
@@ -138,6 +147,7 @@ func EnterSealedSecretNamespace() string {
 	return path
 }
 
+// EnterStatusTrackerAccessToken , it becomes necessary to add the personal access token from github to autheticate the commit-status-tracker.
 func EnterStatusTrackerAccessToken() string {
 	var path string
 	prompt := &survey.Password{
@@ -149,6 +159,7 @@ func EnterStatusTrackerAccessToken() string {
 	return path
 }
 
+// EnterPrefix , if we desire to add the prefix to differentiate between namespaces, then this is the way forward.
 func EnterPrefix() string {
 	var path string
 	prompt := &survey.Input{
@@ -160,6 +171,7 @@ func EnterPrefix() string {
 	return path
 }
 
+// EnterServiceRepoURL , allows users to differentiate between the bootstrap and init options, addition of the service repo url will allow users to bootstrap an environment through the UI prompt.
 func EnterServiceRepoURL() string {
 	var path string
 	prompt := &survey.Input{
@@ -171,6 +183,7 @@ func EnterServiceRepoURL() string {
 	return path
 }
 
+// EnterServiceWebhookSecret allows the user to specify the webhook secret string they wish to authenticate push/pull to service repo in a UI prompt.
 func EnterServiceWebhookSecret() string {
 	var path string
 	prompt := &survey.Input{
@@ -182,6 +195,7 @@ func EnterServiceWebhookSecret() string {
 	return path
 }
 
+// SelectOptionImageRepository , allows users an option between the Internal image registry and the external image registry through the UI prompt.
 func SelectOptionImageRepository() string {
 	var path string
 
@@ -195,6 +209,7 @@ func SelectOptionImageRepository() string {
 	return path
 }
 
+// SelectOptionOverwrite allows users the option to overwrite the current gitops configuration locally through the UI prompt.
 func SelectOptionOverwrite() string {
 	var path string
 
@@ -208,6 +223,7 @@ func SelectOptionOverwrite() string {
 	return path
 }
 
+// SelectOptionCommitStatusTracker allows users the option to select if they wanna incorporate the feature of the commit status tracker through the UI prompt.
 func SelectOptionCommitStatusTracker() string {
 	var path string
 
@@ -220,25 +236,13 @@ func SelectOptionCommitStatusTracker() string {
 	return path
 }
 
+// SelectOptionBootstrap
 func SelectOptionBootstrap() string {
 	var path string
 	prompt := &survey.Select{
 		Message: "Please enter (Bootstrap/init), choose bootstrap if you wish to add a mock service to the gitops repository",
 		Options: []string{"Bootstrap", "Initialise"},
 		Default: "Bootstrap",
-	}
-	err := survey.AskOne(prompt, &path, survey.Required)
-	ui.HandleError(err)
-	return path
-}
-
-func SelectOptionOverWriteCheck() string {
-	var path string
-
-	prompt := &survey.Select{
-		Message: "Would you like to pass in a different path and try again",
-		Options: []string{"yes", "no"},
-		Default: "no",
 	}
 	err := survey.AskOne(prompt, &path, survey.Required)
 	ui.HandleError(err)

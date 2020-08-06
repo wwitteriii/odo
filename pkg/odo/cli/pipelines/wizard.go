@@ -63,7 +63,7 @@ func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []str
 		io.DockerConfigJSONFilename = ui.EnterDockercfg()
 		io.ImageRepo = ui.EnterImageRepoExternalRepository()
 	}
-	io.OutputPath = ui.EnterOutputPath()
+	io.OutputPath = ui.EnterOutputPath(io.GitOpsRepoURL)
 	exists, _ := ioutils.IsExisting(ioutils.NewFilesystem(), filepath.Join(io.OutputPath, "pipelines.yaml"))
 
 	if !exists {
