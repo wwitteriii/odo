@@ -190,7 +190,7 @@ func (a Adapter) Build(parameters common.BuildParameters) (err error) {
 	if isBuildConfigSupported && !parameters.Rootless {
 		return a.runBuildConfig(client, parameters, isImageRegistryInternal)
 	} else {
-		return a.runKaniko(parameters, isImageRegistryInternal)
+		return a.RunKaniko(parameters, isImageRegistryInternal)
 	}
 }
 

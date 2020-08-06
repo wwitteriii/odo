@@ -41,7 +41,7 @@ var (
 	saSecretNames              = []string{}
 )
 
-func (a Adapter) runKaniko(parameters common.BuildParameters, isImageRegistryInternal bool) error {
+func (a Adapter) RunKaniko(parameters common.BuildParameters, isImageRegistryInternal bool) error {
 	var secretUnstructured *unstructured.Unstructured
 	var err error
 	var serviceAccountList *corev1.ServiceAccountList
@@ -118,7 +118,7 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, isImageRegistryInt
 		"component": a.ComponentName,
 	}
 
-	if err := a.createKanikoBuilderPod(labels, initContainer(initContainerName), builderContainer(containerName, parameters.Tag, isImageRegistryInternal), regcredName); err != nil {
+	if err := a.CreateKanikoBuilderPod(labels, InitContainer(initContainerName), BuilderContainer(containerName, parameters.Tag, isImageRegistryInternal), regcredName); err != nil {
 		return errors.Wrap(err, "error while creating kaniko builder pod")
 	}
 
@@ -186,7 +186,7 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, isImageRegistryInt
 	return nil
 }
 
-func (a Adapter) createKanikoBuilderPod(labels map[string]string, init, builder *corev1.Container, secretName string) error {
+func (a Adapter) CreateKanikoBuilderPod(labels map[string]string, init, builder *corev1.Container, secretName string) error {
 	objectMeta := kclient.CreateObjectMeta(a.ComponentName, a.Client.Namespace, labels, nil)
 	pod := &corev1.Pod{
 		ObjectMeta: objectMeta,
@@ -229,7 +229,7 @@ func (a Adapter) createKanikoBuilderPod(labels map[string]string, init, builder 
 	return nil
 }
 
-func builderContainer(name, imageTag string, isImageRegistryInternal bool) *corev1.Container {
+func BuilderContainer(name, imageTag string, isImageRegistryInternal bool) *corev1.Container {
 	commandArgs := []string{"--dockerfile=" + buildContextMountPath + "/Dockerfile",
 		"--context=dir://" + buildContextMountPath,
 		"--destination=" + imageTag}
@@ -259,7 +259,7 @@ func builderContainer(name, imageTag string, isImageRegistryInternal bool) *core
 	return container
 }
 
-func initContainer(name string) *corev1.Container {
+func InitContainer(name string) *corev1.Container {
 	return &corev1.Container{
 		Name:            name,
 		Image:           "busybox",
