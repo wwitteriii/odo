@@ -63,20 +63,6 @@ func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []str
 		io.DockerConfigJSONFilename = ui.EnterDockercfg()
 		io.ImageRepo = ui.EnterImageRepoExternalRepository()
 	}
-	io.OutputPath = ui.EnterOutputPath()
-	exists, _ := ioutils.IsExisting(ioutils.NewFilesystem(), filepath.Join(io.OutputPath, "pipelines.yaml"))
-
-	if !exists {
-		io.Overwrite = true
-	} else {
-		selectOverwriteOption := ui.SelectOptionOverwrite()
-		if selectOverwriteOption == "no" {
-			io.Overwrite = false
-			return fmt.Errorf("Cannot create Gitops configuration since file exists at %s", io.OutputPath)
-		}
-
-		io.Overwrite = true
-	}
 	io.GitOpsWebhookSecret = ui.EnterGitWebhookSecret()
 	io.SealedSecretsService.Name = ui.EnterSealedSecretService()
 	io.SealedSecretsService.Namespace = ui.EnterSealedSecretNamespace()
@@ -93,6 +79,16 @@ func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []str
 		io.ServiceRepoURL = utility.AddGitSuffixIfNecessary(io.ServiceRepoURL)
 	}
 
+	io.OutputPath = ui.EnterOutputPath()
+	exists, _ := ioutils.IsExisting(ioutils.NewFilesystem(), filepath.Join(io.OutputPath, "pipelines.yaml"))
+	if exists {
+		selectOverwriteOption := ui.SelectOptionOverwrite()
+		if selectOverwriteOption == "no" {
+			io.Overwrite = false
+			return fmt.Errorf("Cannot create GitOps configuration since file exists at %s", io.OutputPath)
+		}
+	}
+	io.Overwrite = true
 	io.GitOpsRepoURL = utility.AddGitSuffixIfNecessary(io.GitOpsRepoURL)
 	return nil
 }
