@@ -87,6 +87,7 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, isImageRegistryInt
 		return errors.Wrapf(err, "failed to stream tarball into file transfer container")
 	}
 
+	// Executing remote command to trigger closing of init container
 	cmd := []string{"touch", completionFile}
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
