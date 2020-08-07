@@ -47,7 +47,6 @@ func NewBootstrapParameters() *BootstrapParameters {
 }
 
 // Complete completes BootstrapParameters after they've been created.
-//
 // If the prefix provided doesn't have a "-" then one is added, this makes the
 // generated environment names nicer to read.
 func (io *BootstrapParameters) Complete(name string, cmd *cobra.Command, args []string) error {
@@ -100,6 +99,5 @@ func NewCmdBootstrap(name, fullName string) *cobra.Command {
 	bootstrapCmd.Flags().StringVar(&o.ServiceWebhookSecret, "service-webhook-secret", "", "Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the Service repository. (if not provided, it will be auto-generated)")
 
 	bootstrapCmd.MarkFlagRequired("gitops-repo-url")
-	bootstrapCmd.MarkFlagRequired("service-repo-url")
 	return bootstrapCmd
 }
