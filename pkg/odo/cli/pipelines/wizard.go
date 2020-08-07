@@ -49,46 +49,49 @@ func NewWizardParameters() *WizardParameters {
 }
 
 // Complete completes WizardParameters after they've been created.
-//
 // If the prefix provided doesn't have a "-" then one is added, this makes the
 // generated environment names nicer to read.
 func (io *WizardParameters) Complete(name string, cmd *cobra.Command, args []string) error {
-	io.GitOpsRepoURL = ui.EnterGitRepo()
-	option := ui.SelectOptionImageRepository()
-	if option == "Openshift Internal repository" {
-		io.InternalRegistryHostname = ui.EnterInternalRegistry()
-		io.ImageRepo = ui.EnterImageRepoInternalRegistry()
+	flagset := cmd.Flags()
+	fmt.Print(flagset.NFlag(), flagset.NArg())
+	if flagset.NFlag() == 0 {
+		io.GitOpsRepoURL = ui.EnterGitRepo()
+		option := ui.SelectOptionImageRepository()
+		if option == "Openshift Internal repository" {
+			io.InternalRegistryHostname = ui.EnterInternalRegistry()
+			io.ImageRepo = ui.EnterImageRepoInternalRegistry()
 
-	} else {
-		io.DockerConfigJSONFilename = ui.EnterDockercfg()
-		io.ImageRepo = ui.EnterImageRepoExternalRepository()
-	}
-	io.GitOpsWebhookSecret = ui.EnterGitWebhookSecret()
-	io.SealedSecretsService.Name = ui.EnterSealedSecretService()
-	io.SealedSecretsService.Namespace = ui.EnterSealedSecretNamespace()
-	commitStatusTrackerCheck := ui.SelectOptionCommitStatusTracker()
-	if commitStatusTrackerCheck == "yes" {
-		io.StatusTrackerAccessToken = ui.EnterStatusTrackerAccessToken()
-	}
-	io.Prefix = ui.EnterPrefix()
-	io.Prefix = utility.MaybeCompletePrefix(io.Prefix)
-	io.ServiceRepoURL = ui.EnterServiceRepoURL()
-	if io.ServiceRepoURL != "" {
-		io.ServiceWebhookSecret = ui.EnterServiceWebhookSecret()
-		io.ServiceRepoURL = utility.AddGitSuffixIfNecessary(io.ServiceRepoURL)
-	}
+		} else {
+			io.DockerConfigJSONFilename = ui.EnterDockercfg()
+			io.ImageRepo = ui.EnterImageRepoExternalRepository()
+		}
+		io.GitOpsWebhookSecret = ui.EnterGitWebhookSecret()
+		io.SealedSecretsService.Name = ui.EnterSealedSecretService()
+		io.SealedSecretsService.Namespace = ui.EnterSealedSecretNamespace()
+		commitStatusTrackerCheck := ui.SelectOptionCommitStatusTracker()
+		if commitStatusTrackerCheck == "yes" {
+			io.StatusTrackerAccessToken = ui.EnterStatusTrackerAccessToken()
+		}
+		io.Prefix = ui.EnterPrefix()
+		io.ServiceRepoURL = ui.EnterServiceRepoURL()
+		if io.ServiceRepoURL != "" {
+			io.ServiceWebhookSecret = ui.EnterServiceWebhookSecret()
+		}
 
-	io.OutputPath = ui.EnterOutputPath(io.GitOpsRepoURL)
-	exists, _ := ioutils.IsExisting(ioutils.NewFilesystem(), filepath.Join(io.OutputPath, "pipelines.yaml"))
-	if exists {
-		selectOverwriteOption := ui.SelectOptionOverwrite()
-		if selectOverwriteOption == "no" {
-			io.Overwrite = false
-			return fmt.Errorf("Cannot create GitOps configuration since file exists at %s", io.OutputPath)
+		io.OutputPath = ui.EnterOutputPath(io.GitOpsRepoURL)
+		exists, _ := ioutils.IsExisting(ioutils.NewFilesystem(), filepath.Join(io.OutputPath, "pipelines.yaml"))
+		if exists {
+			selectOverwriteOption := ui.SelectOptionOverwrite()
+			if selectOverwriteOption == "no" {
+				io.Overwrite = false
+				return fmt.Errorf("Cannot create GitOps configuration since file exists at %s", io.OutputPath)
+			}
 		}
 	}
 	io.Overwrite = true
+	io.Prefix = utility.MaybeCompletePrefix(io.Prefix)
 	io.GitOpsRepoURL = utility.AddGitSuffixIfNecessary(io.GitOpsRepoURL)
+	io.ServiceRepoURL = utility.AddGitSuffixIfNecessary(io.ServiceRepoURL)
 	return nil
 }
 
@@ -98,12 +101,10 @@ func (io *WizardParameters) Validate() error {
 	if err != nil {
 		return fmt.Errorf("failed to parse url %s: %w", io.GitOpsRepoURL, err)
 	}
-
 	// TODO: this won't work with GitLab as the repo can have more path elements.
 	if len(utility.RemoveEmptyStrings(strings.Split(gr.Path, "/"))) != 2 {
 		return fmt.Errorf("repo must be org/repo: %s", strings.Trim(gr.Path, ".git"))
 	}
-
 	return nil
 }
 
@@ -138,5 +139,10 @@ func NewCmdWizard(name, fullName string) *cobra.Command {
 			genericclioptions.GenericRun(o, cmd, args)
 		},
 	}
+	addInitCommands(wizardCmd, o.BootstrapOptions.InitOptions)
+	wizardCmd.Flags().StringVar(&o.ServiceRepoURL, "service-repo-url", "", "Provide the URL for your Service repository e.g. https://github.com/organisation/service.git")
+	wizardCmd.Flags().StringVar(&o.ServiceWebhookSecret, "service-webhook-secret", "", "Provide a secret that we can use to authenticate incoming hooks from your Git hosting service for the Service repository. (if not provided, it will be auto-generated)")
+	// wizardCmd.MarkFlagRequired("gitops-repo-url")
+
 	return wizardCmd
 }
