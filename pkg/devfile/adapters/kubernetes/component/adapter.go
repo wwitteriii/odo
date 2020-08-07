@@ -183,7 +183,7 @@ func (a Adapter) Build(parameters common.BuildParameters) (err error) {
 	}
 
 	if !isImageRegistryInternal {
-		if err := a.createDockerConfigSecret(parameters); err != nil {
+		if _, err := a.createDockerConfigSecret(parameters); err != nil {
 			return err
 		}
 	}
@@ -1022,21 +1022,22 @@ func (a Adapter) Exec(command []string) error {
 	return exec.ExecuteCommand(&a.Client, componentInfo, command, true, nil, nil)
 }
 
-func (a Adapter) createDockerConfigSecret(parameters common.BuildParameters) error {
-	data, err := utils.CreateDockerConfigDataFromFilepath(parameters.DockerConfigJSONFilename)
+func (a Adapter) createDockerConfigSecret(parameters common.BuildParameters) (*unstructured.Unstructured, error) {
+	data, err := utils.CreateDockerConfigDataFromFilepath(parameters.DockerConfigJSONFilename, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	secretUnstructured, err := utils.CreateSecret(regcredName, parameters.EnvSpecificInfo.GetNamespace(), data)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if _, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
+	createdSecret, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
 		Namespace(parameters.EnvSpecificInfo.GetNamespace()).
-		Create(secretUnstructured, metav1.CreateOptions{}); err != nil {
-		return err
+		Create(secretUnstructured, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
 	}
-	return nil
+	return createdSecret, nil
 }
 
 // NOTE: we assume internal registry host is: image-registry.openshift-image-registry.svc:5000

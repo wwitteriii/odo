@@ -536,6 +536,54 @@ func TestAdapterDelete(t *testing.T) {
 	}
 }
 
+func TestIsInternalRegistry(t *testing.T) {
+
+	imageTagInternal := "image-registry.openshift-image-registry.svc:5000/test-namespace/test-name"
+	imageTagExternal := "docker.io/test-username/test-imae-repository-name"
+	imageTagInvalid := "namespace/test-image-name"
+
+	tests := []struct {
+		name               string
+		imageTag           string
+		isInternalRegistry bool
+		wantErr            bool
+	}{
+		{
+			name:               "Case: ImageTag is for internal registry",
+			imageTag:           imageTagInternal,
+			isInternalRegistry: true,
+			wantErr:            false,
+		},
+		{
+			name:               "Case: ImageTag is for external registry",
+			imageTag:           imageTagExternal,
+			isInternalRegistry: false,
+			wantErr:            false,
+		},
+		{
+			name:               "Case: ImageTag is invalid",
+			imageTag:           imageTagInvalid,
+			isInternalRegistry: false,
+			wantErr:            true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			isInternalRegistryResult, err := isInternalRegistry(tt.imageTag)
+			if err != nil && !tt.wantErr {
+				t.Errorf("returned error when it should not have")
+			} else if err == nil && tt.wantErr {
+				t.Errorf("should have returned an error but did not")
+			}
+
+			if isInternalRegistryResult != tt.isInternalRegistry {
+				t.Errorf("returned the wrong result")
+			}
+		})
+	}
+}
+
 func getExecCommand(id string, group common.DevfileCommandGroupType) versionsCommon.Exec {
 
 	commands := [...]string{"ls -la", "pwd"}

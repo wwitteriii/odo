@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/spf13/afero"
 	runtimeUnstructured "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog"
@@ -359,21 +360,33 @@ func PipeStdOutput(cmdOutput string, reader *io.PipeReader, controlC chan os.Sig
 	}
 }
 
-func CreateDockerConfigDataFromFilepath(DockerConfigJSONFilename string) ([]byte, error) {
+func CreateDockerConfigDataFromFilepath(DockerConfigJSONFilename string, fs afero.Fs) ([]byte, error) {
+	var filePointer io.Reader
 	filename, err := homedir.Expand(DockerConfigJSONFilename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate path to file for %s: %v", DockerConfigJSONFilename, err)
 	}
-
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read Docker config %#v : %s", filename, err)
+	if fs != nil {
+		f, err := fs.Open(filename)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read test Docker config %#v : %s", filename, err)
+		}
+		filePointer = f
+		defer f.Close()
+	} else {
+		f, err := os.Open(filename)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read Docker config %#v : %s", filename, err)
+		}
+		filePointer = f
+		defer f.Close()
 	}
-	data, err := ioutil.ReadAll(f)
+
+	data, err := ioutil.ReadAll(filePointer)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read secret data: %v", err)
 	}
-	defer f.Close()
+	// defer f.Close()
 	return data, nil
 }
 

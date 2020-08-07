@@ -19,6 +19,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog"
 )
@@ -53,7 +54,7 @@ func (a Adapter) runKaniko(parameters common.BuildParameters, isImageRegistryInt
 		"component": a.ComponentName,
 	}
 
-	if err := a.createKanikoBuilderPod(labels, InitContainer(initContainerName), BuilderContainer(containerName, parameters.Tag, isImageRegistryInternal), regcredName); err != nil {
+	if _, err := a.createKanikoBuilderPod(labels, initContainer(initContainerName), builderContainer(containerName, parameters.Tag, isImageRegistryInternal), regcredName); err != nil {
 		return errors.Wrap(err, "error while creating kaniko builder pod")
 	}
 
@@ -133,7 +134,7 @@ func (a Adapter) createDockerCfgSecretForInternalRegistry(ns string) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to get docker secret")
 	}
-	if err := a.createDockerConfigSecretFrom(secret); err != nil {
+	if _, err := a.createDockerConfigSecretFrom(secret); err != nil {
 		return errors.Wrap(err, "failed to create docker secret")
 	}
 	return nil
@@ -144,6 +145,7 @@ func (a Adapter) getServiceAccountSecret(ns, saName string, secretType corev1.Se
 	if err != nil {
 		return nil, fmt.Errorf("failed to get serviceaccount '%s': %v", saName, err)
 	}
+	fmt.Printf("-----------------------, %s", sa.Name)
 	for _, secretRef := range sa.Secrets {
 		secret, err := a.Client.KubeClient.CoreV1().Secrets(ns).Get(secretRef.Name, metav1.GetOptions{})
 		if err != nil {
@@ -160,10 +162,10 @@ type dockerCfg struct {
 	Auths map[string]*types.AuthConfig `json:"auths,omitempty"`
 }
 
-func (a Adapter) createDockerConfigSecretFrom(source *corev1.Secret) error {
+func (a Adapter) createDockerConfigSecretFrom(source *corev1.Secret) (*unstructured.Unstructured, error) {
 	token, err := getAuthTokenFromDockerCfgSecret(source)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	outCfg := &dockerCfg{
 		Auths: map[string]*types.AuthConfig{
@@ -172,21 +174,22 @@ func (a Adapter) createDockerConfigSecretFrom(source *corev1.Secret) error {
 	}
 	outBytes, err := json.Marshal(&outCfg)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	secretUnstructured, err := utils.CreateSecret(regcredName, source.GetNamespace(), outBytes)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if _, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
+	createdSecret, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
 		Namespace(source.GetNamespace()).
-		Create(secretUnstructured, metav1.CreateOptions{}); err != nil {
-		return err
+		Create(secretUnstructured, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
 	}
-	return nil
+	return createdSecret, nil
 }
 
-func (a Adapter) createKanikoBuilderPod(labels map[string]string, init, builder *corev1.Container, secretName string) error {
+func (a Adapter) createKanikoBuilderPod(labels map[string]string, init, builder *corev1.Container, secretName string) (*corev1.Pod, error) {
 	objectMeta := kclient.CreateObjectMeta(a.ComponentName+"-build", a.Client.Namespace, labels, nil)
 	pod := &corev1.Pod{
 		ObjectMeta: objectMeta,
@@ -223,13 +226,13 @@ func (a Adapter) createKanikoBuilderPod(labels map[string]string, init, builder 
 	klog.V(3).Infof("Creating build pod %v", pod.GetName())
 	p, err := a.Client.KubeClient.CoreV1().Pods(a.Client.Namespace).Create(pod)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	klog.V(5).Infof("Successfully created pod %v", p.GetName())
-	return nil
+	return p, nil
 }
 
-func BuilderContainer(name, imageTag string, isImageRegistryInternal bool) *corev1.Container {
+func builderContainer(name, imageTag string, isImageRegistryInternal bool) *corev1.Container {
 	commandArgs := []string{"--dockerfile=" + buildContextMountPath + "/Dockerfile",
 		"--context=dir://" + buildContextMountPath,
 		"--destination=" + imageTag}
@@ -259,7 +262,7 @@ func BuilderContainer(name, imageTag string, isImageRegistryInternal bool) *core
 	return container
 }
 
-func InitContainer(name string) *corev1.Container {
+func initContainer(name string) *corev1.Container {
 	return &corev1.Container{
 		Name:            name,
 		Image:           "busybox",
