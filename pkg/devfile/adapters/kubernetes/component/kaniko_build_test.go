@@ -1,6 +1,7 @@
 package component
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"testing"
@@ -9,7 +10,9 @@ import (
 	"github.com/openshift/odo/pkg/kclient"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	runtimeUnstructured "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ktesting "k8s.io/client-go/testing"
 )
@@ -142,6 +145,64 @@ func TestGetServiceAccountSecret(t *testing.T) {
 
 	if !reflect.DeepEqual(testSaSecretPorted, want) {
 		t.Errorf("Secrets don't match")
+	}
+
+}
+
+func TestCreateDockerConfigSecretFrom(t *testing.T) {
+	testData := "{ \"image-registry.openshift-image-registry.svc:5000\": { \"auth\": \"test-auth-token\" } }"
+	testDockerConfigData := []byte(testData)
+	testSecretName := "test-secret"
+	testNs := "test-namespace"
+
+	testNamespacedName := types.NamespacedName{
+		Name:      testSecretName,
+		Namespace: testNs,
+	}
+
+	testSecret := corev1.Secret{
+		TypeMeta:   TypeMeta("Secret", "v1"),
+		ObjectMeta: SecretObjectMeta(testNamespacedName),
+		Type:       corev1.SecretTypeDockerConfigJson,
+		Data: map[string][]byte{
+			corev1.DockerConfigKey: testDockerConfigData,
+		},
+	}
+
+	fkclient, _ := kclient.FakeNew()
+
+	testAdapter := Adapter{
+		Client: *fkclient,
+	}
+
+	testSecretData, err := runtimeUnstructured.DefaultUnstructuredConverter.ToUnstructured(&testSecret)
+	if err != nil {
+		t.Error(err)
+		t.Errorf("error making map")
+	}
+
+	testSecretBytes, err := json.Marshal(testSecretData)
+	if err != nil {
+		t.Error(err)
+		t.Errorf("error while marshalling")
+	}
+
+	var testSecretUnstructured *unstructured.Unstructured
+	if err := json.Unmarshal(testSecretBytes, &testSecretUnstructured); err != nil {
+		t.Error(err)
+		t.Errorf("error unmarshalling into unstructured")
+	}
+
+	want := testSecretUnstructured
+	got, err := testAdapter.createDockerConfigSecretFrom(&testSecret)
+	fmt.Printf("got : %v", got)
+	if err != nil {
+		t.Error(err)
+		t.Errorf("failed to get secret")
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("secrets don't match")
 	}
 
 }

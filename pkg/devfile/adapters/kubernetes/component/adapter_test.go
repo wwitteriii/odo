@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/odo/pkg/kclient"
 	"github.com/openshift/odo/pkg/testingutil"
 
+	"github.com/spf13/afero"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -23,6 +24,10 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	ktesting "k8s.io/client-go/testing"
 )
+
+func NewFilesystem() afero.Fs {
+	return afero.NewOsFs()
+}
 
 func TestCreateOrUpdateComponent(t *testing.T) {
 
@@ -535,6 +540,44 @@ func TestAdapterDelete(t *testing.T) {
 		})
 	}
 }
+
+// func TestCreateDockerConfigSecret(t *testing.T) {
+// 	testConfigJsonString := "{ \"auths\" : { \"https://index.docker.io/v1/\": { \"auth\": \"test-auth-token\", \"email\": \"test-email\"} },\"HttpHeaders\": {	\"User-Agent\": \"Docker-Client/19.03.8 (darwin)\"},\"experimental\": \"disabled\"}"
+// 	testFs := NewFilesystem()
+// 	testFilename := "test-config-json"
+// 	testNs := "test-namespace"
+
+// 	testBuildParams := adaptersCommon.BuildParameters{
+// 		DockerConfigJSONFilename: testFilename,
+// 		EnvSpecificInfo: envinfo.EnvSpecificInfo{
+// 			EnvInfo:componentSettings: envinfo.ComponentSettings{
+// 					Namespace: testNs,
+// 				},
+// 			},
+// 		},
+// 	}
+// 	afero.WriteFile(testFs, testFilename, []byte(testConfigJsonString), 0777)
+
+// 	fkclient, _ := kclient.FakeNew()
+
+// 	testAdapter := Adapter{
+// 		Client: *fkclient,
+// 	}
+
+// 	got, err := testAdapter.createDockerConfigSecret(testBuildParams)
+
+// 	defer testFs.Remove(testFilename)
+// 	got, err := CreateDockerConfigDataFromFilepath(testFilename, testFs)
+// 	if err != nil {
+// 		t.Error(err)
+// 		t.Errorf("unable to get dockeconfigdata from filepath")
+// 	}
+
+// 	want := []byte(testConfigJsonString)
+// 	if !reflect.DeepEqual(got, want) {
+// 		t.Errorf("dockerconfigdata does not match")
+// 	}
+// }
 
 func TestIsInternalRegistry(t *testing.T) {
 
