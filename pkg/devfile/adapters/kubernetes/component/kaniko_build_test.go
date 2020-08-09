@@ -1,7 +1,6 @@
 package component
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"testing"
@@ -10,9 +9,7 @@ import (
 	"github.com/openshift/odo/pkg/kclient"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	runtimeUnstructured "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ktesting "k8s.io/client-go/testing"
 )
@@ -99,7 +96,7 @@ func TestGetServiceAccountSecret(t *testing.T) {
 	testSaSecretName := "test-sa-secret"
 	testSaName := "test-service-account"
 
-	testSa := corev1.ServiceAccount{
+	testSa := &corev1.ServiceAccount{
 		TypeMeta:   TypeMeta("serviceAccount", "v1"),
 		ObjectMeta: ObjectMeta(testSaName, testNs),
 		Secrets: []corev1.ObjectReference{
@@ -112,8 +109,8 @@ func TestGetServiceAccountSecret(t *testing.T) {
 		},
 	}
 
-	testSaSecret := corev1.Secret{
-		TypeMeta:   TypeMeta("secret", "v1"),
+	testSaSecret := &corev1.Secret{
+		TypeMeta:   TypeMeta("Secret", "v1"),
 		ObjectMeta: ObjectMeta(testSaSecretName, testNs),
 		Data:       secretData,
 		Type:       corev1.SecretTypeDockercfg,
@@ -123,10 +120,10 @@ func TestGetServiceAccountSecret(t *testing.T) {
 
 	fkclient, fkclientset := kclient.FakeNew()
 	fkclientset.Kubernetes.PrependReactor("get", "serviceAccounts", func(action ktesting.Action) (bool, runtime.Object, error) {
-		return true, &testSa, nil
+		return true, testSa, nil
 	})
 	fkclientset.Kubernetes.PrependReactor("get", "secrets", func(action ktesting.Action) (bool, runtime.Object, error) {
-		return true, &testSaSecret, nil
+		return true, testSaSecret, nil
 	})
 
 	adapterCtx := adaptersCommon.AdapterContext{}
@@ -149,9 +146,12 @@ func TestGetServiceAccountSecret(t *testing.T) {
 
 }
 
-func TestCreateDockerConfigSecretFrom(t *testing.T) {
-	testData := "{ \"image-registry.openshift-image-registry.svc:5000\": { \"auth\": \"test-auth-token\" } }"
-	testDockerConfigData := []byte(testData)
+func TestCreateDockerConfigSecretBytesFrom(t *testing.T) {
+	testConfigJsonString := "{\"auths\":{\"image-registry.openshift-image-registry.svc:5000\":{\"auth\":\"test-auth-token\"}}}"
+	testConfigJsonData := []byte(testConfigJsonString)
+
+	testSaSecretString := "{ \"image-registry.openshift-image-registry.svc:5000\": { \"auth\": \"test-auth-token\" } }"
+	testSaSecretData := []byte(testSaSecretString)
 	testSecretName := "test-secret"
 	testNs := "test-namespace"
 
@@ -160,51 +160,30 @@ func TestCreateDockerConfigSecretFrom(t *testing.T) {
 		Namespace: testNs,
 	}
 
-	testSecret := corev1.Secret{
+	testSecret := &corev1.Secret{
 		TypeMeta:   TypeMeta("Secret", "v1"),
 		ObjectMeta: SecretObjectMeta(testNamespacedName),
 		Type:       corev1.SecretTypeDockerConfigJson,
 		Data: map[string][]byte{
-			corev1.DockerConfigKey: testDockerConfigData,
+			corev1.DockerConfigKey: testSaSecretData,
 		},
 	}
 
 	fkclient, _ := kclient.FakeNew()
-
 	testAdapter := Adapter{
 		Client: *fkclient,
 	}
 
-	testSecretData, err := runtimeUnstructured.DefaultUnstructuredConverter.ToUnstructured(&testSecret)
+	want := testConfigJsonData
+	got, err := testAdapter.createDockerConfigSecretBytesFrom(testSecret)
 	if err != nil {
 		t.Error(err)
-		t.Errorf("error making map")
+		t.Errorf("failed to retrieve dockerconfig secret bytes")
 	}
 
-	testSecretBytes, err := json.Marshal(testSecretData)
-	if err != nil {
-		t.Error(err)
-		t.Errorf("error while marshalling")
+	if !reflect.DeepEqual(want, got) {
+		t.Errorf("secret bytes don't match")
 	}
-
-	var testSecretUnstructured *unstructured.Unstructured
-	if err := json.Unmarshal(testSecretBytes, &testSecretUnstructured); err != nil {
-		t.Error(err)
-		t.Errorf("error unmarshalling into unstructured")
-	}
-
-	want := testSecretUnstructured
-	got, err := testAdapter.createDockerConfigSecretFrom(&testSecret)
-	fmt.Printf("got : %v", got)
-	if err != nil {
-		t.Error(err)
-		t.Errorf("failed to get secret")
-	}
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("secrets don't match")
-	}
-
 }
 
 func TestCreateKanikoBuilderPod(t *testing.T) {

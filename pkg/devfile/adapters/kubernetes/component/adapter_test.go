@@ -1,6 +1,7 @@
 package component
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/openshift/odo/pkg/envinfo"
@@ -23,6 +24,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	ktesting "k8s.io/client-go/testing"
+
+	"encoding/json"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	runtimeUnstructured "k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 func NewFilesystem() afero.Fs {
@@ -541,43 +548,90 @@ func TestAdapterDelete(t *testing.T) {
 	}
 }
 
-// func TestCreateDockerConfigSecret(t *testing.T) {
-// 	testConfigJsonString := "{ \"auths\" : { \"https://index.docker.io/v1/\": { \"auth\": \"test-auth-token\", \"email\": \"test-email\"} },\"HttpHeaders\": {	\"User-Agent\": \"Docker-Client/19.03.8 (darwin)\"},\"experimental\": \"disabled\"}"
-// 	testFs := NewFilesystem()
-// 	testFilename := "test-config-json"
-// 	testNs := "test-namespace"
+func TestCreateDockerConfigSecretBytes(t *testing.T) {
 
-// 	testBuildParams := adaptersCommon.BuildParameters{
-// 		DockerConfigJSONFilename: testFilename,
-// 		EnvSpecificInfo: envinfo.EnvSpecificInfo{
-// 			EnvInfo:componentSettings: envinfo.ComponentSettings{
-// 					Namespace: testNs,
-// 				},
-// 			},
-// 		},
-// 	}
-// 	afero.WriteFile(testFs, testFilename, []byte(testConfigJsonString), 0777)
+	testConfigJsonString := "{ \"auths\" : { \"https://index.docker.io/v1/\": { \"auth\": \"test-auth-token\", \"email\": \"test-email\"} },\"HttpHeaders\": {	\"User-Agent\": \"Docker-Client/19.03.8 (darwin)\"},\"experimental\": \"disabled\"}"
+	testFs := NewFilesystem()
+	testFilename := "test-config-json"
+	testConfigJsonBytes := []byte(testConfigJsonString)
 
-// 	fkclient, _ := kclient.FakeNew()
+	defer testFs.Remove(testFilename)
 
-// 	testAdapter := Adapter{
-// 		Client: *fkclient,
-// 	}
+	afero.WriteFile(testFs, testFilename, []byte(testConfigJsonString), 0777)
 
-// 	got, err := testAdapter.createDockerConfigSecret(testBuildParams)
+	fkclient, _ := kclient.FakeNew()
+	testAdapter := Adapter{
+		Client: *fkclient,
+	}
 
-// 	defer testFs.Remove(testFilename)
-// 	got, err := CreateDockerConfigDataFromFilepath(testFilename, testFs)
-// 	if err != nil {
-// 		t.Error(err)
-// 		t.Errorf("unable to get dockeconfigdata from filepath")
-// 	}
+	want := testConfigJsonBytes
+	got, err := testAdapter.createDockerConfigSecretBytes(testFilename)
+	if err != nil {
+		t.Error(err)
+		t.Errorf("failed to retrieve dockerconfig secret bytes")
+	}
 
-// 	want := []byte(testConfigJsonString)
-// 	if !reflect.DeepEqual(got, want) {
-// 		t.Errorf("dockerconfigdata does not match")
-// 	}
-// }
+	if !reflect.DeepEqual(want, got) {
+		t.Errorf("secret bytes don't match")
+	}
+}
+
+func TestCreateDockerConfigSecret(t *testing.T) {
+	testConfigJsonString := "{ \"auths\" : { \"https://index.docker.io/v1/\": { \"auth\": \"test-auth-token\", \"email\": \"test-email\"} },\"HttpHeaders\": {	\"User-Agent\": \"Docker-Client/19.03.8 (darwin)\"},\"experimental\": \"disabled\"}"
+	testDockerConfigData := []byte(testConfigJsonString)
+	testSecretName := "test-secret"
+	testNs := "test-namespace"
+
+	testNamespacedName := types.NamespacedName{
+		Name:      testSecretName,
+		Namespace: testNs,
+	}
+
+	testSecret := corev1.Secret{
+
+		TypeMeta:   TypeMeta("Secret", "v1"),
+		ObjectMeta: SecretObjectMeta(testNamespacedName),
+		Type:       corev1.SecretTypeDockerConfigJson,
+		Data: map[string][]byte{
+			corev1.DockerConfigJsonKey: testDockerConfigData,
+		},
+	}
+
+	testSecretData, err := runtimeUnstructured.DefaultUnstructuredConverter.ToUnstructured(&testSecret)
+	if err != nil {
+		t.Error(err)
+		t.Errorf("error making map")
+	}
+
+	testSecretBytes, err := json.Marshal(testSecretData)
+	if err != nil {
+		t.Error(err)
+		t.Errorf("error while marshalling")
+	}
+
+	var testSecretUnstructured *unstructured.Unstructured
+	if err := json.Unmarshal(testSecretBytes, &testSecretUnstructured); err != nil {
+		t.Error(err)
+		t.Errorf("error unmarshalling into unstructured")
+	}
+
+	want := testSecretUnstructured
+
+	fkclient, _ := kclient.FakeNew()
+	testAdapter := Adapter{
+		Client: *fkclient,
+	}
+
+	got, err := testAdapter.createDockerConfigSecret(testNs, testDockerConfigData)
+	if err != nil {
+		t.Error(err)
+		t.Errorf("failed to get secret")
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("secrets don't match")
+	}
+}
 
 func TestIsInternalRegistry(t *testing.T) {
 

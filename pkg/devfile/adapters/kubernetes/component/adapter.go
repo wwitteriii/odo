@@ -183,8 +183,13 @@ func (a Adapter) Build(parameters common.BuildParameters) (err error) {
 	}
 
 	if !isImageRegistryInternal {
-		if _, err := a.createDockerConfigSecret(parameters); err != nil {
+		dockerConfigSecretBytes, err := a.createDockerConfigSecretBytes(parameters.DockerConfigJSONFilename)
+		if err != nil {
 			return err
+		}
+
+		if _, err := a.createDockerConfigSecret(parameters.EnvSpecificInfo.GetNamespace(), dockerConfigSecretBytes); err != nil {
+			return errors.Wrap(err, "failed to create dockerconfig secret")
 		}
 	}
 
@@ -1022,20 +1027,25 @@ func (a Adapter) Exec(command []string) error {
 	return exec.ExecuteCommand(&a.Client, componentInfo, command, true, nil, nil)
 }
 
-func (a Adapter) createDockerConfigSecret(parameters common.BuildParameters) (*unstructured.Unstructured, error) {
-	data, err := utils.CreateDockerConfigDataFromFilepath(parameters.DockerConfigJSONFilename, nil)
+func (a Adapter) createDockerConfigSecretBytes(DockerConfigJSONFilename string) ([]byte, error) {
+	data, err := utils.CreateDockerConfigDataFromFilepath(DockerConfigJSONFilename, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Error retriving docker config secret bytes")
 	}
-	secretUnstructured, err := utils.CreateSecret(regcredName, parameters.EnvSpecificInfo.GetNamespace(), data)
+	return data, nil
+}
+
+func (a Adapter) createDockerConfigSecret(nameSpace string, dockerConfigSecretBytes []byte) (*unstructured.Unstructured, error) {
+
+	secretUnstructured, err := utils.CreateSecret(regcredName, nameSpace, dockerConfigSecretBytes)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to convert created secret to unstructured format")
 	}
 	createdSecret, err := a.Client.DynamicClient.Resource(secretGroupVersionResource).
-		Namespace(parameters.EnvSpecificInfo.GetNamespace()).
+		Namespace(nameSpace).
 		Create(secretUnstructured, metav1.CreateOptions{})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to create secret on cluster")
 	}
 	return createdSecret, nil
 }
