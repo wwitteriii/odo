@@ -83,7 +83,7 @@ type Adapter struct {
 
 const dockerfilePath string = "Dockerfile"
 
-func (a Adapter) runBuildConfig(client *occlient.Client, parameters common.BuildParameters, isImageRegistryInternal bool) (err error) {
+func (a Adapter) runBuildConfig(isS2i bool, client *occlient.Client, parameters common.BuildParameters, isImageRegistryInternal bool) (err error) {
 	buildName := a.ComponentName
 
 	commonObjectMeta := metav1.ObjectMeta{
@@ -105,9 +105,17 @@ func (a Adapter) runBuildConfig(client *occlient.Client, parameters common.Build
 	if !isImageRegistryInternal {
 		secretName = regcredName
 	}
-	_, err = client.CreateDockerBuildConfigWithBinaryInput(commonObjectMeta, dockerfilePath, parameters.Tag, []corev1.EnvVar{}, buildOutput, secretName)
-	if err != nil {
-		return err
+
+	if isS2i {
+		_, err = client.CreateSourceBuildConfigWithBinaryInput(commonObjectMeta, parameters.FromKind, parameters.FromNamespace, parameters.FromName, parameters.Tag, []corev1.EnvVar{}, buildOutput, secretName)
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err = client.CreateDockerBuildConfigWithBinaryInput(commonObjectMeta, dockerfilePath, parameters.Tag, []corev1.EnvVar{}, buildOutput, secretName)
+		if err != nil {
+			return err
+		}
 	}
 
 	defer func() {
@@ -189,7 +197,7 @@ func (a Adapter) Build(parameters common.BuildParameters) (err error) {
 	}
 
 	if isBuildConfigSupported && !parameters.Rootless {
-		return a.runBuildConfig(client, parameters, isImageRegistryInternal)
+		return a.runBuildConfig(true, client, parameters, isImageRegistryInternal)
 	} else {
 		return a.runKaniko(parameters, isImageRegistryInternal)
 	}

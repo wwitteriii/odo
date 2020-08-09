@@ -3163,6 +3163,40 @@ func (c *Client) CreateDockerBuildConfigWithBinaryInput(commonObjectMeta metav1.
 	return bc, err
 }
 
+func (c *Client) CreateSourceBuildConfigWithBinaryInput(commonObjectMeta metav1.ObjectMeta, fromKind, fromNamespace, fromName string, outputImageTag string, envVars []corev1.EnvVar, outputType string, secretName string) (bc buildv1.BuildConfig, err error) {
+	// generate and create ImageStream if not present
+
+	var imageStream *imagev1.ImageStream
+	if imageStream, err = c.GetImageStream(c.Namespace, commonObjectMeta.Name, ""); err != nil || imageStream == nil {
+		imageStream = &imagev1.ImageStream{
+			ObjectMeta: commonObjectMeta,
+		}
+
+		_, err = c.imageClient.ImageStreams(c.Namespace).Create(imageStream)
+		if err != nil {
+			return bc, errors.Wrapf(err, "unable to create ImageStream for %s", commonObjectMeta.Name)
+		}
+	}
+
+	bc = generateSourceBuildConfigWithBinaryInput(commonObjectMeta, fromKind,
+		fromNamespace, fromName, outputImageTag, outputType)
+
+	if secretName != "" {
+		bc.Spec.CommonSpec.Output.PushSecret = &corev1.LocalObjectReference{
+			Name: secretName,
+		}
+	}
+
+	if len(envVars) > 0 {
+		bc.Spec.Strategy.SourceStrategy.Env = envVars
+	}
+	_, err = c.buildClient.BuildConfigs(c.Namespace).Create(&bc)
+	if err != nil {
+		return bc, errors.Wrapf(err, "unable to create BuildConfig for %s", commonObjectMeta.Name)
+	}
+	return bc, err
+}
+
 // CreateBuildConfig creates a buildConfig using the builderImage as well as gitURL.
 // envVars is the array containing the environment variables
 func (c *Client) CreateBuildConfig(commonObjectMeta metav1.ObjectMeta, builderImage string, gitURL string, gitRef string, envVars []corev1.EnvVar) (buildv1.BuildConfig, error) {

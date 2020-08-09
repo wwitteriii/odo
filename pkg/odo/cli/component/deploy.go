@@ -49,6 +49,9 @@ type DeployOptions struct {
 	DeploymentPort           int
 	dockerConfigJSONFilename string
 	rootless                 bool
+	fromKind                 string
+	fromNamespace            string
+	fromName                 string
 
 	*genericclioptions.Context
 }
@@ -113,7 +116,11 @@ func (do *DeployOptions) Validate() (err error) {
 		if component.Dockerfile != nil {
 			dockerfileURL = component.Dockerfile.DockerfileLocation
 			do.rootless = component.Dockerfile.Rootless
-			break
+		}
+		if component.SourceToImage != nil {
+			do.fromKind = component.SourceToImage.FromKind
+			do.fromNamespace = component.SourceToImage.FromNamespace
+			do.fromName = component.SourceToImage.FromName
 		}
 	}
 

@@ -68,6 +68,8 @@ type DevfileComponent struct {
 
 	// Allows specifying a dockerfile to initiate build
 	Dockerfile *Dockerfile `json:"dockerfile,omitempty"`
+
+	SourceToImage *SourceToImage `json:"sourcetoimage,omitempty"`
 }
 
 // Configuration
@@ -380,4 +382,10 @@ type Source struct {
 
 	// Mandatory path to source repository hosted locally or on cloud
 	Location string `json:"location"`
+}
+
+type SourceToImage struct {
+	FromKind      string `json:"fromKind"`
+	FromNamespace string `json:"fromNamespace"`
+	FromName      string `json:"fromName"`
 }

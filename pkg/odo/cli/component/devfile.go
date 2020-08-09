@@ -169,6 +169,9 @@ func (do *DeployOptions) DevfileDeploy() (err error) {
 		EnvSpecificInfo:          *do.EnvSpecificInfo,
 		DockerConfigJSONFilename: do.dockerConfigJSONFilename,
 		Rootless:                 do.rootless,
+		FromKind:                 do.fromKind,
+		FromNamespace:            do.fromNamespace,
+		FromName:                 do.fromName,
 	}
 
 	log.Infof("\nBuilding component %s", componentName)

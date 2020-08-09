@@ -1198,7 +1198,35 @@ const JsonSchema210 = `{
               "source"
             ],
             "type":"object"
-          }
+          },
+          "SourceToImage":{
+            "description":"SourceToImage component",
+            "properties":{
+              "name":{
+                "description":"Mandatory name that allows referencing the sourcetoimage component",
+                "type":"string"
+              },              
+              "fromKind":{
+                "description":"From Kind",
+                "type":"string"
+              },
+              "fromNamespace":{
+                "description":"From Namespace",
+                "type":"string"
+              },
+              "fromName":{
+                "description":"From Name",
+                "type":"string"
+              }              
+            },
+            "required":[
+              "name",
+              "fromKind",
+              "fromNamespace",
+              "fromName"
+            ],
+            "type":"object"
+          }          
         },
         "type": "object"
       },

@@ -348,6 +348,40 @@ func generateDockerBuildConfigWithBinaryInput(commonObjectMeta metav1.ObjectMeta
 	}
 }
 
+func generateSourceBuildConfigWithBinaryInput(commonObjectMeta metav1.ObjectMeta,
+	fromKind, fromNamespace, fromName, outputImageTag, outputType string) buildv1.BuildConfig {
+	buildSource := buildv1.BuildSource{
+		Binary: &buildv1.BinaryBuildSource{},
+		Type:   buildv1.BuildSourceBinary,
+	}
+
+	return buildv1.BuildConfig{
+		ObjectMeta: commonObjectMeta,
+		Spec: buildv1.BuildConfigSpec{
+			CommonSpec: buildv1.CommonSpec{
+				Output: buildv1.BuildOutput{
+					To: &corev1.ObjectReference{
+						Kind: outputType,
+						Name: outputImageTag,
+					},
+					// OPTIONAL: PushSecrets and ImageLabels
+				},
+				Source: buildSource,
+				Strategy: buildv1.BuildStrategy{
+					Type: buildv1.SourceBuildStrategyType,
+					SourceStrategy: &buildv1.SourceBuildStrategy{
+						From: corev1.ObjectReference{
+							Kind:      fromKind,
+							Name:      fromName,
+							Namespace: fromNamespace,
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 // generateBuildConfig creates a BuildConfig for Git URL's being passed into Odo
 func generateBuildConfig(commonObjectMeta metav1.ObjectMeta, gitURL, gitRef, imageName, imageNamespace string) buildv1.BuildConfig {
 

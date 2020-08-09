@@ -74,6 +74,8 @@ type Component struct {
 
 	// Allows specifying a dockerfile to initiate build
 	Dockerfile *Dockerfile `json:"dockerfile,omitempty"`
+
+	SourceToImage *SourceToImage `json:"sourcetoimage,omitempty"`
 }
 
 // Composite Composite command that allows executing several sub-commands either sequentially or concurrently
@@ -437,4 +439,10 @@ type Source struct {
 
 	// Mandatory path to source repository hosted locally or on cloud
 	Location string `json:"location"`
+}
+
+type SourceToImage struct {
+	FromKind      string `json:"fromKind"`
+	FromNamespace string `json:"fromNamespace"`
+	FromName      string `json:"fromName"`
 }
