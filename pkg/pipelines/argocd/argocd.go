@@ -35,6 +35,7 @@ var (
 		{Group: "triggers.tekton.dev", Kind: "TriggerTemplate", JSONPointers: []string{"/status"}},
 		{Group: "triggers.tekton.dev", Kind: "TriggerBinding", JSONPointers: []string{"/status"}},
 		{Group: "route.openshift.io", Kind: "Route", JSONPointers: []string{"/spec/host"}},
+		{Group: "bitnami.com", Kind: "SealedSecret", JSONPointers: []string{"/status"}},
 	}
 
 	resourceExclusions = excludeResources{
