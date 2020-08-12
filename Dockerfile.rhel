@@ -16,7 +16,7 @@ FROM registry.redhat.io/ubi8/ubi-minimal:8.2-345
 
 COPY --from=builder /go/src/github.com/openshift/odo/dist/bin/darwin-amd64/odo /usr/share/openshift/odo/mac/odo
 COPY --from=builder /go/src/github.com/openshift/odo/dist/bin/windows-amd64/odo.exe /usr/share/openshift/odo/windows/odo.exe
-COPY --from=builder /go/src/github.com/openshift/odo/dist/bin/linux-amd64/odo /usr/share/openshift/odo/linux/odo-custom
+COPY --from=builder /go/src/github.com/openshift/odo/dist/bin/linux-amd64/odo /usr/share/openshift/odo/linux/odo
 
 #CONTAINERID='bacd6ff52eb2'
 #mnt=$(podman mount ${CONTAINERID})
